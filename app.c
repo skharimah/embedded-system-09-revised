@@ -109,7 +109,7 @@ APP_DRV_OBJECTS appDrvObject;
 
 /*******************************************************************************
   Function:
-    void createQueue (void)
+    QueueHandle_t createQueue (void)
 
   Remarks:
     See prototype in app.h.
@@ -117,7 +117,7 @@ APP_DRV_OBJECTS appDrvObject;
 
 QueueHandle_t createQueue(void) {
     QueueHandle_t queue;
-    queue = xQueueCreate(10, sizeof (unsigned int));
+    queue = xQueueCreate(124, sizeof (unsigned int));
     if (queue == NULL) {
         /* Queue is not created and should not be used
          * The return value will be NULL if queue is not created
@@ -128,21 +128,20 @@ QueueHandle_t createQueue(void) {
 
 /*******************************************************************************
   Function:
-    bool receiveFromQueue (QueueHandle_t queue)
+    unsigned char receiveFromQueue (QueueHandle_t queue)
 
   Remarks:
     See prototype in app.h.
  */
 
-bool receiveFromQueue(QueueHandle_t queue) {
-    unsigned int buffer;
+unsigned char receiveFromQueue(QueueHandle_t queue) {
+    unsigned char buffer = '0';
     if (queue != NULL) {
         if (xQueueReceive(queue, &buffer, portMAX_DELAY) == pdTRUE) {
             /*Unsigned char value from the queue is successfully stored in buffer*/
-            return true;
         }
     }
-    return false;
+    return buffer;
 }
 
 /*******************************************************************************
@@ -222,8 +221,7 @@ void APP_Initialize(void) {
     
     msgQueue = createQueue();
     if(msgQueue == NULL){
-        
-        /*wait indefinitely until the queue is successfully created*/
+        /* Wait indefinitely until the queue is successfully created */
     }
 }
 
@@ -238,15 +236,10 @@ void APP_Initialize(void) {
 void APP_Tasks(void) {
     
     while (1) {
-        
-        //if(receiveFromQueue(msgQueue)){
-            
-            /*receiving from message queue*/
-        //}
-        
-       if(DRV_USART_ReceiverBufferIsEmpty(usbHandle)) {
+
+        if(DRV_USART_ReceiverBufferIsEmpty(usbHandle)) {
             /* UART ready to receive */
-       }
+        }
         
     }
 }

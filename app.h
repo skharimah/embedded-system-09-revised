@@ -168,7 +168,7 @@ QueueHandle_t createQueue(void);
 
 /*******************************************************************************
   Function:
-    bool receiveFromQueue(QueueHandle_t queue);
+    unsigned char receiveFromQueue(QueueHandle_t queue);
 
   Summary:
     Receive from the specified queue.
@@ -181,10 +181,11 @@ QueueHandle_t createQueue(void);
     Queue handle for the queue this function is to read from.
 
   Returns:
-    True if item is successfully received from queue. False if the given queue is empty.
+    Returns the char item received from the queue
+    If no item is successfully retrieved it will return unsigned char '0'.
 */
 
-bool receiveFromQueue(QueueHandle_t queue);
+unsigned char receiveFromQueue(QueueHandle_t queue);
 
 /*******************************************************************************
   Function:

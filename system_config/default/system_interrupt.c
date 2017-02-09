@@ -115,10 +115,11 @@ void IntHandlerDrvTmrInstance0(void)
         }
 
         
-
+        /*
         if(app1SendTimerValToMsgQ(millisec) != MSG_QUEUE_IS_FULL) {
             //LATASET = 0x08;
         }
+        */
         
         //Clear Interrupt Flag 
         
