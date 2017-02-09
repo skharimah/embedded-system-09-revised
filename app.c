@@ -219,6 +219,12 @@ void APP_Initialize(void) {
     ODCACLR = 0x8;
     
     usbHandle = DRV_USART_Open(DRV_USART_INDEX_0, DRV_IO_INTENT_READWRITE);
+    
+    msgQueue = createQueue();
+    if(msgQueue == NULL){
+        
+        /*wait indefinitely until the queue is successfully created*/
+    }
 }
 
 /******************************************************************************
@@ -232,6 +238,11 @@ void APP_Initialize(void) {
 void APP_Tasks(void) {
     
     while (1) {
+        
+        //if(receiveFromQueue(msgQueue)){
+            
+            /*receiving from message queue*/
+        //}
         
        if(DRV_USART_ReceiverBufferIsEmpty(usbHandle)) {
             /* UART ready to receive */
