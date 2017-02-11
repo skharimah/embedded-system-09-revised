@@ -57,6 +57,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include "app_public.h"
 #include "debug.h"
 #include <xc.h>
+#include "string.h"
 
 // *****************************************************************************
 // *****************************************************************************
@@ -216,8 +217,7 @@ void APP_Initialize(void) {
     /* Set Port A bit 0x08 as output pins */
     TRISACLR = 0x8;
     ODCACLR = 0x8;
-    
-    usbHandle = DRV_USART_Open(DRV_USART_INDEX_0, DRV_IO_INTENT_READWRITE);
+
     
     msgQueue = createQueue();
     if(msgQueue == NULL){
@@ -234,6 +234,28 @@ void APP_Initialize(void) {
  */
 
 void APP_Tasks(void) {
+    
+        
+    
+    //define usb handle to handle the uart to read and write at the same time
+    usbHandle = DRV_USART_Open(DRV_USART_INDEX_0, DRV_IO_INTENT_READWRITE);
+    
+    //get into command mode
+    dbgUARTVal('$');
+    dbgUARTVal('$');
+    dbgUARTVal('$');
+    
+    //reboot everytime the code starts
+    dbgUARTVal('r');
+    dbgUARTVal('e');
+    dbgUARTVal('b');
+    dbgUARTVal('o');
+    dbgUARTVal('o');
+    dbgUARTVal('t');
+    
+    //new line character
+//    dbgUARTVal(13);
+    
     
     while (1) {
 

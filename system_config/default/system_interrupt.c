@@ -126,3 +126,32 @@ void IntHandlerDrvTmrInstance0(void)
     }
     PLIB_INT_SourceFlagClear(INT_ID_0,INT_SOURCE_TIMER_2);
 }
+
+ /*void IntHandlerDrvUsartInstance0(void)
+{
+     dbgOutputLoc(134);
+     
+     
+     char recvChar;
+    /*DRV_USART_TasksTransmit(sysObj.drvUsart0);
+    DRV_USART_TasksReceive(sysObj.drvUsart0);
+    DRV_USART_TasksError(sysObj.drvUsart0);*/
+    
+    
+    /*if (!DRV_USART_ReceiverBufferIsEmpty(usbHandle)){
+        //dbgOutputLoc(135);
+     
+       recvChar = DRV_USART_ReadByte (usbHandle);
+       //dbgOutputLoc(136);
+    
+       dbgOutputVal(recvChar);
+    }*/
+     
+     //DRV_USART_TasksTransmit(sysObj.drvUsart0);
+     //dbgOutputLoc(137);
+    //DRV_USART_TasksReceive(sysObj.drvUsart0);
+    // DRV_USART_TasksError(sysObj.drvUsart0);
+    
+    
+    
+//}
