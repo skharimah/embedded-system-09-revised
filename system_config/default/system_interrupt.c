@@ -83,75 +83,155 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
  * Returns: none
  */
 char name[7] = {'T', 'E', 'A', 'M', ' ', '9', ' '};
+char mystring[15] = {'R', 'E', 'A', 'D', 'Y', '.', ' ', '\0'};
+bool received = true;
+int counter = 0;
 
 DBG_POS namepos = T;
 unsigned char out;
 unsigned int ch = 1;
 unsigned int millisec = 0;
-void IntHandlerDrvTmrInstance0(void)
 
-{
-    dbgOutputLoc(millisec);
+void IntHandlerDrvTmrInstance0(void) {
+    dbgOutputLoc(TMR_START);
     millisec++;
-    unsigned char val = millisec % 100;
-    //dbgOutputLoc(val);
-    if ( millisec % 100 == 0){
+    unsigned char val;
+    //dbgOutputLoc(millisec);
+    if (millisec % 500 == 0) {
+        //dbgOutputVal('.');
+        LATAINV = 0x8;
         //Inverts ChipKit LD4 to display functioning timer
         //LATAINV = 0x8;
 
         //assign next letter of string to unsigned character
-        out = name[namepos];
+        //out = name[namepos];
 
         //output to I/O pins through dbgOutputVal functions
-        dbgOutputVal(out);
-        dbgUARTVal(out);
+        //dbgOutputVal(out);
+        //dbgUARTVal(out);
 
         //Reset the string iterator
-        if(namepos == SECONDSPACE) {
-            namepos = T;
-        }
-        else {
-            namepos++;
-        }
+        //if(namepos == SECONDSPACE) {
+        //    namepos = T;
+        //}
+        //else {
+        //    namepos++;
+        //}
 
-        
-        /*
-        if(app1SendTimerValToMsgQ(millisec) != MSG_QUEUE_IS_FULL) {
-            //LATASET = 0x08;
-        }
-        */
-        
+
+
+
+
+
         //Clear Interrupt Flag 
-        
+        switch (DRV_USART_ClientStatus(usbHandle)) {
+            case DRV_USART_CLIENT_STATUS_ERROR:
+                SYS_DEBUG(0, "UART ERROR");
+                val = 'E';
+                break;
+            case DRV_USART_CLIENT_STATUS_BUSY:
+                SYS_DEBUG(0, "UART BUSY");
+                val = 'B';
+                break;
+            case DRV_USART_CLIENT_STATUS_CLOSED:
+                SYS_DEBUG(0, "UART CLOSED");
+                val = 'C';
+                break;
+            case DRV_USART_CLIENT_STATUS_READY:
+                SYS_DEBUG(0, "UART READY");
+                //writeStringUART(mystring);
+                val = 'R';
+
+                break;
+            default:
+                val = 'U';
+        }
+        //dbgUARTVal(val);
+        //if (received) {
+            charToMsgQ(val);
+        //}
+
     }
-    PLIB_INT_SourceFlagClear(INT_ID_0,INT_SOURCE_TIMER_2);
+    PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_TIMER_2);
+    dbgOutputLoc(TMR_STOP);
 }
 
- /*void IntHandlerDrvUsartInstance0(void)
-{
-     dbgOutputLoc(134);
+void IntHandlerDrvUsartInstance0(void) {
+    Message mymsg;
+    char mychar;
+    //dbgOutputLoc(UART_START);
+    //    DRV_USART_TasksTransmit(sysObj.drvUsart0);
+    //    DRV_USART_TasksReceive(sysObj.drvUsart0);
+    //    DRV_USART_TasksError(sysObj.drvUsart0);
+
+    if (PLIB_INT_SourceFlagGet(INT_ID_0, INT_SOURCE_USART_1_RECEIVE)) {
+        dbgOutputLoc(99);
+        while (PLIB_USART_ReceiverDataIsAvailable(USART_ID_1)) {
+            mychar = ReceiveCharFromWifly();
+            received = true;
+            counter = 0;
+            charToMsgQFromISR(recvMsgQueue, mychar);
+            dbgOutputVal(mychar);
+            dbgOutputLoc(WIFLY_RECV);
+        }
+        PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_USART_1_RECEIVE);
+    } else if (PLIB_INT_SourceFlagGet(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT)) {
+        dbgOutputLoc(WIFLY_TRANS);
+        while (!xQueueIsQueueEmptyFromISR(msgQueue)) {
+            dbgOutputLoc(35);
+            BaseType_t xTaskWokenByReceive = pdFALSE;
+            if (xQueueReceiveFromISR(msgQueue, (void *) &mymsg, &xTaskWokenByReceive)
+                    == pdTRUE) {
+                mychar = mymsg.ucMessageID;
+                dbgOutputVal(mychar);
+                //TransmitMessageToWifly(qMsg.message, qMsg.message_size);
+                TransmitCharToWifly(mychar);
+                if (counter <= 10) {
+                    counter++;
+                } else if (counter <= 25) {
+                    received = false;
+                    counter++;
+                } else {
+                    counter = 0;
+                }
+
+            }
+        }
+        PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT);
+        PLIB_INT_SourceDisable(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT);
+        dbgOutputLoc(42);
+    } else if (PLIB_INT_SourceFlagGet(INT_ID_0, INT_SOURCE_USART_1_ERROR)) {
+        dbgOutputVal('E');
+        dbgOutputLoc(WIFLY_ERROR);
+        PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_USART_1_ERROR);
+    }
+    dbgOutputLoc(43);
+
+    //dbgOutputLoc(UART_STOP);
+}
+//    dbgOutputLoc(134);
+
+
+//     char recvChar;
+/*DRV_USART_TasksTransmit(sysObj.drvUsart0);
+DRV_USART_TasksReceive(sysObj.drvUsart0);
+DRV_USART_TasksError(sysObj.drvUsart0);*/
+
+
+/*if (!DRV_USART_ReceiverBufferIsEmpty(usbHandle)){
+    //dbgOutputLoc(135);
      
-     
-     char recvChar;
-    /*DRV_USART_TasksTransmit(sysObj.drvUsart0);
-    DRV_USART_TasksReceive(sysObj.drvUsart0);
-    DRV_USART_TasksError(sysObj.drvUsart0);*/
+   recvChar = DRV_USART_ReadByte (usbHandle);
+   //dbgOutputLoc(136);
     
-    
-    /*if (!DRV_USART_ReceiverBufferIsEmpty(usbHandle)){
-        //dbgOutputLoc(135);
-     
-       recvChar = DRV_USART_ReadByte (usbHandle);
-       //dbgOutputLoc(136);
-    
-       dbgOutputVal(recvChar);
-    }*/
-     
-     //DRV_USART_TasksTransmit(sysObj.drvUsart0);
-     //dbgOutputLoc(137);
-    //DRV_USART_TasksReceive(sysObj.drvUsart0);
-    // DRV_USART_TasksError(sysObj.drvUsart0);
-    
-    
-    
+   dbgOutputVal(recvChar);
+}*/
+
+//DRV_USART_TasksTransmit(sysObj.drvUsart0);
+//dbgOutputLoc(137);
+//DRV_USART_TasksReceive(sysObj.drvUsart0);
+// DRV_USART_TasksError(sysObj.drvUsart0);
+
+
+
 //}

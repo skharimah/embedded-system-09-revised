@@ -28,6 +28,15 @@ extern "C" {
 #endif
     
 DRV_HANDLE usbHandle;// = DRV_USART_Open(DRV_USART_INDEX_0, DRV_IO_INTENT_READWRITE);
+QueueHandle_t motorMsgQueue;
+QueueHandle_t msgQueue;
+QueueHandle_t recvMsgQueue;
+
+typedef struct AMessage
+ {
+    char ucMessageID;
+    char ucData[ 20 ];
+ } Message;
 
 /*******************************************************************************
   Function:
@@ -49,6 +58,14 @@ DRV_HANDLE usbHandle;// = DRV_USART_Open(DRV_USART_INDEX_0, DRV_IO_INTENT_READWR
 */
     
 int app1SendTimerValToMsgQ(unsigned int millisecondsElapsed);
+int charToMsgQFromISR(QueueHandle_t queue, unsigned char value);
+int app1SendCharToMsgQ(unsigned char value);
+int charToMsgQ(char val);
+int writeStringUART(char* string);
+
+void TransmitCharToWifly(unsigned char value);
+
+char ReceiveCharFromWifly();
 
 /*******************************************************************************
   Function:

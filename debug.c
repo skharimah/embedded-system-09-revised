@@ -50,7 +50,7 @@ int dbgOutputVal(unsigned char val){
 int dbgUARTVal(unsigned char val){
     
     if (!(DRV_USART_TRANSFER_STATUS_TRANSMIT_FULL & DRV_USART_TransferStatus(usbHandle)) ){
-        LATAINV = 0x8;
+        
         DRV_USART_WriteByte(usbHandle, val);
         return 0;
     }
@@ -67,6 +67,7 @@ int dbgUARTVal(unsigned char val){
     See prototype in debug.h.
  */
 int dbgOutputLoc(unsigned char outputVal){
+
         PLIB_PORTS_PinWrite ( PORTS_ID_0, PIN9_PORT, PIN9, 0);
         PLIB_PORTS_PinWrite ( PORTS_ID_0, PIN10_PORT, PIN10, 0);
         PLIB_PORTS_PinWrite ( PORTS_ID_0, PIN11_PORT, PIN11, 0);
@@ -76,7 +77,7 @@ int dbgOutputLoc(unsigned char outputVal){
         PLIB_PORTS_PinWrite ( PORTS_ID_0, PIN15_PORT, PIN15, 0);
         PLIB_PORTS_PinWrite ( PORTS_ID_0, PIN16_PORT, PIN16, 0);
         
-        
+
         PLIB_PORTS_PinWrite ( PORTS_ID_0, PIN9_PORT, PIN9, 1);
         PLIB_PORTS_PinWrite ( PORTS_ID_0, PIN10_PORT, PIN10, 1);
         PLIB_PORTS_PinWrite ( PORTS_ID_0, PIN11_PORT, PIN11, 1);
@@ -85,6 +86,7 @@ int dbgOutputLoc(unsigned char outputVal){
         PLIB_PORTS_PinWrite ( PORTS_ID_0, PIN14_PORT, PIN14, 1);
         PLIB_PORTS_PinWrite ( PORTS_ID_0, PIN15_PORT, PIN15, 1);
         PLIB_PORTS_PinWrite ( PORTS_ID_0, PIN16_PORT, PIN16, 1);
+
     
     
     

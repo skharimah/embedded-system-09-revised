@@ -64,8 +64,8 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 // Section: Global Data Definitions
 // *****************************************************************************
 // *****************************************************************************
-QueueHandle_t msgQueue;
-QueueHandle_t motorMsgQueue;
+
+
 
 
 
@@ -118,7 +118,7 @@ APP_DRV_OBJECTS appDrvObject;
 
 QueueHandle_t createQueue(void) {
     QueueHandle_t queue;
-    queue = xQueueCreate(124, sizeof (unsigned int));
+    queue = xQueueCreate(10, sizeof (Message));
     if (queue == NULL) {
         /* Queue is not created and should not be used
          * The return value will be NULL if queue is not created
@@ -136,6 +136,7 @@ QueueHandle_t createQueue(void) {
  */
 
 unsigned char receiveFromQueue(QueueHandle_t queue) {
+    dbgOutputLoc(33);
     unsigned char buffer = '0';
     if (queue != NULL) {
         if (xQueueReceive(queue, &buffer, portMAX_DELAY) == pdTRUE) {
@@ -143,6 +144,18 @@ unsigned char receiveFromQueue(QueueHandle_t queue) {
         }
     }
     return buffer;
+}
+int charToMsgQ(char val){
+    if (app1SendCharToMsgQ(val) != MSG_QUEUE_IS_FULL) {
+                //LATASET = 0x08;
+                PLIB_INT_SourceEnable(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT);
+                PLIB_INT_SourceFlagSet(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT);
+
+                dbgOutputLoc(77);
+                return 0;
+            }
+    
+    return -1;
 }
 
 /*******************************************************************************
@@ -153,9 +166,40 @@ unsigned char receiveFromQueue(QueueHandle_t queue) {
     See prototype in app_public.h.
  */
 int app1SendTimerValToMsgQ(unsigned int millisecondsElapsed) {
+    dbgOutputLoc(22);
     if (msgQueue != NULL) {
         if (xQueueSendFromISR(msgQueue,
                 (void *) &millisecondsElapsed,
+                NULL) != pdTRUE) {
+            return MSG_QUEUE_IS_FULL;
+        } else
+            return 0;
+    }
+    else
+        return MSG_QUEUE_DOES_NOT_EXIST;
+
+}
+int app1SendCharToMsgQ(unsigned char value) {
+    dbgOutputLoc(11);
+    if (msgQueue != NULL) {
+        if (xQueueSendFromISR(msgQueue,
+                (void *) &value,
+                NULL) != pdTRUE) {
+            return MSG_QUEUE_IS_FULL;
+        } else
+            return 0;
+    }
+    else
+        return MSG_QUEUE_DOES_NOT_EXIST;
+
+}
+int charToMsgQFromISR(QueueHandle_t queue, unsigned char value) {
+    dbgOutputLoc(88);
+    Message temp;
+    temp.ucMessageID = value;
+    if (queue != NULL) {
+        if (xQueueSendFromISR(queue,
+                (void *) &temp,
                 NULL) != pdTRUE) {
             return MSG_QUEUE_IS_FULL;
         } else
@@ -186,6 +230,104 @@ int appSendMotorEncoderOutputValueToMsgQ(unsigned int motorEncoderOutputVal) {
         return MSG_QUEUE_DOES_NOT_EXIST;
 
 }
+int writeStringUART(char* string){
+    dbgOutputLoc(STRING_START);
+    int i;
+    for (i = 0; string[i] != '\0'; i++){
+        dbgUARTVal(string[i]);
+    }
+    dbgOutputLoc(STRING_STOP);
+}
+
+/******************************************************************************
+ * Function:
+ *      TransmitCharToWifly()
+ * 
+ * Remarks:
+ *      Sends a character over UART to the wifly
+ */
+void TransmitCharToWifly(unsigned char value)
+{
+    dbgOutputLoc(39);
+    while(PLIB_USART_TransmitterBufferIsFull(USART_ID_1)) 
+    {
+        dbgOutputLoc(7);
+    }
+    dbgOutputLoc(40);
+    PLIB_USART_TransmitterByteSend(USART_ID_1, value);
+    dbgOutputLoc(41);
+}
+
+/******************************************************************************
+ * Function:
+ *      ReceiveCharFromWifly()
+ * 
+ * Remarks:
+ *      Receives a character from the wifly via USART
+ * 
+ * Returns:
+ *      The character received from the wifly
+ */
+char ReceiveCharFromWifly()
+{    
+    dbgOutputLoc(66);
+    return PLIB_USART_ReceiverByteReceive(USART_ID_1);
+}
+char ReceiveCharFromWiflyBlocking()
+{    
+    while(!PLIB_USART_ReceiverDataIsAvailable (USART_ID_1)) 
+    {
+        dbgOutputLoc(8);
+    }
+    return PLIB_USART_ReceiverByteReceive(USART_ID_1);
+}
+
+char readCharFromQ(QueueHandle_t xQueue){
+    dbgOutputLoc(77);
+    Message mymessage;
+    xQueueReceive(  xQueue,
+                    (void *) &mymessage,
+                    portMAX_DELAY 
+            );
+    return mymessage.ucMessageID;
+}
+
+
+int UARTInit(USART_MODULE_ID id, int baudrate){
+    
+    PLIB_USART_BaudSetAndEnable (id, SYS_CLK_PeripheralFrequencyGet(CLK_BUS_PERIPHERAL_2), baudrate);
+//    PLIB_USART_Enable (id);
+//    PLIB_USART_ReceiverEnable (id);
+//    PLIB_USART_TransmitterEnable (id);
+    return 1;
+
+        
+        
+        
+        
+        
+//    DRV_USART_INIT              usartInit;
+//    SYS_MODULE_OBJ              objectHandle;
+//    usartInit.baud  = 57600;
+//    usartInit.mode  = DRV_USART_OPERATION_MODE_NORMAL;
+//    usartInit.flags = DRV_USART_INIT_FLAG_NONE;
+//    usartInit.usartID   = USART_ID_1;
+//    usartInit.brgClock  = 80000000;
+//    usartInit.handshake = DRV_USART_HANDSHAKE_NONE;
+//    usartInit.lineControl       = DRV_USART_LINE_CONTROL_8NONE1;
+//    usartInit.interruptError    = INT_SOURCE_USART_1_ERROR;
+//    usartInit.interruptReceive  = INT_SOURCE_USART_1_RECEIVE;
+//    usartInit.queueSizeReceive  = 10;
+//    usartInit.queueSizeTransmit = 10;
+//    usartInit.interruptTransmit = INT_SOURCE_USART_1_TRANSMIT;
+//    usartInit.moduleInit.value  = SYS_MODULE_POWER_RUN_FULL;
+//        
+//    
+//    //define usb handle to handle the uart to read and write at the same time
+//    //DRV_USART_Initialize(const SYS_MODULE_INDEX drvIndex, const SYS_MODULE_INIT * const init);
+//    objectHandle = DRV_USART_Initialize(DRV_USART_INDEX_1, (SYS_MODULE_INIT*)&usartInit);
+//    usbHandle = DRV_USART_Open(DRV_USART_INDEX_0, (DRV_IO_INTENT_READWRITE | DRV_IO_INTENT_BLOCKING));
+}
 
 // *****************************************************************************
 // *****************************************************************************
@@ -203,16 +345,15 @@ int appSendMotorEncoderOutputValueToMsgQ(unsigned int motorEncoderOutputVal) {
 
 void APP_Initialize(void) {
    
-    DRV_TMR0_Initialize();
-    DRV_TMR0_Start();
+    
 
     //SYS_PORTS_Clear ( PORTS_BIT_POS_0, PORT_CHANNEL_G, 0xFF );
     //SYS_PORTS_Set( PORTS_BIT_POS_0, PORT_CHANNEL_G, 1, 0x0F0 );
-    TRISGCLR = 0x0F0;
-    ODCGCLR = 0x0F0;
+    //TRISGCLR = 0x0F0;
+    //ODCGCLR = 0x0F0;
 
-    TRISECLR = 0xFF;
-    ODCECLR = 0xFF;
+   // TRISECLR = 0xFF;
+    //ODCECLR = 0xFF;
 
     /* Set Port A bit 0x08 as output pins */
     TRISACLR = 0x8;
@@ -220,7 +361,11 @@ void APP_Initialize(void) {
 
     
     msgQueue = createQueue();
+    recvMsgQueue = createQueue();
     if(msgQueue == NULL){
+        /* Wait indefinitely until the queue is successfully created */
+    }
+    if(recvMsgQueue == NULL){
         /* Wait indefinitely until the queue is successfully created */
     }
 }
@@ -234,34 +379,37 @@ void APP_Initialize(void) {
  */
 
 void APP_Tasks(void) {
-    
-        
-    
-    //define usb handle to handle the uart to read and write at the same time
-    usbHandle = DRV_USART_Open(DRV_USART_INDEX_0, DRV_IO_INTENT_READWRITE);
+    DRV_TMR0_Initialize();
+    DRV_TMR0_Start();
+    UARTInit(USART_ID_1, 57600);
+    Message myMsg;
+    char myChar;
     
     //get into command mode
-    dbgUARTVal('$');
-    dbgUARTVal('$');
-    dbgUARTVal('$');
+//    dbgUARTVal('$');
+//    dbgUARTVal('$');
+//    dbgUARTVal('$');
     
-    //reboot everytime the code starts
-    dbgUARTVal('r');
-    dbgUARTVal('e');
-    dbgUARTVal('b');
-    dbgUARTVal('o');
-    dbgUARTVal('o');
-    dbgUARTVal('t');
+    //reboot every time the code starts
+//    dbgUARTVal('r');
+//    dbgUARTVal('e');
+//    dbgUARTVal('b');
+//    dbgUARTVal('o');
+//    dbgUARTVal('o');
+//    dbgUARTVal('t');
     
     //new line character
 //    dbgUARTVal(13);
     
     
     while (1) {
-
-        if(DRV_USART_ReceiverBufferIsEmpty(usbHandle)) {
+        dbgOutputLoc(APPTASKS);
+        myChar = readCharFromQ(recvMsgQueue);
+        dbgOutputVal(myChar);
+        dbgOutputLoc(APPTASKS + 1);
+        //if(DRV_USART_ReceiverBufferIsEmpty(usbHandle)) {
             /* UART ready to receive */
-        }
+        //}
         
     }
 }

@@ -54,6 +54,18 @@ extern "C" {
 #define PIN15 15
 #define PIN16 7
     
+//DEBUG LOCATIONS
+#define TMR_START 13
+#define TMR_STOP 14
+#define UART_START 145
+#define UART_STOP 146
+#define WIFLY_RECV 111
+#define WIFLY_TRANS 121
+#define WIFLY_ERROR 131
+#define STRING_START 20
+#define STRING_STOP 21
+#define APPTASKS 1  
+    
 typedef enum {
     /* Describe structure member. */
     MSG_QUEUE_DOES_NOT_EXIST = 1,
