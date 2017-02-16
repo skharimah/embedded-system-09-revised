@@ -83,7 +83,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
  * Returns: none
  */
 char name[7] = {'T', 'E', 'A', 'M', ' ', '9', ' '};
-char mystring[100] = "My message is the coolest damn thing I have ever sent via wifi ever!?\0";//{'R', 'E', 'A', 'D', 'Y', '.', ' ', '\0'};
+char mystring[100] = "     Team 9: Hard at work!\0"; //{'R', 'E', 'A', 'D', 'Y', '.', ' ', '\0'};
 bool received = true;
 int counter = 0;
 
@@ -92,12 +92,17 @@ unsigned char out;
 unsigned int ch = 1;
 
 unsigned int millisec = 0;
+<<<<<<< Updated upstream
 int itterate = 0;
 int leftTicks = 0;
 int rightTicks;
+=======
+unsigned int count = 0;
+>>>>>>> Stashed changes
 
 void IntHandlerDrvTmrInstance0(void) {
     millisec++;
+<<<<<<< Updated upstream
     if(millisec % 100 == 0) {
         
         //Get timer values
@@ -109,6 +114,82 @@ void IntHandlerDrvTmrInstance0(void) {
         ticksMessage.leftTicks = leftTicks;
         ticksMessage.rightTicks = rightTicks;
         app1SendEncoderValToMsgQ(ticksMessage);
+=======
+    unsigned char val;
+    //dbgOutputLoc(millisec);
+    if (millisec % 500 == 0) {
+        count++;
+
+        //dbgOutputVal('.');
+        LATAINV = 0x8;
+        //Inverts ChipKit LD4 to display functioning timer
+        //LATAINV = 0x8;
+
+        //assign next letter of string to unsigned character
+        //out = name[namepos];
+
+        //output to I/O pins through dbgOutputVal functions
+        //dbgOutputVal(out);
+        //dbgUARTVal(out);
+
+        //Reset the string iterator
+        //if(namepos == SECONDSPACE) {
+        //    namepos = T;
+        //}
+        //else {
+        //    namepos++;
+        //}
+
+
+
+
+
+
+        //Clear Interrupt Flag 
+        switch (DRV_USART_ClientStatus(usbHandle)) {
+            case DRV_USART_CLIENT_STATUS_ERROR:
+                SYS_DEBUG(0, "UART ERROR");
+                val = 'E';
+                break;
+            case DRV_USART_CLIENT_STATUS_BUSY:
+                SYS_DEBUG(0, "UART BUSY");
+                val = 'B';
+                break;
+            case DRV_USART_CLIENT_STATUS_CLOSED:
+                SYS_DEBUG(0, "UART CLOSED");
+                val = 'C';
+                break;
+            case DRV_USART_CLIENT_STATUS_READY:
+                SYS_DEBUG(0, "UART READY");
+                //writeStringUART(mystring);
+                val = 'D';
+
+                break;
+            default:
+                val = 'U';
+        }
+        //dbgUARTVal(val);
+        //if (received) {
+        //charToMsgQ(val);
+        Message mymsg;
+        int i, j, temp = 0;
+        for (i = 0; mystring[i] != '\0'; i++){
+            mymsg.ucData[i] = mystring[i];
+            temp++;
+        }
+        int length = count;
+        for (j = temp; j < temp+4; j++) {
+            mymsg.ucData[temp + 3 -j] = (length % 10) + '0';
+
+            length = (length - (length % 10)) / 10;
+        }
+
+        mymsg.ucData[j] = '\0';
+        mymsg.ucMessageID = val;
+        msgToMsgQISR(mymsg);
+        //}
+
+>>>>>>> Stashed changes
     }
     if(millisec % 1000 == 0) {
         //motorsTurnDemo(itterate);
@@ -152,14 +233,8 @@ void IntHandlerDrvUsartInstance0(void) {
 
     if (PLIB_INT_SourceFlagGet(INT_ID_0, INT_SOURCE_USART_1_RECEIVE)) {
         dbgOutputLoc(99);
-        while (PLIB_USART_ReceiverDataIsAvailable(USART_ID_1)) {
-            mychar = ReceiveCharFromWifly();
-            received = true;
-            counter = 0;
-            charToMsgQFromISR(recvMsgQueue, mychar);
-            dbgOutputVal(mychar);
-            dbgOutputLoc(WIFLY_RECV);
-        }
+        received = true;
+        counter = 0;
         PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_USART_1_RECEIVE);
     } else if (PLIB_INT_SourceFlagGet(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT)) {
         dbgOutputLoc(WIFLY_TRANS);

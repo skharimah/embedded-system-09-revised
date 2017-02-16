@@ -66,7 +66,7 @@ int charToMsgQFromISR(QueueHandle_t queue, unsigned char value);
 int app1SendCharToMsgQ(unsigned char value);
 int charToMsgQ(char val);
 
-int msgToMsgQ(Message msg);
+int msgToMsgQISR(Message msg);
 int writeStringUART(char* string);
 
 void TransmitCharToWifly(unsigned char value);

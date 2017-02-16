@@ -85,7 +85,7 @@ QueueHandle_t encoderQueue;
  */
 
 APP_DATA appData;
-APP_DATA appData ={
+APP_DATA appData = {
 };
 
 // *****************************************************************************
@@ -185,26 +185,39 @@ ENCODER_DATA receiveFromEncoderQueue(QueueHandle_t queue) {
 
 int charToMsgQ(char val){
     if (app1SendCharToMsgQ(val) != MSG_QUEUE_IS_FULL) {
-                //LATASET = 0x08;
-                PLIB_INT_SourceEnable(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT);
-                PLIB_INT_SourceFlagSet(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT);
+        //LATASET = 0x08;
+        PLIB_INT_SourceEnable(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT);
+        PLIB_INT_SourceFlagSet(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT);
 
-                dbgOutputLoc(77);
-                return 0;
-            }
-    
+        dbgOutputLoc(77);
+        return 0;
+    }
+
     return -1;
 }
-int msgToMsgQ(Message msg){
-    if (messageToQISR(msgQueue, msg) != MSG_QUEUE_IS_FULL) {
-                //LATASET = 0x08;
-                PLIB_INT_SourceEnable(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT);
-                PLIB_INT_SourceFlagSet(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT);
 
-                dbgOutputLoc(77);
-                return 0;
-            }
-    
+int msgToMsgQISR(Message msg) {
+    if (messageToQISR(msgQueue, msg) != MSG_QUEUE_IS_FULL) {
+        //LATASET = 0x08;
+        PLIB_INT_SourceEnable(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT);
+        PLIB_INT_SourceFlagSet(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT);
+
+        dbgOutputLoc(77);
+        return 0;
+    }
+
+    return -1;
+}
+int msgToMsgQ(Message msg) {
+    if (messageToQ(msgQueue, msg) != MSG_QUEUE_IS_FULL) {
+        //LATASET = 0x08;
+        PLIB_INT_SourceEnable(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT);
+        PLIB_INT_SourceFlagSet(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT);
+
+        dbgOutputLoc(77);
+        return 0;
+    }
+
     return -1;
 }
 
@@ -224,11 +237,11 @@ int app1SendTimerValToMsgQ(unsigned int millisecondsElapsed) {
             return MSG_QUEUE_IS_FULL;
         } else
             return 0;
-    }
-    else
+    } else
         return MSG_QUEUE_DOES_NOT_EXIST;
 
 }
+
 int app1SendCharToMsgQ(unsigned char value) {
     dbgOutputLoc(11);
     if (msgQueue != NULL) {
@@ -238,11 +251,11 @@ int app1SendCharToMsgQ(unsigned char value) {
             return MSG_QUEUE_IS_FULL;
         } else
             return 0;
-    }
-    else
+    } else
         return MSG_QUEUE_DOES_NOT_EXIST;
 
 }
+
 int charToMsgQFromISR(QueueHandle_t queue, unsigned char value) {
     dbgOutputLoc(88);
     Message temp;
@@ -254,12 +267,12 @@ int charToMsgQFromISR(QueueHandle_t queue, unsigned char value) {
             return MSG_QUEUE_IS_FULL;
         } else
             return 0;
-    }
-    else
+    } else
         return MSG_QUEUE_DOES_NOT_EXIST;
 
 }
-int messageToQISR(QueueHandle_t queue, Message msg){
+
+int messageToQISR(QueueHandle_t queue, Message msg) {
 
     dbgOutputLoc(88);
     if (queue != NULL) {
@@ -269,8 +282,20 @@ int messageToQISR(QueueHandle_t queue, Message msg){
             return MSG_QUEUE_IS_FULL;
         } else
             return 0;
-    }
-    else
+    } else
+        return MSG_QUEUE_DOES_NOT_EXIST;
+}
+int messageToQ(QueueHandle_t queue, Message msg) {
+
+    dbgOutputLoc(88);
+    if (queue != NULL) {
+        if (xQueueSend(queue,
+                (void *) &msg,
+                NULL) != pdTRUE) {
+            return MSG_QUEUE_IS_FULL;
+        } else
+            return 0;
+    } else
         return MSG_QUEUE_DOES_NOT_EXIST;
 }
 
@@ -302,15 +327,15 @@ int appSendMotorEncoderOutputValueToMsgQ(unsigned int motorEncoderOutputVal) {
             return MSG_QUEUE_IS_FULL;
         } else
             return 0;
-    }
-    else
+    } else
         return MSG_QUEUE_DOES_NOT_EXIST;
 
 }
-int writeStringUART(char* string){
+
+int writeStringUART(char* string) {
     dbgOutputLoc(STRING_START);
     int i;
-    for (i = 0; string[i] != '\0'; i++){
+    for (i = 0; string[i] != '\0'; i++) {
         dbgUARTVal(string[i]);
     }
     dbgOutputLoc(STRING_STOP);
@@ -323,19 +348,17 @@ int writeStringUART(char* string){
  * Remarks:
  *      Sends a character over UART to the wifly
  */
-void TransmitCharToWifly(unsigned char value)
-{
+void TransmitCharToWifly(unsigned char value) {
     dbgOutputLoc(39);
-    while(PLIB_USART_TransmitterBufferIsFull(USART_ID_1)) 
-    {
+    while (PLIB_USART_TransmitterBufferIsFull(USART_ID_1)) {
         dbgOutputLoc(7);
     }
     dbgOutputLoc(40);
     PLIB_USART_TransmitterByteSend(USART_ID_1, value);
     dbgOutputLoc(41);
 }
-void TransmitCharToWiflyNonblocking(unsigned char value)
-{
+
+void TransmitCharToWiflyNonblocking(unsigned char value) {
     dbgOutputLoc(40);
     PLIB_USART_TransmitterByteSend(USART_ID_1, value);
     dbgOutputLoc(41);
@@ -347,53 +370,57 @@ void TransmitCharToWiflyNonblocking(unsigned char value)
   * where L are the base 10 digits of the length of the following message
   * and C is the checksum of the message
   */
-void TransmitMsgToWifly(Message msg){
+
+void TransmitMsgToWifly(Message msg) {
     char len[4], chksum[4];
     int i;
-    msglen(msg, len);
+    intLenToChar(msg, len);
     checksum(msg, chksum);
-    for (i = 0; i < 4; i++){
-        while(PLIB_USART_TransmitterBufferIsFull(USART_ID_1));
+    for (i = 0; i < 4; i++) {
+        while (PLIB_USART_TransmitterBufferIsFull(USART_ID_1));
         TransmitCharToWiflyNonblocking(len[i]);
     }
-        
+
     TransmitCharToWifly(msg.ucMessageID);
-    
-    for (i = 0; msg.ucData[i] != '\0' && msg.ucData[i] != '}' && i < MSG_BUF_SIZE; i++){
-        while(PLIB_USART_TransmitterBufferIsFull(USART_ID_1));
+
+    for (i = 0; msg.ucData[i] != '\0' && msg.ucData[i] != '}' && i < MSG_BUF_SIZE; i++) {
+        while (PLIB_USART_TransmitterBufferIsFull(USART_ID_1));
         TransmitCharToWiflyNonblocking(msg.ucData[i]);
     }
-    for (i = 0; i < 4; i++){
-        while(PLIB_USART_TransmitterBufferIsFull(USART_ID_1));
+    for (i = 0; i < 4; i++) {
+        while (PLIB_USART_TransmitterBufferIsFull(USART_ID_1));
         TransmitCharToWiflyNonblocking(chksum[i]);
     }
 }
 // takes in a Messaqe, calculates the length (characters) of the message
-void msglen(Message msg, char *len){
+
+void intLenToChar(Message msg, char *len) {
     int i, j, length = 1;
-    for (i = 0; msg.ucData[i] != '\0'; i++){
+    for (i = 0; msg.ucData[i] != '\0'; i++) {
         length++;
     }
-    for (j = 0; j < 4; j++){
+    for (j = 0; j < 4; j++) {
         len[3 - j] = (length % 10) + '0';
-        
-        length = (length - (length % 10))/10;
+
+        length = (length - (length % 10)) / 10;
     }
 }
 // Takes in a message, computes the sum of the bits to make sure that the 
 // Data was transmitted properly
-void checksum(Message msg, char *len){
+
+void checksum(Message msg, char *len) {
     int i, j, sum = msg.ucMessageID;
     int hex;
-    for (i = 0; msg.ucData[i] != '\0'; i++){
+    for (i = 0; msg.ucData[i] != '\0'; i++) {
         sum = sum + msg.ucData[i];
     }
-    for (j = 0; j < 4; j++){
+    for (j = 0; j < 4; j++) {
         len[3 - j] = (sum % 10) + '0';
-        
-        sum = (sum - (sum % 10))/10;
+
+        sum = (sum - (sum % 10)) / 10;
     }
 }
+
 /******************************************************************************
  * Function:
  *      ReceiveCharFromWifly()
@@ -404,65 +431,86 @@ void checksum(Message msg, char *len){
  * Returns:
  *      The character received from the wifly
  */
-char ReceiveCharFromWifly()
-{    
+char ReceiveCharFromWifly() {
     dbgOutputLoc(66);
     return PLIB_USART_ReceiverByteReceive(USART_ID_1);
 }
-char ReceiveCharFromWiflyBlocking()
-{    
-    while(!PLIB_USART_ReceiverDataIsAvailable (USART_ID_1)) 
-    {
+
+char ReceiveCharFromWiflyBlocking() {
+    while (!PLIB_USART_ReceiverDataIsAvailable(USART_ID_1)) {
         dbgOutputLoc(8);
     }
     return PLIB_USART_ReceiverByteReceive(USART_ID_1);
 }
 
-char readCharFromQ(QueueHandle_t xQueue){
+int ReceiveMsgFromWifly(Message *msg) {
+    char mychar;
+    char len[4], chksum[4];
+    int i, length, checksum;
+    i = 0;
+    if (PLIB_USART_ReceiverDataIsAvailable(USART_ID_1)) {
+        while (i < 4) {
+            if (PLIB_USART_ReceiverDataIsAvailable(USART_ID_1)) {
+                len[3 - i] = ReceiveCharFromWifly();
+                i++;
+            }
+        }
+        i = 0;
+
+        length = charLenToInt(len);
+        while (i < length) {
+            if (PLIB_USART_ReceiverDataIsAvailable(USART_ID_1)) {
+                if (i == 0)
+                    msg->ucMessageID = ReceiveCharFromWifly();
+                else
+                    msg->ucData[i] = ReceiveCharFromWifly();
+                i++;
+            }
+
+        }
+        i = 0;
+        while (i < 4) {
+            if (PLIB_USART_ReceiverDataIsAvailable(USART_ID_1)) {
+                chksum[3 - i] = ReceiveCharFromWifly();
+                i++;
+            }
+
+        }
+        checksum = charLenToInt(chksum);
+
+        return 0;
+    }
+    return -1;
+}
+
+int charLenToInt(char *len) {
+    int i;
+    int powTen = 1;
+    int sum = 0;
+    for (i = 0; i < 4; i++) {
+        sum = sum + (len[i] - '0') * powTen;
+        powTen = powTen * 10;
+    }
+    return sum;
+}
+
+char readCharFromQ(QueueHandle_t xQueue) {
     dbgOutputLoc(77);
     Message mymessage;
-    xQueueReceive(  xQueue,
-                    (void *) &mymessage,
-                    portMAX_DELAY 
+    xQueueReceive(xQueue,
+            (void *) &mymessage,
+            portMAX_DELAY
             );
     return mymessage.ucMessageID;
 }
 
+int UARTInit(USART_MODULE_ID id, int baudrate) {
 
-int UARTInit(USART_MODULE_ID id, int baudrate){
-    
-    PLIB_USART_BaudSetAndEnable (id, SYS_CLK_PeripheralFrequencyGet(CLK_BUS_PERIPHERAL_2), baudrate);
-//    PLIB_USART_Enable (id);
-//    PLIB_USART_ReceiverEnable (id);
-//    PLIB_USART_TransmitterEnable (id);
+    PLIB_USART_BaudSetAndEnable(id, SYS_CLK_PeripheralFrequencyGet(CLK_BUS_PERIPHERAL_2), baudrate);
+    //    PLIB_USART_Enable (id);
+    //    PLIB_USART_ReceiverEnable (id);
+    //    PLIB_USART_TransmitterEnable (id);
     return 1;
-
-        
-        
-        
-        
-        
-//    DRV_USART_INIT              usartInit;
-//    SYS_MODULE_OBJ              objectHandle;
-//    usartInit.baud  = 57600;
-//    usartInit.mode  = DRV_USART_OPERATION_MODE_NORMAL;
-//    usartInit.flags = DRV_USART_INIT_FLAG_NONE;
-//    usartInit.usartID   = USART_ID_1;
-//    usartInit.brgClock  = 80000000;
-//    usartInit.handshake = DRV_USART_HANDSHAKE_NONE;
-//    usartInit.lineControl       = DRV_USART_LINE_CONTROL_8NONE1;
-//    usartInit.interruptError    = INT_SOURCE_USART_1_ERROR;
-//    usartInit.interruptReceive  = INT_SOURCE_USART_1_RECEIVE;
-//    usartInit.queueSizeReceive  = 10;
-//    usartInit.queueSizeTransmit = 10;
-//    usartInit.interruptTransmit = INT_SOURCE_USART_1_TRANSMIT;
-//    usartInit.moduleInit.value  = SYS_MODULE_POWER_RUN_FULL;
-//        
-//    
-//    //define usb handle to handle the uart to read and write at the same time
-//    //DRV_USART_Initialize(const SYS_MODULE_INDEX drvIndex, const SYS_MODULE_INIT * const init);
-//    objectHandle = DRV_USART_Initialize(DRV_USART_INDEX_1, (SYS_MODULE_INIT*)&usartInit);
-//    usbHandle = DRV_USART_Open(DRV_USART_INDEX_0, (DRV_IO_INTENT_READWRITE | DRV_IO_INTENT_BLOCKING));
 }
 
 // *****************************************************************************
@@ -499,13 +547,28 @@ void APP_Initialize(void) {
     if(encoderQueue == NULL) {
         /* Wait indefinitely until the queue is successfully created */
     }
-        
+
+
+
+
+    //SYS_PORTS_Clear ( PORTS_BIT_POS_0, PORT_CHANNEL_G, 0xFF );
+    //SYS_PORTS_Set( PORTS_BIT_POS_0, PORT_CHANNEL_G, 1, 0x0F0 );
+    //TRISGCLR = 0x0F0;
+    //ODCGCLR = 0x0F0;
+
+    // TRISECLR = 0xFF;
+    //ODCECLR = 0xFF;
+
+    /* Set Port A bit 0x08 as output pins */
+    TRISACLR = 0x8;
+    ODCACLR = 0x8;
+
     msgQueue = createQueue();
     recvMsgQueue = createQueue();
-    if(msgQueue == NULL){
+    if (msgQueue == NULL) {
         /* Wait indefinitely until the queue is successfully created */
     }
-    if(recvMsgQueue == NULL){
+    if (recvMsgQueue == NULL) {
         /* Wait indefinitely until the queue is successfully created */
     }
 }
@@ -551,10 +614,51 @@ void APP_Tasks(void) {
         myChar = readCharFromQ(recvMsgQueue);
         dbgOutputVal(myChar);
         dbgOutputLoc(APPTASKS + 1);
+    bool sentOnce = false;
+
+    //get into command mode
+    //    dbgUARTVal('$');
+    //    dbgUARTVal('$');
+    //    dbgUARTVal('$');
+
+    //reboot every time the code starts
+    //    dbgUARTVal('r');
+    //    dbgUARTVal('e');
+    //    dbgUARTVal('b');
+    //    dbgUARTVal('o');
+    //    dbgUARTVal('o');
+    //    dbgUARTVal('t');
+
+    //new line character
+    //    dbgUARTVal(13);
+    myMsg.ucMessageID = 'M';
+    char string[100] = "{\"test data\":\"1000\"}";
+    int i;
+    for (i = 0; string[i] != '\0'; i++)
+        myMsg.ucData[i] = string[i];
+    myMsg.ucData[i] = '\0';
+    //msgToMsgQ(myMsg);
+
+
+    while (1) {
+//        if (!sentOnce){
+//            //msgToMsgQ(myMsg);
+//        }
+//        if (ReceiveMsgFromWifly(&myMsg) == 0) {
+//            if (!sentOnce) {
+//                dbgOutputVal(myMsg.ucMessageID);
+//                myMsg.ucMessageID = 'D';
+//                msgToMsgQ(myMsg);
+//                sentOnce = true;
+//            }
+//            else{
+//                msgToMsgQ(myMsg);
+//            }
+//        }
         //if(DRV_USART_ReceiverBufferIsEmpty(usbHandle)) {
-            /* UART ready to receive */
+        /* UART ready to receive */
         //}
-        
+
     }
 }
 

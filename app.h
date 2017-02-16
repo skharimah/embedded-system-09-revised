@@ -177,7 +177,7 @@ typedef struct
 
 QueueHandle_t createQueue(void);
 int messageToQISR(QueueHandle_t queue, Message msg);
-void msglen(Message msg, char *len);
+void intLenToChar(Message msg, char *len);
 void checksum(Message msg, char *len);
 QueueHandle_t createEncoderQueue(void);
 
