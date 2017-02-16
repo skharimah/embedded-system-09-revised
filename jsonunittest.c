@@ -33,7 +33,7 @@ void returnTheCorrectKeyValuePairInJsonString(void) {
     char *key_bool = "admin";
     char *key_int = "age";
     
-    const char *jsstringCorrectValue1 = "Jane Doe";
+    const char *jsstringCorrectValue1 = "Smith";
     const char *jsstringCorrectValue2 = "true";
     const char *jsstringCorrectValue3 = "15";
     
@@ -42,7 +42,7 @@ void returnTheCorrectKeyValuePairInJsonString(void) {
     char *intPass = "INT PASS";
     
     static const char *jsstring1 = 
-        "{\"name\": \"Jane Doe\", \"admin\": true, \"age\": 15}";
+        "{\"name\": \"Smith\", \"admin\": true, \"age\": 15}";
     
     struct Tuple nameTupleValue = getValueFromJsonString(key_name, jsstring1);
     struct Tuple boolTupleValue = getValueFromJsonString(key_bool, jsstring1);
@@ -67,31 +67,11 @@ void returnTheCorrectKeyValuePairInJsonString(void) {
             intValue[i] = intTupleValue.resultString[i];
         }
     }
+    
+    assert(strcmp(nameValue, "Smith") == 0);
+    
+    dbgUARTVal('$');
 
-    assert(nameValue == jsstringCorrectValue1);
-    
-    dbgUARTVal('n');
-    
-//    for(i=0; i<strlen(namePass); i++) {
-//        dbgUARTVal(namePass[i]);
-//    }
-    
-    assert(boolValue == jsstringCorrectValue2);
-    
-    dbgUARTVal('b');
-    
-//    for(i=0; i<strlen(boolPass); i++) {
-//        dbgUARTVal(boolPass[i]);
-//    }
-    
-    assert(intValue == jsstringCorrectValue3);
-    
-    dbgUARTVal('i');
-    
-//    for(i=0; i<strlen(intPass); i++) {
-//        dbgUARTVal(intPass[i]);
-//    }
-    
 }    
 
 
