@@ -64,7 +64,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 // Section: Global Data Definitions
 // *****************************************************************************
 // *****************************************************************************
-
+QueueHandle_t encoderQueue;
 
 
 
@@ -129,6 +129,25 @@ QueueHandle_t createQueue(void) {
 
 /*******************************************************************************
   Function:
+    void createEncoderQueue (void)
+
+  Remarks:
+    See prototype in app.h.
+ */
+
+QueueHandle_t createEncoderQueue(void) {
+    QueueHandle_t queue;
+    queue = xQueueCreate(10, sizeof (ENCODER_DATA));
+    if (queue == NULL) {
+        /* Queue is not created and should not be used
+         * The return value will be NULL if queue is not created
+         */
+    }
+    return queue;
+}
+
+/*******************************************************************************
+  Function:
     unsigned char receiveFromQueue (QueueHandle_t queue)
 
   Remarks:
@@ -145,6 +164,25 @@ unsigned char receiveFromQueue(QueueHandle_t queue) {
     }
     return buffer;
 }
+
+/*******************************************************************************
+  Function:
+    bool receiveFromQueue (QueueHandle_t queue)
+
+  Remarks:
+    See prototype in app.h.
+ */
+
+ENCODER_DATA receiveFromEncoderQueue(QueueHandle_t queue) {
+    ENCODER_DATA buffer;
+    if (queue != NULL) {
+        if (xQueueReceive(queue, &buffer, portMAX_DELAY) == pdTRUE) {
+            /*Unsigned char value from the queue is successfully stored in buffer*/
+        }
+    }
+    return buffer;
+}
+
 int charToMsgQ(char val){
     if (app1SendCharToMsgQ(val) != MSG_QUEUE_IS_FULL) {
                 //LATASET = 0x08;
@@ -236,6 +274,19 @@ int messageToQISR(QueueHandle_t queue, Message msg){
         return MSG_QUEUE_DOES_NOT_EXIST;
 }
 
+int app1SendEncoderValToMsgQ(ENCODER_DATA encoderTicks) {
+    if (encoderQueue != NULL) {
+        if (xQueueSendFromISR(encoderQueue,
+                (void *) &encoderTicks,
+                NULL) != pdTRUE) {
+            return MSG_QUEUE_IS_FULL;
+        } else
+            return 0;
+    }
+    else
+        return MSG_QUEUE_DOES_NOT_EXIST;
+
+}
 /*******************************************************************************
   Function:
     int appSendMotorEncoderOutputValueToMsgQ(unsigned int motorEncoderOutputVal)
@@ -430,21 +481,25 @@ int UARTInit(USART_MODULE_ID id, int baudrate){
 
 void APP_Initialize(void) {
    
+    DRV_TMR0_Initialize();
+    DRV_TMR0_Start();
     
-
-    //SYS_PORTS_Clear ( PORTS_BIT_POS_0, PORT_CHANNEL_G, 0xFF );
-    //SYS_PORTS_Set( PORTS_BIT_POS_0, PORT_CHANNEL_G, 1, 0x0F0 );
-    //TRISGCLR = 0x0F0;
-    //ODCGCLR = 0x0F0;
-
-   // TRISECLR = 0xFF;
-    //ODCECLR = 0xFF;
-
-    /* Set Port A bit 0x08 as output pins */
-    TRISACLR = 0x8;
-    ODCACLR = 0x8;
-
+    DRV_TMR1_Initialize();
+    DRV_TMR1_Start();
     
+    DRV_TMR2_Initialize();
+    DRV_TMR2_Start();
+    
+    motorsInitialize();
+    
+    motorsBackward();
+   
+    encoderQueue = createEncoderQueue();
+    //msgQueue = createQueue();
+    if(encoderQueue == NULL) {
+        /* Wait indefinitely until the queue is successfully created */
+    }
+        
     msgQueue = createQueue();
     recvMsgQueue = createQueue();
     if(msgQueue == NULL){
@@ -470,24 +525,28 @@ void APP_Tasks(void) {
     Message myMsg;
     char myChar;
     
-    //get into command mode
-//    dbgUARTVal('$');
-//    dbgUARTVal('$');
-//    dbgUARTVal('$');
+    //Initialize encoder receive message
+    ENCODER_DATA encoderReceived;
+    encoderReceived.leftTicks = 0;
+    encoderReceived.rightTicks = 0;
     
-    //reboot every time the code starts
-//    dbgUARTVal('r');
-//    dbgUARTVal('e');
-//    dbgUARTVal('b');
-//    dbgUARTVal('o');
-//    dbgUARTVal('o');
-//    dbgUARTVal('t');
-    
-    //new line character
-//    dbgUARTVal(13);
-    
-    
+    int leftTicks = 0;
+    int rightTicks = 0;
+    int leftTicksPrev = 0;
+    int rightTicksPrev = 0;
+
     while (1) {
+        leftTicksPrev = leftTicks;
+        rightTicksPrev = rightTicks;
+        //motorsForwardDistance(27);
+    
+        //Receive encoder data
+        encoderReceived = receiveFromEncoderQueue(encoderQueue);
+        leftTicks = encoderReceived.leftTicks;
+        rightTicks = encoderReceived.rightTicks;
+        dbgOutputVal(rightTicks - rightTicksPrev);
+        
+        
         dbgOutputLoc(APPTASKS);
         myChar = readCharFromQ(recvMsgQueue);
         dbgOutputVal(myChar);

@@ -60,6 +60,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include "system_definitions.h"
 #include "queue.h"
 #include "app_public.h"
+#include "motor.h"
 
 #include "peripheral/usart/plib_usart.h"
 #include "peripheral/devcon/plib_devcon.h"
@@ -119,6 +120,16 @@ typedef struct
 
 } APP_DATA;
 
+//Encoder Message Struct
+typedef struct
+{
+    //Ticks of the right motor encoder
+    int rightTicks;
+    
+    //Ticks of the left motor encoder
+    int leftTicks;
+} ENCODER_DATA;
+
 /* Driver objects.
 
   Summary:
@@ -168,6 +179,8 @@ QueueHandle_t createQueue(void);
 int messageToQISR(QueueHandle_t queue, Message msg);
 void msglen(Message msg, char *len);
 void checksum(Message msg, char *len);
+QueueHandle_t createEncoderQueue(void);
+
 /*******************************************************************************
   Function:
     unsigned char receiveFromQueue(QueueHandle_t queue);

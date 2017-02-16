@@ -90,78 +90,57 @@ int counter = 0;
 DBG_POS namepos = T;
 unsigned char out;
 unsigned int ch = 1;
+
 unsigned int millisec = 0;
+int itterate = 0;
+int leftTicks = 0;
+int rightTicks;
 
 void IntHandlerDrvTmrInstance0(void) {
-    dbgOutputLoc(TMR_START);
     millisec++;
-    unsigned char val;
-    //dbgOutputLoc(millisec);
-    if (millisec % 500 == 0) {
-        //dbgOutputVal('.');
-        LATAINV = 0x8;
-        //Inverts ChipKit LD4 to display functioning timer
-        //LATAINV = 0x8;
-
-        //assign next letter of string to unsigned character
-        //out = name[namepos];
-
-        //output to I/O pins through dbgOutputVal functions
-        //dbgOutputVal(out);
-        //dbgUARTVal(out);
-
-        //Reset the string iterator
-        //if(namepos == SECONDSPACE) {
-        //    namepos = T;
-        //}
-        //else {
-        //    namepos++;
-        //}
-
-
-
-
-
-
-        //Clear Interrupt Flag 
-        switch (DRV_USART_ClientStatus(usbHandle)) {
-            case DRV_USART_CLIENT_STATUS_ERROR:
-                SYS_DEBUG(0, "UART ERROR");
-                val = 'E';
-                break;
-            case DRV_USART_CLIENT_STATUS_BUSY:
-                SYS_DEBUG(0, "UART BUSY");
-                val = 'B';
-                break;
-            case DRV_USART_CLIENT_STATUS_CLOSED:
-                SYS_DEBUG(0, "UART CLOSED");
-                val = 'C';
-                break;
-            case DRV_USART_CLIENT_STATUS_READY:
-                SYS_DEBUG(0, "UART READY");
-                //writeStringUART(mystring);
-                val = 'D';
-
-                break;
-            default:
-                val = 'U';
-        }
-        //dbgUARTVal(val);
-        //if (received) {
-            //charToMsgQ(val);
-        Message mymsg;
-        int i;
-        for (i = 0; mystring[i] != '\0'; i++)
-            mymsg.ucData[i] = mystring[i];
-        mymsg.ucData[i] = '\0';
-        mymsg.ucMessageID = val;
-        msgToMsgQ(mymsg);
-        //}
-
+    if(millisec % 100 == 0) {
+        
+        //Get timer values
+        leftTicks = PLIB_TMR_Counter16BitGet(TMR_ID_3);
+        rightTicks = PLIB_TMR_Counter16BitGet(TMR_ID_4);
+        
+        //Send encoder data to queue
+        ENCODER_DATA ticksMessage;
+        ticksMessage.leftTicks = leftTicks;
+        ticksMessage.rightTicks = rightTicks;
+        app1SendEncoderValToMsgQ(ticksMessage);
     }
-    PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_TIMER_2);
-    dbgOutputLoc(TMR_STOP);
+    if(millisec % 1000 == 0) {
+        //motorsTurnDemo(itterate);
+        //motorsSpeedDemo(itterate);
+        if(itterate == 5)
+            itterate = 0;
+        else
+            itterate++;
+        
+        
+    }
+    PLIB_INT_SourceFlagClear(INT_ID_0,INT_SOURCE_TIMER_2);
 }
+
+//Left Encoder Interrupt
+void IntHandlerDrvTmrInstance1(void)
+{
+    //dbgOutputVal(leftMotorTicks);
+    
+    PLIB_INT_SourceFlagClear(INT_ID_0,INT_SOURCE_TIMER_3);
+    DRV_TMR1_Tasks();
+}
+    
+//Right Encoder Interrupt 
+void IntHandlerDrvTmrInstance2(void)
+{
+    //dbgOutputVal(rightMotorTicks);
+
+    PLIB_INT_SourceFlagClear(INT_ID_0,INT_SOURCE_TIMER_4);
+    DRV_TMR2_Tasks();
+}
+
 
 void IntHandlerDrvUsartInstance0(void) {
     Message mymsg;
@@ -216,29 +195,7 @@ void IntHandlerDrvUsartInstance0(void) {
 
     //dbgOutputLoc(UART_STOP);
 }
-//    dbgOutputLoc(134);
 
-
-//     char recvChar;
-/*DRV_USART_TasksTransmit(sysObj.drvUsart0);
-DRV_USART_TasksReceive(sysObj.drvUsart0);
-DRV_USART_TasksError(sysObj.drvUsart0);*/
-
-
-/*if (!DRV_USART_ReceiverBufferIsEmpty(usbHandle)){
-    //dbgOutputLoc(135);
-     
-   recvChar = DRV_USART_ReadByte (usbHandle);
-   //dbgOutputLoc(136);
-    
-   dbgOutputVal(recvChar);
-}*/
-
-//DRV_USART_TasksTransmit(sysObj.drvUsart0);
-//dbgOutputLoc(137);
-//DRV_USART_TasksReceive(sysObj.drvUsart0);
-// DRV_USART_TasksError(sysObj.drvUsart0);
-
-
-
-//}
+/*******************************************************************************
+ End of File
+*/

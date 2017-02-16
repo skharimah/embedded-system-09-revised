@@ -82,41 +82,73 @@ _IntHandlerDrvTmrInstance0:
     .end	_IntHandlerDrvTmrInstance0
 
 
+/* TMR Instance 1 Interrupt */
+   .extern  IntHandlerDrvTmrInstance1
 
-
-/* USART Instance 0 Interrupt */
-
-   .extern  IntHandlerDrvUsartInstance0
-
-   .section	.vector_24,code, keep
-   .equ     __vector_dispatch_24, IntVectorDrvUsartInstance0
-   .global  __vector_dispatch_24
+   .section	.vector_12,code, keep
+   .equ     __vector_dispatch_12, IntVectorDrvTmrInstance1
+   .global  __vector_dispatch_12
    .set     nomicromips
    .set     noreorder
    .set     nomips16
    .set     noat
-   .ent  IntVectorDrvUsartInstance0
+   .ent  IntVectorDrvTmrInstance1
 
-IntVectorDrvUsartInstance0:
-    la    $26,  _IntHandlerDrvUsartInstance0         
+IntVectorDrvTmrInstance1:
+    la    $26,  _IntHandlerDrvTmrInstance1         
     jr    $26
     nop
-	.end	IntVectorDrvUsartInstance0
+	.end	IntVectorDrvTmrInstance1
 
-   .section	.DrvUsartInstance0_vector_text, code, keep
+   .section	.DrvTmrInstance1_vector_text, code, keep
    .set     nomicromips
    .set     noreorder
    .set     nomips16
    .set     noat
-   .ent  _IntHandlerDrvUsartInstance0
+   .ent  _IntHandlerDrvTmrInstance1
 
-_IntHandlerDrvUsartInstance0:
+_IntHandlerDrvTmrInstance1:
     portSAVE_CONTEXT
-    la    s6,  IntHandlerDrvUsartInstance0
+    la    s6,  IntHandlerDrvTmrInstance1
     jalr  s6
     nop
     portRESTORE_CONTEXT
-    .end	_IntHandlerDrvUsartInstance0
+    .end	_IntHandlerDrvTmrInstance1
+
+
+/* TMR Instance 2 Interrupt */
+   .extern  IntHandlerDrvTmrInstance2
+
+   .section	.vector_16,code, keep
+   .equ     __vector_dispatch_16, IntVectorDrvTmrInstance2
+   .global  __vector_dispatch_16
+   .set     nomicromips
+   .set     noreorder
+   .set     nomips16
+   .set     noat
+   .ent  IntVectorDrvTmrInstance2
+
+IntVectorDrvTmrInstance2:
+    la    $26,  _IntHandlerDrvTmrInstance2         
+    jr    $26
+    nop
+	.end	IntVectorDrvTmrInstance2
+
+   .section	.DrvTmrInstance2_vector_text, code, keep
+   .set     nomicromips
+   .set     noreorder
+   .set     nomips16
+   .set     noat
+   .ent  _IntHandlerDrvTmrInstance2
+
+_IntHandlerDrvTmrInstance2:
+    portSAVE_CONTEXT
+    la    s6,  IntHandlerDrvTmrInstance2
+    jalr  s6
+    nop
+    portRESTORE_CONTEXT
+    .end	_IntHandlerDrvTmrInstance2
+
 
 
 /*******************************************************************************
