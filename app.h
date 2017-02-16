@@ -165,7 +165,9 @@ typedef struct
 */
 
 QueueHandle_t createQueue(void);
-
+int messageToQISR(QueueHandle_t queue, Message msg);
+void msglen(Message msg, char *len);
+void checksum(Message msg, char *len);
 /*******************************************************************************
   Function:
     unsigned char receiveFromQueue(QueueHandle_t queue);

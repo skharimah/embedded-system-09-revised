@@ -27,6 +27,10 @@
 extern "C" {
 #endif
     
+    
+    
+#define MSG_BUF_SIZE 100
+    
 DRV_HANDLE usbHandle;// = DRV_USART_Open(DRV_USART_INDEX_0, DRV_IO_INTENT_READWRITE);
 QueueHandle_t motorMsgQueue;
 QueueHandle_t msgQueue;
@@ -35,7 +39,7 @@ QueueHandle_t recvMsgQueue;
 typedef struct AMessage
  {
     char ucMessageID;
-    char ucData[ 20 ];
+    char ucData[ MSG_BUF_SIZE ];
  } Message;
 
 /*******************************************************************************
@@ -61,9 +65,13 @@ int app1SendTimerValToMsgQ(unsigned int millisecondsElapsed);
 int charToMsgQFromISR(QueueHandle_t queue, unsigned char value);
 int app1SendCharToMsgQ(unsigned char value);
 int charToMsgQ(char val);
+
+int msgToMsgQ(Message msg);
 int writeStringUART(char* string);
 
 void TransmitCharToWifly(unsigned char value);
+
+void TransmitMsgToWifly(Message msg);
 
 char ReceiveCharFromWifly();
 

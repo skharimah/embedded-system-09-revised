@@ -157,6 +157,18 @@ int charToMsgQ(char val){
     
     return -1;
 }
+int msgToMsgQ(Message msg){
+    if (messageToQISR(msgQueue, msg) != MSG_QUEUE_IS_FULL) {
+                //LATASET = 0x08;
+                PLIB_INT_SourceEnable(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT);
+                PLIB_INT_SourceFlagSet(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT);
+
+                dbgOutputLoc(77);
+                return 0;
+            }
+    
+    return -1;
+}
 
 /*******************************************************************************
   Function:
@@ -209,6 +221,20 @@ int charToMsgQFromISR(QueueHandle_t queue, unsigned char value) {
         return MSG_QUEUE_DOES_NOT_EXIST;
 
 }
+int messageToQISR(QueueHandle_t queue, Message msg){
+
+    dbgOutputLoc(88);
+    if (queue != NULL) {
+        if (xQueueSendFromISR(queue,
+                (void *) &msg,
+                NULL) != pdTRUE) {
+            return MSG_QUEUE_IS_FULL;
+        } else
+            return 0;
+    }
+    else
+        return MSG_QUEUE_DOES_NOT_EXIST;
+}
 
 /*******************************************************************************
   Function:
@@ -257,7 +283,66 @@ void TransmitCharToWifly(unsigned char value)
     PLIB_USART_TransmitterByteSend(USART_ID_1, value);
     dbgOutputLoc(41);
 }
-
+void TransmitCharToWiflyNonblocking(unsigned char value)
+{
+    dbgOutputLoc(40);
+    PLIB_USART_TransmitterByteSend(USART_ID_1, value);
+    dbgOutputLoc(41);
+}/*
+  * Function: TransmitMsgToWifly(Message msg)
+  * 
+  * Remarks: Sends the message to the server via wifly according to specs:
+  * LLLLMMMMMMMMM...MCCCC
+  * where L are the base 10 digits of the length of the following message
+  * and C is the checksum of the message
+  */
+void TransmitMsgToWifly(Message msg){
+    char len[4], chksum[4];
+    int i;
+    msglen(msg, len);
+    checksum(msg, chksum);
+    for (i = 0; i < 4; i++){
+        while(PLIB_USART_TransmitterBufferIsFull(USART_ID_1));
+        TransmitCharToWiflyNonblocking(len[i]);
+    }
+        
+    TransmitCharToWifly(msg.ucMessageID);
+    
+    for (i = 0; msg.ucData[i] != '\0' && msg.ucData[i] != '}' && i < MSG_BUF_SIZE; i++){
+        while(PLIB_USART_TransmitterBufferIsFull(USART_ID_1));
+        TransmitCharToWiflyNonblocking(msg.ucData[i]);
+    }
+    for (i = 0; i < 4; i++){
+        while(PLIB_USART_TransmitterBufferIsFull(USART_ID_1));
+        TransmitCharToWiflyNonblocking(chksum[i]);
+    }
+}
+// takes in a Messaqe, calculates the length (characters) of the message
+void msglen(Message msg, char *len){
+    int i, j, length = 1;
+    for (i = 0; msg.ucData[i] != '\0'; i++){
+        length++;
+    }
+    for (j = 0; j < 4; j++){
+        len[3 - j] = (length % 10) + '0';
+        
+        length = (length - (length % 10))/10;
+    }
+}
+// Takes in a message, computes the sum of the bits to make sure that the 
+// Data was transmitted properly
+void checksum(Message msg, char *len){
+    int i, j, sum = msg.ucMessageID;
+    int hex;
+    for (i = 0; msg.ucData[i] != '\0'; i++){
+        sum = sum + msg.ucData[i];
+    }
+    for (j = 0; j < 4; j++){
+        len[3 - j] = (sum % 10) + '0';
+        
+        sum = (sum - (sum % 10))/10;
+    }
+}
 /******************************************************************************
  * Function:
  *      ReceiveCharFromWifly()
@@ -381,7 +466,7 @@ void APP_Initialize(void) {
 void APP_Tasks(void) {
     DRV_TMR0_Initialize();
     DRV_TMR0_Start();
-    UARTInit(USART_ID_1, 57600);
+    UARTInit(USART_ID_1, 230400);
     Message myMsg;
     char myChar;
     

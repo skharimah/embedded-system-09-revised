@@ -83,7 +83,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
  * Returns: none
  */
 char name[7] = {'T', 'E', 'A', 'M', ' ', '9', ' '};
-char mystring[15] = {'R', 'E', 'A', 'D', 'Y', '.', ' ', '\0'};
+char mystring[100] = "My message is the coolest damn thing I have ever sent via wifi ever!?\0";//{'R', 'E', 'A', 'D', 'Y', '.', ' ', '\0'};
 bool received = true;
 int counter = 0;
 
@@ -140,7 +140,7 @@ void IntHandlerDrvTmrInstance0(void) {
             case DRV_USART_CLIENT_STATUS_READY:
                 SYS_DEBUG(0, "UART READY");
                 //writeStringUART(mystring);
-                val = 'R';
+                val = 'D';
 
                 break;
             default:
@@ -148,7 +148,14 @@ void IntHandlerDrvTmrInstance0(void) {
         }
         //dbgUARTVal(val);
         //if (received) {
-            charToMsgQ(val);
+            //charToMsgQ(val);
+        Message mymsg;
+        int i;
+        for (i = 0; mystring[i] != '\0'; i++)
+            mymsg.ucData[i] = mystring[i];
+        mymsg.ucData[i] = '\0';
+        mymsg.ucMessageID = val;
+        msgToMsgQ(mymsg);
         //}
 
     }
@@ -185,7 +192,7 @@ void IntHandlerDrvUsartInstance0(void) {
                 mychar = mymsg.ucMessageID;
                 dbgOutputVal(mychar);
                 //TransmitMessageToWifly(qMsg.message, qMsg.message_size);
-                TransmitCharToWifly(mychar);
+                TransmitMsgToWifly(mymsg);
                 if (counter <= 10) {
                     counter++;
                 } else if (counter <= 25) {
