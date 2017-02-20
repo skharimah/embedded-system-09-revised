@@ -29,46 +29,10 @@
   Remarks:
     See prototype in debug.h.
  */
-int dbgOutputVal(unsigned char val){
+int dbgOutputVal(unsigned char outputVal){
     
     //Set I/O pins 30-37
-    PLIB_PORTS_Write( PORTS_ID_0, PORT_CHANNEL_E,  0);
-    PLIB_PORTS_Write( PORTS_ID_0, PORT_CHANNEL_E,  1);
-    PLIB_PORTS_Write( PORTS_ID_0, PORT_CHANNEL_E,  val);
-    
-    
-    
-    return 0;
-}
-/*******************************************************************************
-  Function:
-    int dbgUARTVal(unsigned char)
- 
-  Remarks:
-    See prototype in debug.h.
- */
-int dbgUARTVal(unsigned char val){
-    
-    if (!(DRV_USART_TRANSFER_STATUS_TRANSMIT_FULL & DRV_USART_TransferStatus(usbHandle)) ){
-        
-        DRV_USART_WriteByte(usbHandle, val);
-        return 0;
-    }
-    return 1;
-}
-
-
-
-/*******************************************************************************
-  Function:
-    int dbgOutputLoc(unsigned char)
-
-  Remarks:
-    See prototype in debug.h.
- */
-int dbgOutputLoc(unsigned char outputVal){
-
-        PLIB_PORTS_PinWrite ( PORTS_ID_0, PIN9_PORT, PIN9, 0);
+    PLIB_PORTS_PinWrite ( PORTS_ID_0, PIN9_PORT, PIN9, 0);
         PLIB_PORTS_PinWrite ( PORTS_ID_0, PIN10_PORT, PIN10, 0);
         PLIB_PORTS_PinWrite ( PORTS_ID_0, PIN11_PORT, PIN11, 0);
         PLIB_PORTS_PinWrite ( PORTS_ID_0, PIN12_PORT, PIN12, 0);
@@ -129,7 +93,45 @@ int dbgOutputLoc(unsigned char outputVal){
     if (outputVal & 1<<7)
         PLIB_PORTS_PinWrite ( PORTS_ID_0, PIN16_PORT, PIN16, 1);
     else
-        PLIB_PORTS_PinWrite ( PORTS_ID_0, PIN16_PORT, PIN16, 0);
+        PLIB_PORTS_PinWrite ( PORTS_ID_0, PIN16_PORT, PIN16, 0);  
+    return 0;
+}
+/*******************************************************************************
+  Function:
+    int dbgUARTVal(unsigned char)
+ 
+  Remarks:
+    See prototype in debug.h.
+ */
+int dbgUARTVal(unsigned char val){
+    
+    if (!(DRV_USART_TRANSFER_STATUS_TRANSMIT_FULL & DRV_USART_TransferStatus(usbHandle)) ){
+        
+        DRV_USART_WriteByte(usbHandle, val);
+        return 0;
+    }
+    return 1;
+}
+
+
+
+/*******************************************************************************
+  Function:
+    int dbgOutputLoc(unsigned char)
+
+  Remarks:
+    See prototype in debug.h.
+ */
+int dbgOutputLoc(unsigned char outputVal){
+    PLIB_PORTS_Write( PORTS_ID_0, PORT_CHANNEL_E,  0);
+    PLIB_PORTS_Write( PORTS_ID_0, PORT_CHANNEL_E,  1);
+    PLIB_PORTS_Write( PORTS_ID_0, PORT_CHANNEL_E,  outputVal);
+    
+    
+    
+        return 0;
+
+        
     
     
     

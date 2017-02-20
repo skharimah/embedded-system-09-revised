@@ -180,7 +180,7 @@ int messageToQISR(QueueHandle_t queue, Message msg);
 void intLenToChar(Message msg, char *len);
 void checksum(Message msg, char *len);
 QueueHandle_t createEncoderQueue(void);
-
+int getMsgFromRecvQ(Message *msg);
 /*******************************************************************************
   Function:
     unsigned char receiveFromQueue(QueueHandle_t queue);

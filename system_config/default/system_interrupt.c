@@ -83,7 +83,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
  * Returns: none
  */
 char name[7] = {'T', 'E', 'A', 'M', ' ', '9', ' '};
-char mystring[100] = "     Team 9: Hard at work!\0"; //{'R', 'E', 'A', 'D', 'Y', '.', ' ', '\0'};
+char mystring[100] = "Team 9: Hard at work!"; //{'R', 'E', 'A', 'D', 'Y', '.', ' ', '\0'};
 bool received = true;
 int counter = 0;
 
@@ -92,32 +92,25 @@ unsigned char out;
 unsigned int ch = 1;
 
 unsigned int millisec = 0;
-<<<<<<< Updated upstream
 int itterate = 0;
 int leftTicks = 0;
 int rightTicks;
-=======
 unsigned int count = 0;
->>>>>>> Stashed changes
 
 void IntHandlerDrvTmrInstance0(void) {
     millisec++;
-<<<<<<< Updated upstream
-    if(millisec % 100 == 0) {
-        
-        //Get timer values
+
+
+    //dbgOutputLoc(millisec);
+    if (millisec % 500 == 0) {//Get timer values
         leftTicks = PLIB_TMR_Counter16BitGet(TMR_ID_3);
         rightTicks = PLIB_TMR_Counter16BitGet(TMR_ID_4);
-        
+
         //Send encoder data to queue
         ENCODER_DATA ticksMessage;
         ticksMessage.leftTicks = leftTicks;
         ticksMessage.rightTicks = rightTicks;
-        app1SendEncoderValToMsgQ(ticksMessage);
-=======
-    unsigned char val;
-    //dbgOutputLoc(millisec);
-    if (millisec % 500 == 0) {
+        unsigned char val;
         count++;
 
         //dbgOutputVal('.');
@@ -173,55 +166,53 @@ void IntHandlerDrvTmrInstance0(void) {
         //charToMsgQ(val);
         Message mymsg;
         int i, j, temp = 0;
-        for (i = 0; mystring[i] != '\0'; i++){
+        for (i = 0; mystring[i] != '\0'; i++) {
             mymsg.ucData[i] = mystring[i];
             temp++;
         }
         int length = count;
-        for (j = temp; j < temp+4; j++) {
-            mymsg.ucData[temp + 3 -j] = (length % 10) + '0';
+        /* for (j = temp; j < temp + 4; j++) {
+             mymsg.ucData[temp + 3 - j] = (length % 10) + '0';
 
-            length = (length - (length % 10)) / 10;
-        }
+             length = (length - (length % 10)) / 10;
+         }*/
 
-        mymsg.ucData[j] = '\0';
+        mymsg.ucData[i] = '\0';
         mymsg.ucMessageID = val;
-        msgToMsgQISR(mymsg);
+        msgToWiflyMsgQISR(mymsg);
         //}
 
->>>>>>> Stashed changes
     }
-    if(millisec % 1000 == 0) {
+    if (millisec % 1000 == 0) {
         //motorsTurnDemo(itterate);
         //motorsSpeedDemo(itterate);
-        if(itterate == 5)
+        if (itterate == 5)
             itterate = 0;
         else
             itterate++;
-        
-        
+
+
     }
-    PLIB_INT_SourceFlagClear(INT_ID_0,INT_SOURCE_TIMER_2);
+    PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_TIMER_2);
 }
 
 //Left Encoder Interrupt
-void IntHandlerDrvTmrInstance1(void)
-{
+
+void IntHandlerDrvTmrInstance1(void) {
     //dbgOutputVal(leftMotorTicks);
-    
-    PLIB_INT_SourceFlagClear(INT_ID_0,INT_SOURCE_TIMER_3);
+    dbgOutputLoc(212);
+    PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_TIMER_3);
     DRV_TMR1_Tasks();
 }
-    
-//Right Encoder Interrupt 
-void IntHandlerDrvTmrInstance2(void)
-{
-    //dbgOutputVal(rightMotorTicks);
 
-    PLIB_INT_SourceFlagClear(INT_ID_0,INT_SOURCE_TIMER_4);
+//Right Encoder Interrupt 
+
+void IntHandlerDrvTmrInstance2(void) {
+    //dbgOutputVal(rightMotorTicks);
+    dbgOutputLoc(221);
+    PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_TIMER_4);
     DRV_TMR2_Tasks();
 }
-
 
 void IntHandlerDrvUsartInstance0(void) {
     Message mymsg;
@@ -232,10 +223,20 @@ void IntHandlerDrvUsartInstance0(void) {
     //    DRV_USART_TasksError(sysObj.drvUsart0);
 
     if (PLIB_INT_SourceFlagGet(INT_ID_0, INT_SOURCE_USART_1_RECEIVE)) {
+        PLIB_INT_SourceDisable(INT_ID_0, INT_SOURCE_USART_1_RECEIVE);
+        PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_USART_1_RECEIVE);
         dbgOutputLoc(99);
+        mymsg = ReceiveMsgFromWifly();
+        mychar = mymsg.ucMessageID;
+        dbgOutputVal(mychar);
+        dbgOutputLoc(100);
+        wiflyToMsgQ(mymsg);
+
         received = true;
         counter = 0;
-        PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_USART_1_RECEIVE);
+        
+        PLIB_INT_SourceEnable(INT_ID_0, INT_SOURCE_USART_1_RECEIVE);
+        
     } else if (PLIB_INT_SourceFlagGet(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT)) {
         dbgOutputLoc(WIFLY_TRANS);
         while (!xQueueIsQueueEmptyFromISR(msgQueue)) {
@@ -243,8 +244,7 @@ void IntHandlerDrvUsartInstance0(void) {
             BaseType_t xTaskWokenByReceive = pdFALSE;
             if (xQueueReceiveFromISR(msgQueue, (void *) &mymsg, &xTaskWokenByReceive)
                     == pdTRUE) {
-                mychar = mymsg.ucMessageID;
-                dbgOutputVal(mychar);
+
                 //TransmitMessageToWifly(qMsg.message, qMsg.message_size);
                 TransmitMsgToWifly(mymsg);
                 if (counter <= 10) {
@@ -273,4 +273,4 @@ void IntHandlerDrvUsartInstance0(void) {
 
 /*******************************************************************************
  End of File
-*/
+ */

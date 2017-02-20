@@ -28,8 +28,8 @@ extern "C" {
 #define PIN5_PORT PORT_CHANNEL_E
 #define PIN6_PORT PORT_CHANNEL_E
 #define PIN7_PORT PORT_CHANNEL_E
-#define PIN9_PORT PORT_CHANNEL_C
-#define PIN10_PORT PORT_CHANNEL_C
+#define PIN9_PORT PORT_CHANNEL_A
+#define PIN10_PORT PORT_CHANNEL_F
 #define PIN11_PORT PORT_CHANNEL_D
 #define PIN12_PORT PORT_CHANNEL_F
 #define PIN13_PORT PORT_CHANNEL_D
@@ -45,8 +45,8 @@ extern "C" {
 #define PIN5 5
 #define PIN6 6
 #define PIN7 7
-#define PIN9 2
-#define PIN10 3
+#define PIN9 10
+#define PIN10 1
 #define PIN11 10
 #define PIN12 3
 #define PIN13 5
