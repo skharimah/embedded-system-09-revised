@@ -223,7 +223,7 @@ int msgToWiflyMsgQ(Message msg) {
 }
 
 int wiflyToMsgQ(Message msg) {
-    if (messageToQ(recvMsgQueue, msg) != MSG_QUEUE_IS_FULL) {
+    if (messageToQISR(recvMsgQueue, msg) != MSG_QUEUE_IS_FULL) {
         //LATASET = 0x08;
         dbgOutputLoc(78);
         return 0;
@@ -268,7 +268,7 @@ int app1SendCharToMsgQ(unsigned char value) {
 }
 
 int charToMsgQFromISR(QueueHandle_t queue, unsigned char value) {
-    dbgOutputLoc(88);
+    dbgOutputLoc(87);
     Message temp;
     temp.ucMessageID = value;
     if (queue != NULL) {
@@ -299,7 +299,7 @@ int messageToQISR(QueueHandle_t queue, Message msg) {
 
 int messageToQ(QueueHandle_t queue, Message msg) {
 
-    dbgOutputLoc(88);
+    dbgOutputLoc(89);
     if (queue != NULL) {
         if (xQueueSend(queue,
                 (void *) &msg,
@@ -470,7 +470,8 @@ int getMsgFromRecvQ(Message *msg) {
 
 Message ReceiveMsgFromWifly() {
     Message msg;
-    
+    //msg.ucData[0]=0;
+    //msg.ucMessageID=0;
     char mychar;
     char len[4], chksum[4];
     int i, length, checksum;

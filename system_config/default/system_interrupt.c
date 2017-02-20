@@ -228,7 +228,7 @@ void IntHandlerDrvUsartInstance0(void) {
         dbgOutputLoc(99);
         mymsg = ReceiveMsgFromWifly();
         mychar = mymsg.ucMessageID;
-        dbgOutputVal(mychar);
+        //dbgOutputVal(mychar);
         dbgOutputLoc(100);
         wiflyToMsgQ(mymsg);
 
