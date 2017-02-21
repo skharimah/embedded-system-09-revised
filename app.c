@@ -154,16 +154,16 @@ QueueHandle_t createEncoderQueue(void) {
     See prototype in app.h.
  */
 
-unsigned char receiveFromQueue(QueueHandle_t queue) {
+/*unsigned char receiveFromQueue(QueueHandle_t queue) {
     dbgOutputLoc(33);
     unsigned char buffer = '0';
     if (queue != NULL) {
         if (xQueueReceive(queue, &buffer, portMAX_DELAY) == pdTRUE) {
-            /*Unsigned char value from the queue is successfully stored in buffer*/
+            /*Unsigned char value from the queue is successfully stored in buffer
         }
     }
     return buffer;
-}
+}*/
 
 /*******************************************************************************
   Function:
@@ -183,7 +183,7 @@ ENCODER_DATA receiveFromEncoderQueue(QueueHandle_t queue) {
     return buffer;
 }
 
-int charToMsgQ(char val) {
+/*int charToMsgQ(char val) {
     if (app1SendCharToMsgQ(val) != MSG_QUEUE_IS_FULL) {
         //LATASET = 0x08;
         PLIB_INT_SourceEnable(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT);
@@ -194,7 +194,7 @@ int charToMsgQ(char val) {
     }
 
     return -1;
-}
+}*/
 
 int msgToWiflyMsgQISR(Message msg) {
     if (messageToQISR(msgQueue, msg) != MSG_QUEUE_IS_FULL) {
@@ -239,7 +239,7 @@ int wiflyToMsgQ(Message msg) {
   Remarks:
     See prototype in app_public.h.
  */
-int app1SendTimerValToMsgQ(unsigned int millisecondsElapsed) {
+/*int app1SendTimerValToMsgQ(unsigned int millisecondsElapsed) {
     dbgOutputLoc(22);
     if (msgQueue != NULL) {
         if (xQueueSendFromISR(msgQueue,
@@ -281,7 +281,7 @@ int charToMsgQFromISR(QueueHandle_t queue, unsigned char value) {
     } else
         return MSG_QUEUE_DOES_NOT_EXIST;
 
-}
+}*/
 
 int messageToQISR(QueueHandle_t queue, Message msg) {
 
@@ -601,7 +601,8 @@ void APP_Initialize(void) {
 
     motorsInitialize();
 
-    motorsBackward();
+    motorsForward();
+    
 
     encoderQueue = createEncoderQueue();
     //msgQueue = createQueue();
@@ -621,8 +622,8 @@ void APP_Initialize(void) {
     //ODCECLR = 0xFF;
 
     /* Set Port A bit 0x08 as output pins */
-    TRISACLR = 0x8;
-    ODCACLR = 0x8;
+    //TRISACLR = 0x8;
+    //ODCACLR = 0x8;
 
     msgQueue = createQueue();
     recvMsgQueue = createQueue();
@@ -643,8 +644,6 @@ void APP_Initialize(void) {
  */
 
 void APP_Tasks(void) {
-    DRV_TMR0_Initialize();
-    DRV_TMR0_Start();
     UARTInit(USART_ID_1, 230400);
     Message myMsg;
     myMsg.ucData[0] = 't';
@@ -667,6 +666,10 @@ void APP_Tasks(void) {
     bool connected = false;
 
     while (1) {
+        //motorsStop();
+        //motorsBackward();
+        //dbgOutputLoc(101);
+        //dbgOutputVal('t');
         leftTicksPrev = leftTicks;
         rightTicksPrev = rightTicks;
         //motorsForwardDistance(27);
@@ -675,7 +678,7 @@ void APP_Tasks(void) {
         encoderReceived = receiveFromEncoderQueue(encoderQueue);
         leftTicks = encoderReceived.leftTicks;
         rightTicks = encoderReceived.rightTicks;
-        dbgOutputVal(rightTicks - rightTicksPrev);
+        //dbgOutputVal(rightTicks - rightTicksPrev);
 
 
         dbgOutputLoc(APPTASKS);

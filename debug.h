@@ -37,22 +37,22 @@ extern "C" {
 #define PIN15_PORT PORT_CHANNEL_G
 #define PIN16_PORT PORT_CHANNEL_G
 
-#define PIN0 0
-#define PIN1 1
-#define PIN2 2
-#define PIN3 3
-#define PIN4 4
-#define PIN5 5
-#define PIN6 6
-#define PIN7 7
-#define PIN9 10
-#define PIN10 1
-#define PIN11 10
-#define PIN12 3
-#define PIN13 5
-#define PIN14 11
-#define PIN15 15
-#define PIN16 7
+#define PIN0 0      //RE0  ----  93
+#define PIN1 1      //RE1  ----  94
+#define PIN2 2      //RE2  ----  98
+#define PIN3 3      //RE3  ----  99
+#define PIN4 4      //RE4  ----  100
+#define PIN5 5      //RE5  ----  3
+#define PIN6 6      //RE6  ----  4
+#define PIN7 7      //RE7  ----  5
+#define PIN9 10     //RA10 ----  29
+#define PIN10 1     //RF1  ----  88
+#define PIN11 10    //RD10 ----  70
+#define PIN12 3     //RF3  ----  51
+#define PIN13 5     //RD5  ----  39
+#define PIN14 11    //RB11 ----  35
+#define PIN15 15    //RG15 ----  1
+#define PIN16 7     //RG7  ----  29
     
 //DEBUG LOCATIONS
 #define TMR_START 13

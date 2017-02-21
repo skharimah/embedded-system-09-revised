@@ -65,7 +65,7 @@ void motorsForwardDistance(int ticks) {
 void motorsForward() {
     SYS_PORTS_PinWrite(PORTS_ID_0, PORT_CHANNEL_G, PORTS_BIT_POS_8, 1); //51
     
-    SYS_PORTS_PinWrite(PORTS_ID_0, PORT_CHANNEL_D, PORTS_BIT_POS_11, 1);
+    SYS_PORTS_PinWrite(PORTS_ID_0, PORT_CHANNEL_D, PORTS_BIT_POS_11, 1); //49
     
     //Set Motors to speed
     PLIB_OC_PulseWidth16BitSet(0,500);
