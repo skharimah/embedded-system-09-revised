@@ -1,4 +1,4 @@
-#include "jsonaccess.h"
+#include "json_access/jsonaccess.h"
 #include "unity.h"
 
 void test_addStringKeyValuePairToJsonObject_should_correctJsonString() {
@@ -52,7 +52,7 @@ void test_addIntegerKeyValuePairToJsonObject_should_correctIntegerValue() {
 
     int i = 0;
     char buff[20] = {};
-    static const char *jsstring = "{\"name\":\"Indiana Jones\",\"awards\":93}";
+    static char *jsstring = "{\"name\":\"Indiana Jones\",\"awards\":93}";
 
     struct Tuple tuple = getValueFromJsonString("awards", jsstring);
 
@@ -65,7 +65,7 @@ void test_addIntegerKeyValuePairToJsonObject_should_correctIntegerValue() {
     TEST_ASSERT_EQUAL_STRING("93", buff);
 }
 
-int main(void)
+int main_unit_test(void)
 {
     UNITY_BEGIN();
     RUN_TEST(test_addStringKeyValuePairToJsonObject_should_correctJsonString);
