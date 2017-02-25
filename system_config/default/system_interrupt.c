@@ -103,7 +103,7 @@ void IntHandlerDrvTmrInstance0(void) {
 
 
     //dbgOutputLoc(millisec);
-    if (millisec % 100 == 0) {//Get timer values
+    if (millisec % 500 == 0) {//Get timer values
         leftTicksPrev = leftTicks;
         leftTicks = PLIB_TMR_Counter16BitGet(TMR_ID_3);
         rightTicks = PLIB_TMR_Counter16BitGet(TMR_ID_4);
@@ -117,7 +117,7 @@ void IntHandlerDrvTmrInstance0(void) {
         count++;
 
         //dbgOutputVal('.');
-        //LATAINV = 0x8;
+        LATAINV = 0x8;
         //Inverts ChipKit LD4 to display functioning timer
         //LATAINV = 0x8;
 
