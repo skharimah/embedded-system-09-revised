@@ -153,7 +153,7 @@ void IntHandlerDrvTmrInstance0(void) {
 
         /* Add key value pairs into the JSON object */
         addStringKeyValuePairToJsonObject(rootValue, "dest", "192.168.1.101");
-        addStringKeyValuePairToJsonObject(rootValue, "source", IPADDRESS);
+        addStringKeyValuePairToJsonObject(rootValue, "source", "192.168.1.102");
         addStringKeyValuePairToJsonObject(rootValue, "mystring", "Jones is Trump");
         char *value = serializeJsonStringFromJsonValue(rootValue);
         

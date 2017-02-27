@@ -444,12 +444,15 @@ int getMsgFromRecvQ(Message *msg) {
 }
 
 bool ReadJSONfromWifly(Message* msg, int* msglen) {
+    dbgOutputLoc(175);
     bool eom = false;
     int noDataCounter = 0;
     char mychar;
     while (!eom && noDataCounter < MSGFAILSIZE) {
         if (PLIB_USART_ReceiverDataIsAvailable(USART_ID_1)) {
+            dbgOutputLoc(176);
             mychar = ReceiveCharFromWifly();
+            dbgOutputVal(mychar);
             msg->ucData[(*msglen)] = mychar;
             (*msglen)++;
             //if (mychar == '{')
@@ -457,9 +460,11 @@ bool ReadJSONfromWifly(Message* msg, int* msglen) {
                 eom = true;
 
         } else {
+            dbgOutputLoc(177);
             noDataCounter++;
         }
     }
+    dbgOutputLoc(178);
     if (eom)
         return true;
     else
@@ -536,14 +541,15 @@ bool ReceiveMsgFromWifly(Message* msg) {
     //    }
     //    msg.ucMessageID = '\0';
     //    return msg;
+    dbgOutputLoc(170);
     int pos = 0;
     char chksum[4];
     int checksum1, checksum2;
     int i;
     (*msg).ucMessageID = ReceiveCharFromWifly();
-    
+    dbgOutputLoc(171);
     bool validJSONMessage = ReadJSONfromWifly(msg, &pos);
-
+    dbgOutputLoc(172);
     if (validJSONMessage) {
         while (i < 4) {
             if (PLIB_USART_ReceiverDataIsAvailable(USART_ID_1)) {
@@ -553,18 +559,24 @@ bool ReceiveMsgFromWifly(Message* msg) {
 
         }
     }
+    dbgOutputLoc(173);
     
     checksum2 = charLenToInt(chksum);
     checksum((*msg), chksum);
     checksum1 = charLenToInt(chksum);
+    dbgOutputLoc(174);
     
             // Parse message into JSON
             // check checksum, length
             // 
-    if (checksum1 == checksum2)
+    if (checksum1 == checksum2){
+        dbgOutputVal('T');
         return true;
-    else
+    }
+    else{
+        dbgOutputVal('F');
         return false;
+    }
 
 }
 
