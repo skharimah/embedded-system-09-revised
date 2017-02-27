@@ -20,9 +20,8 @@ int jsoneq(const char *json, jsmntok_t *tok, const char *s) {
   Summary:
     See jsonaccess.h
 */
-void addStringKeyValuePairToJsonObject(JSON_Value *root_value, char *key, char *value) {
-    JSON_Object *root_object = json_value_get_object(root_value);
-    json_object_set_string(root_object, key, value);
+void addStringKeyValuePairToJsonObject(char *key, char *value) {
+    jwObj_string(key, value);
 }
 
 /*******************************************************************************
@@ -31,21 +30,46 @@ void addStringKeyValuePairToJsonObject(JSON_Value *root_value, char *key, char *
   Summary:
     See jsonaccess.h
 */
-void addIntegerKeyValuePairToJsonObject(JSON_Value *root_value, char *key, int value) {
-    JSON_Object *root_object = json_value_get_object(root_value);
-    json_object_set_number(root_object, key, value);
+void addIntegerKeyValuePairToJsonObject(char *key, int value) {
+    jwObj_int(key, value);
 }
 
 /*******************************************************************************
   Function:
-    char *serializeJsonStringFromJsonValue(JSON_Value *root_value)
+    void addIntegerArrayToJsonObject(char *key, int value[])
   Summary:
     See jsonaccess.h
 */
-char *serializeJsonStringFromJsonValue(JSON_Value *root_value) {
-    char *serializedString = NULL;
-    serializedString = json_serialize_to_string(root_value);
-    return serializedString;
+void addIntegerArrayToJsonObject(char *key, int values[]) {
+    /* TODO: Needs to reimplement this function */
+    int i = 0;
+    jwObj_array(key);
+    while(values[i] != NULL) {
+        jwArr_int(values[i]);
+        i++;
+    }
+    jwEnd();
+}
+
+/*******************************************************************************
+  Function:
+    void startWritingToJsonObject()
+  Summary:
+    See jsonaccess.h
+*/
+void startWritingToJsonObject(char buffer[100], unsigned int buflen) {
+    jwOpen(buffer, buflen, JW_OBJECT, JW_COMPACT);
+}
+
+
+/*******************************************************************************
+  Function:
+    void endWritingToJsonObject()
+  Summary:
+    See jsonaccess.h
+*/
+void endWritingToJsonObject() {
+    jwClose();
 }
 
 /*******************************************************************************
