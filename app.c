@@ -69,6 +69,7 @@ QueueHandle_t encoderQueue;
 
 
 
+
 // *****************************************************************************
 /* Application Data
 
@@ -163,13 +164,14 @@ ENCODER_DATA receiveFromEncoderQueue(QueueHandle_t queue) {
     }
     return buffer;
 }
+
 /*******************************************************************************
   Function:
     int msgToWiflyMsgQ(Message msg)
 
   Remarks:
     Write to Wifly (transmit) Queue inside of ISR
-    See prototype in app.h.
+    See prototype in app_publich.h.
  */
 int msgToWiflyMsgQISR(Message msg) {
     if (messageToQISR(msgQueue, msg) != MSG_QUEUE_IS_FULL) {
@@ -183,13 +185,14 @@ int msgToWiflyMsgQISR(Message msg) {
 
     return -1;
 }
+
 /*******************************************************************************
   Function:
     int msgToWiflyMsgQ(Message msg)
 
   Remarks:
     Write to Wifly (transmit) Queue outside of ISR
-    See prototype in app.h.
+    See prototype in app_public.h.
  */
 int msgToWiflyMsgQ(Message msg) {
     if (messageToQ(msgQueue, msg) != MSG_QUEUE_IS_FULL) {
@@ -203,6 +206,7 @@ int msgToWiflyMsgQ(Message msg) {
 
     return -1;
 }
+
 /*******************************************************************************
   Function:
     int wiflyToMsgQ(Message msg) 
@@ -242,6 +246,7 @@ int messageToQISR(QueueHandle_t queue, Message msg) {
     } else
         return MSG_QUEUE_DOES_NOT_EXIST;
 }
+
 /*******************************************************************************
   Function:
     int messageToQ(QueueHandle_t queue, Message msg) 
@@ -322,6 +327,7 @@ void TransmitCharToWifly(unsigned char value) {
     PLIB_USART_TransmitterByteSend(USART_ID_1, value);
     dbgOutputLoc(41);
 }
+
 /******************************************************************************
  * Function:
  *      TransmitCharToWifly()
@@ -345,12 +351,12 @@ void TransmitCharToWiflyNonblocking(unsigned char value) {
 void TransmitMsgToWifly(Message msg) {
     char len[4], chksum[4];
     int i;
-    intLenToChar(msg, len);
+//    intLenToChar(msg, len);
     checksum(msg, chksum);
-    for (i = 0; i < 4; i++) {
-        while (PLIB_USART_TransmitterBufferIsFull(USART_ID_1));
-        TransmitCharToWiflyNonblocking(len[i]);
-    }
+//    for (i = 0; i < 4; i++) {
+//        while (PLIB_USART_TransmitterBufferIsFull(USART_ID_1));
+//        TransmitCharToWiflyNonblocking(len[i]);
+//    }
 
     TransmitCharToWifly(msg.ucMessageID);
 
@@ -408,6 +414,7 @@ char ReceiveCharFromWifly() {
     dbgOutputLoc(167);
     return retchar;
 }
+
 /******************************************************************************
  * Function:
  *      ReceiveCharFromWiflyBlocking()
@@ -436,62 +443,108 @@ int getMsgFromRecvQ(Message *msg) {
     return -1;
 }
 
-Message ReceiveMsgFromWifly() {
-    Message msg;
-    //msg.ucData[0]=0;
-    //msg.ucMessageID=0;
+bool ReadJSONfromWifly(Message* msg, int* msglen) {
+    bool eom = false;
+    int noDataCounter = 0;
     char mychar;
-    char len[4], chksum[4];
-    int i, length, checksum;
-    i = 0;
-    dbgOutputLoc(170);
+    while (!eom && noDataCounter < MSGFAILSIZE) {
+        if (PLIB_USART_ReceiverDataIsAvailable(USART_ID_1)) {
+            mychar = ReceiveCharFromWifly();
+            msg->ucData[(*msglen)] = mychar;
+            (*msglen)++;
+            //if (mychar == '{')
+            if (mychar == '}')
+                eom = true;
 
-    if (PLIB_USART_ReceiverDataIsAvailable(USART_ID_1)) {
-        mychar = ReceiveCharFromWifly();
-        if (mychar >= '0' && mychar <= '9') {
-            len[3 - i] = mychar;
-            dbgOutputVal(len[3 - i]);
-            i++;
+        } else {
+            noDataCounter++;
         }
-        while (i < 4) {
-            if (PLIB_USART_ReceiverDataIsAvailable(USART_ID_1)) {
-                mychar = ReceiveCharFromWifly();
-                if (mychar >= '0' && mychar <= '9') {
-                    len[3 - i] = mychar;
-                    dbgOutputVal(len[3 - i]);
-                    i++;
-                } else
-                    dbgOutputVal(mychar);
-            }
-        }
-        i = 0;
+    }
+    if (eom)
+        return true;
+    else
+        return false;
+}
 
-        length = charLenToInt(len);
-        dbgOutputLoc(171);
-        dbgOutputVal(length);
-        char temp[MSG_BUF_SIZE];
-        while (i < length) {
-            if (PLIB_USART_ReceiverDataIsAvailable(USART_ID_1)) {
-                dbgOutputLoc(68);
-                mychar = ReceiveCharFromWifly();
-                dbgOutputVal(mychar);
-                if (mychar != NULL) {
-                    if (i == 0) {
-                        dbgOutputLoc(65);
-                        msg.ucMessageID = mychar;
-                    } else {
-                        dbgOutputLoc(64);
-                        temp[i] = mychar;
-                    }
-                    i++;
-                }
-            }
-            dbgOutputLoc(67);
-        }
-        strcpy(msg.ucData, temp);
-        i = 0;
-        dbgOutputLoc(172);
-        //dbgOutputVal(length)
+bool ReceiveMsgFromWifly(Message* msg) {
+    //    //Message msg;
+    //    //msg.ucData[0]=0;
+    //    //msg.ucMessageID=0;
+    //    char mychar;
+    //    char len[4], chksum[4];
+    //    int i, length, checksum;
+    //    i = 0;
+    //    dbgOutputLoc(170);
+    //
+    //    if (PLIB_USART_ReceiverDataIsAvailable(USART_ID_1)) {
+    //        mychar = ReceiveCharFromWifly();
+    //        if (mychar >= '0' && mychar <= '9') {
+    //            len[3 - i] = mychar;
+    //            dbgOutputVal(len[3 - i]);
+    //            i++;
+    //        }
+    //        while (i < 4) {
+    //            if (PLIB_USART_ReceiverDataIsAvailable(USART_ID_1)) {
+    //                mychar = ReceiveCharFromWifly();
+    //                if (mychar >= '0' && mychar <= '9') {
+    //                    len[3 - i] = mychar;
+    //                    dbgOutputVal(len[3 - i]);
+    //                    i++;
+    //                } else
+    //                    dbgOutputVal(mychar);
+    //            }
+    //        }
+    //        i = 0;
+    //
+    //        length = charLenToInt(len);
+    //        dbgOutputLoc(171);
+    //        dbgOutputVal(length);
+    //        char temp[MSG_BUF_SIZE];
+    //        while (i < length) {
+    //            if (PLIB_USART_ReceiverDataIsAvailable(USART_ID_1)) {
+    //                dbgOutputLoc(68);
+    //                mychar = ReceiveCharFromWifly();
+    //                dbgOutputVal(mychar);
+    //                if (mychar != NULL) {
+    //                    if (i == 0) {
+    //                        dbgOutputLoc(65);
+    //                        msg.ucMessageID = mychar;
+    //                    } else {
+    //                        dbgOutputLoc(64);
+    //                        temp[i] = mychar;
+    //                    }
+    //                    i++;
+    //                }
+    //            }
+    //            dbgOutputLoc(67);
+    //        }
+    //        strcpy(msg.ucData, temp);
+    //        i = 0;
+    //        dbgOutputLoc(172);
+    //        //dbgOutputVal(length)
+    //        while (i < 4) {
+    //            if (PLIB_USART_ReceiverDataIsAvailable(USART_ID_1)) {
+    //                chksum[3 - i] = ReceiveCharFromWifly();
+    //                i++;
+    //            }
+    //
+    //        }
+    //        dbgOutputLoc(173);
+    //        checksum = charLenToInt(chksum);
+    //        dbgOutputLoc(174);
+    //        return msg;
+    //    }
+    //    msg.ucMessageID = '\0';
+    //    return msg;
+    int pos = 0;
+    char chksum[4];
+    int checksum1, checksum2;
+    int i;
+    (*msg).ucMessageID = ReceiveCharFromWifly();
+    
+    bool validJSONMessage = ReadJSONfromWifly(msg, &pos);
+
+    if (validJSONMessage) {
         while (i < 4) {
             if (PLIB_USART_ReceiverDataIsAvailable(USART_ID_1)) {
                 chksum[3 - i] = ReceiveCharFromWifly();
@@ -499,13 +552,20 @@ Message ReceiveMsgFromWifly() {
             }
 
         }
-        dbgOutputLoc(173);
-        checksum = charLenToInt(chksum);
-        dbgOutputLoc(174);
-        return msg;
     }
-    msg.ucMessageID = '\0';
-    return msg;
+    
+    checksum2 = charLenToInt(chksum);
+    checksum((*msg), chksum);
+    checksum1 = charLenToInt(chksum);
+    
+            // Parse message into JSON
+            // check checksum, length
+            // 
+    if (checksum1 == checksum2)
+        return true;
+    else
+        return false;
+
 }
 
 int charLenToInt(char *len) {
@@ -570,7 +630,7 @@ void APP_Initialize(void) {
     motorsInitialize();
 
     motorsForward();
-    
+
 
     encoderQueue = createEncoderQueue();
     //msgQueue = createQueue();
@@ -619,7 +679,7 @@ void APP_Tasks(void) {
     myMsg.ucMessageID = 't';
     //recvMsg = malloc(Message);
     char myChar;
-
+    appState = RUN;
     //Initialize encoder receive message
     ENCODER_DATA encoderReceived;
     encoderReceived.leftTicks = 0;
@@ -634,81 +694,52 @@ void APP_Tasks(void) {
     bool connected = false;
 
     while (1) {
-        //motorsStop();
-        //motorsBackward();
-        //dbgOutputLoc(101);
-        //dbgOutputVal('t');
+        dbgOutputLoc(APPTASKS);
         leftTicksPrev = leftTicks;
         rightTicksPrev = rightTicks;
-        //motorsForwardDistance(27);
 
         //Receive encoder data
         encoderReceived = receiveFromEncoderQueue(encoderQueue);
         leftTicks = encoderReceived.leftTicks;
         rightTicks = encoderReceived.rightTicks;
-        //dbgOutputVal(rightTicks - rightTicksPrev);
 
 
-        dbgOutputLoc(APPTASKS);
-        //myChar = readCharFromQ(recvMsgQueue);
-        //dbgOutputVal(myChar);
+
+
         dbgOutputLoc(APPTASKS + 1);
-
-        bool sentOnce = false;
-
-        if (!connected) {
-            checkConnected();
+        switch (appState){
+            case RUN:
+                break;
+            case RECV:
+                if(ReceiveMsgFromWifly(&myMsg));
+                {
+                    
+                }
+                break;
+            case TRANS:
+                break;
         }
-
-        if (connected && getMsgFromRecvQ(&myMsg) == 0) {
-            //if (!sentOnce) {
-            dbgOutputLoc(171);
-            dbgOutputVal(myMsg.ucMessageID);
-            for (i = 0; myMsg.ucData[i] != '\0'; i++)
-                dbgOutputVal(myMsg.ucData[i]);
-
-            //myMsg.ucMessageID = 'D';
-            //msgToWiflyMsgQ(myMsg);
-            //sentOnce = true;
-        }
-
-
-        //get into command mode
-        //    dbgUARTVal('$');
-        //    dbgUARTVal('$');
-        //    dbgUARTVal('$');
-
-        //reboot every time the code starts
-        //    dbgUARTVal('r');
-        //    dbgUARTVal('e');
-        //    dbgUARTVal('b');
-        //    dbgUARTVal('o');
-        //    dbgUARTVal('o');
-        //    dbgUARTVal('t');
-
-        //new line character
-        //    dbgUARTVal(13);
-        myMsg.ucMessageID = 'M';
-        char string[100] = "{\"test data\":\"1000\"}";
-        int i;
-        for (i = 0; string[i] != '\0'; i++)
-            myMsg.ucData[i] = string[i];
-        myMsg.ucData[i] = '\0';
-        //msgToMsgQ(myMsg);
-
-
-        //  while (1) {
-        //        if (!sentOnce){
-        //            //msgToMsgQ(myMsg);
+        //
+        //        bool sentOnce = false;
+        //
+        //        if (!connected) {
+        //            checkConnected();
         //        }
-        //        
-        //            else{
-        //                msgToMsgQ(myMsg);
-        //            }
+        //
+        //        if (connected && getMsgFromRecvQ(&myMsg) == 0) {
+        //            //if (!sentOnce) {
+        //            dbgOutputLoc(171);
+        //            dbgOutputVal(myMsg.ucMessageID);
+        //            for (i = 0; myMsg.ucData[i] != '\0'; i++)
+        //                dbgOutputVal(myMsg.ucData[i]);
         //        }
-        //if(DRV_USART_ReceiverBufferIsEmpty(usbHandle)) {
-        /* UART ready to receive */
-        //}
+        //        myMsg.ucMessageID = 'M';
+        //        char string[100] = "{\"test data\":\"1000\"}";
+        //        int i;
+        //        for (i = 0; string[i] != '\0'; i++)
+        //            myMsg.ucData[i] = string[i];
+        //        myMsg.ucData[i] = '\0';
+
 
     }
 }

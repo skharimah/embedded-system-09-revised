@@ -65,6 +65,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include "system_definitions.h"
 #include "app_public.h"
 #include "debug.h"
+#include "json_access/jsonaccess.h"
 
 // *****************************************************************************
 // *****************************************************************************
@@ -115,27 +116,8 @@ void IntHandlerDrvTmrInstance0(void) {
         ticksMessage.rightTicks = rightTicks;
         unsigned char val;
         count++;
-
-        //dbgOutputVal('.');
+        
         LATAINV = 0x8;
-        //Inverts ChipKit LD4 to display functioning timer
-        //LATAINV = 0x8;
-
-        //assign next letter of string to unsigned character
-        //out = name[namepos];
-
-        //output to I/O pins through dbgOutputVal functions
-        //dbgOutputVal(out);
-        //dbgUARTVal(out);
-
-        //Reset the string iterator
-        //if(namepos == SECONDSPACE) {
-        //    namepos = T;
-        //}
-        //else {
-        //    namepos++;
-        //}
-
 
 
 
@@ -164,24 +146,22 @@ void IntHandlerDrvTmrInstance0(void) {
             default:
                 val = 'U';
         }
-        //dbgUARTVal(val);
-        //if (received) {
-        //charToMsgQ(val);
+        
         Message mymsg;
-        int i, j, temp = 0;
-        for (i = 0; mystring[i] != '\0'; i++) {
-            mymsg.ucData[i] = mystring[i];
-            temp++;
+        mymsg.ucMessageID = 'D';
+        JSON_Value *rootValue = json_value_init_object();
+
+        /* Add key value pairs into the JSON object */
+        addStringKeyValuePairToJsonObject(rootValue, "dest", "192.168.1.101");
+        addStringKeyValuePairToJsonObject(rootValue, "source", IPADDRESS);
+        addStringKeyValuePairToJsonObject(rootValue, "mystring", "Jones is Trump");
+        char *value = serializeJsonStringFromJsonValue(rootValue);
+        
+        int i;
+        for (i = 0; value[i] != '}'; i++){
+            mymsg.ucData[i] = value[i];
         }
-        int length = count;
-        /* for (j = temp; j < temp + 4; j++) {
-             mymsg.ucData[temp + 3 - j] = (length % 10) + '0';
-
-             length = (length - (length % 10)) / 10;
-         }*/
-
-        mymsg.ucData[i] = '\0';
-        mymsg.ucMessageID = val;
+        mymsg.ucData[i] = value[i];
         msgToWiflyMsgQISR(mymsg);
         //}
 
@@ -220,18 +200,15 @@ void IntHandlerDrvTmrInstance2(void) {
 void IntHandlerDrvUsartInstance0(void) {
     Message mymsg;
     char mychar;
-    //dbgOutputLoc(UART_START);
-    //    DRV_USART_TasksTransmit(sysObj.drvUsart0);
-    //    DRV_USART_TasksReceive(sysObj.drvUsart0);
-    //    DRV_USART_TasksError(sysObj.drvUsart0);
+    dbgOutputLoc(UART_START);
 
     if (PLIB_INT_SourceFlagGet(INT_ID_0, INT_SOURCE_USART_1_RECEIVE)) {
         PLIB_INT_SourceDisable(INT_ID_0, INT_SOURCE_USART_1_RECEIVE);
         PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_USART_1_RECEIVE);
         dbgOutputLoc(99);
-        mymsg = ReceiveMsgFromWifly();
+        ReceiveMsgFromWifly(&mymsg);
         mychar = mymsg.ucMessageID;
-        //dbgOutputVal(mychar);
+        dbgOutputVal(mychar);
         dbgOutputLoc(100);
         wiflyToMsgQ(mymsg);
 

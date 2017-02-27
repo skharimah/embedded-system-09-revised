@@ -31,10 +31,15 @@ extern "C" {
     
 #define MSG_BUF_SIZE 100
     
+    const char* DEVNAME;// = "sensor";
+    const char* IPADDRESS;// = "192.168.1.102";
+    
 DRV_HANDLE usbHandle;// = DRV_USART_Open(DRV_USART_INDEX_0, DRV_IO_INTENT_READWRITE);
 QueueHandle_t motorMsgQueue;
 QueueHandle_t msgQueue;
 QueueHandle_t recvMsgQueue;
+typedef enum  {RUN, RECV, TRANS} State;
+State appState;
 
 typedef struct AMessage
  {
@@ -67,9 +72,10 @@ int app1SendCharToMsgQ(unsigned char value);
 int charToMsgQ(char val);
 
 int msgToWiflyMsgQISR(Message msg);
+int msgToWiflyMsgQ(Message msg);
 int writeStringUART(char* string);
 
-Message ReceiveMsgFromWifly();
+bool ReceiveMsgFromWifly(Message* msg);
 
 void TransmitCharToWifly(unsigned char value);
 
