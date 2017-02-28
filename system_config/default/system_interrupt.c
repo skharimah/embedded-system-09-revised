@@ -101,6 +101,7 @@ int leftTicksPrev = 0;
 
 void IntHandlerDrvTmrInstance0(void) {
     millisec++;
+    dbgOutputLoc(TMR_START);
 
 
     //dbgOutputLoc(millisec);
@@ -108,63 +109,44 @@ void IntHandlerDrvTmrInstance0(void) {
         leftTicksPrev = leftTicks;
         leftTicks = PLIB_TMR_Counter16BitGet(TMR_ID_3);
         rightTicks = PLIB_TMR_Counter16BitGet(TMR_ID_4);
-        
-        dbgOutputVal(leftTicks - leftTicksPrev);
+        dbgOutputLoc(TMR_START + 2);
+        //dbgOutputVal(leftTicks - leftTicksPrev);
         //Send encoder data to queue
         ENCODER_DATA ticksMessage;
         ticksMessage.leftTicks = leftTicks;
         ticksMessage.rightTicks = rightTicks;
         unsigned char val;
         count++;
-        
+
         LATAINV = 0x8;
 
-
+        dbgOutputLoc(TMR_START + 3);
 
 
 
         //Clear Interrupt Flag 
-        switch (DRV_USART_ClientStatus(usbHandle)) {
-            case DRV_USART_CLIENT_STATUS_ERROR:
-                SYS_DEBUG(0, "UART ERROR");
-                val = 'E';
-                break;
-            case DRV_USART_CLIENT_STATUS_BUSY:
-                SYS_DEBUG(0, "UART BUSY");
-                val = 'B';
-                break;
-            case DRV_USART_CLIENT_STATUS_CLOSED:
-                SYS_DEBUG(0, "UART CLOSED");
-                val = 'C';
-                break;
-            case DRV_USART_CLIENT_STATUS_READY:
-                SYS_DEBUG(0, "UART READY");
-                //writeStringUART(mystring);
-                val = 'D';
 
-                break;
-            default:
-                val = 'U';
-        }
-        
         Message mymsg;
         mymsg.ucMessageID = 'D';
-        JSON_Value *rootValue = json_value_init_object();
+        char buffer[MSG_BUF_SIZE];
+        unsigned int buflen = MSG_BUF_SIZE;
+        int array[] = {1, 2, 3, 4, 5};
 
-        /* Add key value pairs into the JSON object */
-        addStringKeyValuePairToJsonObject(rootValue, "dest", "192.168.1.101");
-        addStringKeyValuePairToJsonObject(rootValue, "source", "192.168.1.102");
-        addStringKeyValuePairToJsonObject(rootValue, "mystring", "Jones is Trump");
-        char *value = serializeJsonStringFromJsonValue(rootValue);
-        
-        int i;
-        for (i = 0; value[i] != '}'; i++){
-            mymsg.ucData[i] = value[i];
+        startWritingToJsonObject(buffer, buflen);
+        addIntegerKeyValuePairToJsonObject("sequence_id", 1);
+        addStringKeyValuePairToJsonObject("message_type", "request");
+        addStringKeyValuePairToJsonObject("source", "192.168.1.102");
+        addStringKeyValuePairToJsonObject("destination", "192.168.1.102");
+        endWritingToJsonObject();
+
+        int i = 0;
+        for (i = 0; buffer[i] != '\0'; i++) {
+            mymsg.ucData[i] = buffer[i];
         }
-        mymsg.ucData[i] = value[i];
+        mymsg.ucData[i] = '\0';
+        dbgOutputLoc(TMR_START + 7);
         msgToWiflyMsgQISR(mymsg);
         //}
-
     }
     if (millisec % 1000 == 0) {
         //motorsTurnDemo(itterate);
@@ -177,6 +159,7 @@ void IntHandlerDrvTmrInstance0(void) {
 
     }
     PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_TIMER_2);
+    dbgOutputLoc(TMR_STOP);
 }
 
 //Left Encoder Interrupt
@@ -204,19 +187,20 @@ void IntHandlerDrvUsartInstance0(void) {
 
     if (PLIB_INT_SourceFlagGet(INT_ID_0, INT_SOURCE_USART_1_RECEIVE)) {
         PLIB_INT_SourceDisable(INT_ID_0, INT_SOURCE_USART_1_RECEIVE);
-        PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_USART_1_RECEIVE);
+        
         dbgOutputLoc(99);
         ReceiveMsgFromWifly(&mymsg);
         mychar = mymsg.ucMessageID;
-        dbgOutputVal(mychar);
+        dbgOutputVal(mymsg.ucData[0]);
         dbgOutputLoc(100);
         wiflyToMsgQ(mymsg);
 
         received = true;
         counter = 0;
-        
+
         PLIB_INT_SourceEnable(INT_ID_0, INT_SOURCE_USART_1_RECEIVE);
-        
+        PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_USART_1_RECEIVE);
+
     } else if (PLIB_INT_SourceFlagGet(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT)) {
         dbgOutputLoc(WIFLY_TRANS);
         while (!xQueueIsQueueEmptyFromISR(msgQueue)) {
@@ -242,7 +226,7 @@ void IntHandlerDrvUsartInstance0(void) {
         PLIB_INT_SourceDisable(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT);
         dbgOutputLoc(42);
     } else if (PLIB_INT_SourceFlagGet(INT_ID_0, INT_SOURCE_USART_1_ERROR)) {
-        dbgOutputVal('E');
+        //dbgOutputVal('E');
         dbgOutputLoc(WIFLY_ERROR);
         PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_USART_1_ERROR);
     }

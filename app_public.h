@@ -29,7 +29,7 @@ extern "C" {
     
     
     
-#define MSG_BUF_SIZE 100
+#define MSG_BUF_SIZE 200
     
     const char* DEVNAME;// = "sensor";
     const char* IPADDRESS;// = "192.168.1.102";
