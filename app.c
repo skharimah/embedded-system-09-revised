@@ -119,7 +119,9 @@ APP_DRV_OBJECTS appDrvObject;
 
 QueueHandle_t createQueue(void) {
     QueueHandle_t queue;
-    queue = xQueueCreate(10, sizeof (struct Message *));
+    
+    int queueSize = sizeof (struct Message *);
+    queue = xQueueCreate(10, queueSize);
     if (queue == NULL) {
         /* Queue is not created and should not be used
          * The return value will be NULL if queue is not created
@@ -173,7 +175,7 @@ ENCODER_DATA receiveFromEncoderQueue(QueueHandle_t queue) {
     Write to Wifly (transmit) Queue inside of ISR
     See prototype in app_publich.h.
  */
-int msgToWiflyMsgQISR(Message msg) {
+int msgToWiflyMsgQISR(Message* msg) {
     if (messageToQISR(msgQueue, msg) != MSG_QUEUE_IS_FULL) {
         //LATASET = 0x08;
         PLIB_INT_SourceEnable(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT);
@@ -194,7 +196,7 @@ int msgToWiflyMsgQISR(Message msg) {
     Write to Wifly (transmit) Queue outside of ISR
     See prototype in app_public.h.
  */
-int msgToWiflyMsgQ(Message msg) {
+int msgToWiflyMsgQ(Message* msg) {
     if (messageToQ(msgQueue, msg) != MSG_QUEUE_IS_FULL) {
         //LATASET = 0x08;
         PLIB_INT_SourceEnable(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT);
@@ -215,8 +217,8 @@ int msgToWiflyMsgQ(Message msg) {
     Writes message (from wifly) to the received message queue
     See prototype in app_public.h.
  */
-int wiflyToMsgQ(Message msg) {
-    dbgOutputVal(msg.ucData[0]);
+int wiflyToMsgQ(Message* msg) {
+    dbgOutputVal(msg->ucData[0]);
     if (messageToQISR(recvMsgQueue, msg) != MSG_QUEUE_IS_FULL) {
         //LATASET = 0x08;
         dbgOutputLoc(78);
@@ -234,12 +236,12 @@ int wiflyToMsgQ(Message msg) {
     Write to Message Queue inside of ISR
     See prototype in app.h.
  */
-int messageToQISR(QueueHandle_t queue, Message msg) {
-    dbgOutputVal(msg.ucData[0]);
+int messageToQISR(QueueHandle_t queue, Message* msg) {
+    dbgOutputVal(msg->ucData[0]);
     dbgOutputLoc(88);
     if (queue != NULL) {
         if (xQueueSendFromISR(queue,
-                (void *) &msg,
+                (void *) msg,
                 NULL) != pdTRUE) {
             return MSG_QUEUE_IS_FULL;
         } else
@@ -256,12 +258,12 @@ int messageToQISR(QueueHandle_t queue, Message msg) {
     Write to Message Queue outside of ISR
     See prototype in app.h.
  */
-int messageToQ(QueueHandle_t queue, Message msg) {
+int messageToQ(QueueHandle_t queue, Message* msg) {
 
     dbgOutputLoc(89);
     if (queue != NULL) {
         if (xQueueSend(queue,
-                (void *) &msg,
+                (void *) msg,
                 NULL) != pdTRUE) {
             return MSG_QUEUE_IS_FULL;
         } else
@@ -349,7 +351,7 @@ void TransmitCharToWiflyNonblocking(unsigned char value) {
   * and C is the checksum of the message, also base 10
   */
 
-void TransmitMsgToWifly(Message msg) {
+void TransmitMsgToWifly(Message* msg) {
     char len[4], chksum[4];
     int i;
     //    intLenToChar(msg, len);
@@ -359,11 +361,11 @@ void TransmitMsgToWifly(Message msg) {
     //        TransmitCharToWiflyNonblocking(len[i]);
     //    }
 
-    TransmitCharToWifly(msg.ucMessageID);
+    TransmitCharToWifly(msg->ucMessageID);
 
-    for (i = 0; msg.ucData[i] != '\0' && i < MSG_BUF_SIZE; i++) {
+    for (i = 0; msg->ucData[i] != '\0' && i < MSG_BUF_SIZE; i++) {
         while (PLIB_USART_TransmitterBufferIsFull(USART_ID_1));
-        TransmitCharToWiflyNonblocking(msg.ucData[i]);
+        TransmitCharToWiflyNonblocking(msg->ucData[i]);
     }
     for (i = 0; i < 4; i++) {
         while (PLIB_USART_TransmitterBufferIsFull(USART_ID_1));
@@ -372,9 +374,9 @@ void TransmitMsgToWifly(Message msg) {
 }
 // takes in a Messaqe, calculates the length (characters) of the message
 
-void intLenToChar(Message msg, char *len) {
+void intLenToChar(Message *msg, char *len) {
     int i, j, length = 1;
-    for (i = 0; msg.ucData[i] != '\0'; i++) {
+    for (i = 0; msg->ucData[i] != '\0'; i++) {
         length++;
     }
     for (j = 0; j < 4; j++) {
@@ -386,11 +388,11 @@ void intLenToChar(Message msg, char *len) {
 // Takes in a message, computes the sum of the bits to make sure that the 
 // Data was transmitted properly
 
-void checksum(Message msg, char *len) {
-    int i, j, sum = msg.ucMessageID;
+void checksum(Message* msg, char *len) {
+    int i, j, sum = msg->ucMessageID;
     int hex;
-    for (i = 0; msg.ucData[i] != '\0'; i++) {
-        sum = sum + msg.ucData[i];
+    for (i = 0; msg->ucData[i] != '\0'; i++) {
+        sum = sum + msg->ucData[i];
     }
     for (j = 0; j < 4; j++) {
         len[3 - j] = (sum % 10) + '0';
@@ -439,7 +441,7 @@ int getMsgFromRecvQ(Message *msg) {
             &msg,
             0
             ) == pdTRUE) {
-        dbgOutputVal("R");
+        dbgOutputVal('R');
         return 0;
     }
 
@@ -508,7 +510,7 @@ bool ReceiveMsgFromWifly(Message* msg) {
         char mychar = ReceiveCharFromWifly();
         dbgOutputVal(mychar);
         checksum2 = charLenToInt(chksum);
-        checksum((*msg), chksum);
+        checksum(msg, chksum);
         checksum1 = charLenToInt(chksum);
         dbgOutputLoc(174);
     } else

@@ -198,7 +198,7 @@ QueueHandle_t createQueue(void);
     An integer 0 for success, -1 for failure.
 
 */
-int messageToQISR(QueueHandle_t queue, Message msg);
+int messageToQISR(QueueHandle_t queue, Message* msg);
 /*******************************************************************************
   Function:
     int messageToQ(QueueHandle_t queue, Message msg)
@@ -218,7 +218,7 @@ int messageToQISR(QueueHandle_t queue, Message msg);
     An integer 0 for success, -1 for failure.
 
 */
-int messageToQ(QueueHandle_t queue, Message msg);
+int messageToQ(QueueHandle_t queue, Message* msg);
 /*******************************************************************************
   Function:
     void intLenToChar(Message msg, char *len)
@@ -238,8 +238,8 @@ int messageToQ(QueueHandle_t queue, Message msg);
     An integer 0 for success, -1 for failure.
 
 */
-void intLenToChar(Message msg, char *len);
-void checksum(Message msg, char *sum);
+void intLenToChar(Message *msg, char *len);
+void checksum(Message *msg, char *sum);
 QueueHandle_t createEncoderQueue(void);
 int getMsgFromRecvQ(Message *msg);
 /*******************************************************************************

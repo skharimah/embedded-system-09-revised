@@ -145,7 +145,7 @@ void IntHandlerDrvTmrInstance0(void) {
         }
         mymsg.ucData[i] = '\0';
         dbgOutputLoc(TMR_START + 7);
-        msgToWiflyMsgQISR(mymsg);
+        msgToWiflyMsgQISR(&mymsg);
         //}
     }
     if (millisec % 1000 == 0) {
@@ -193,7 +193,7 @@ void IntHandlerDrvUsartInstance0(void) {
         mychar = mymsg.ucMessageID;
         dbgOutputVal(mymsg.ucData[0]);
         dbgOutputLoc(100);
-        wiflyToMsgQ(mymsg);
+        wiflyToMsgQ(&mymsg);
 
         received = true;
         counter = 0;
@@ -206,11 +206,11 @@ void IntHandlerDrvUsartInstance0(void) {
         while (!xQueueIsQueueEmptyFromISR(msgQueue)) {
             dbgOutputLoc(35);
             BaseType_t xTaskWokenByReceive = pdFALSE;
-            if (xQueueReceiveFromISR(msgQueue, (void *) &mymsg, &xTaskWokenByReceive)
+            if (xQueueReceiveFromISR(msgQueue, &mymsg, &xTaskWokenByReceive)
                     == pdTRUE) {
-
+                
                 //TransmitMessageToWifly(qMsg.message, qMsg.message_size);
-                TransmitMsgToWifly(mymsg);
+                TransmitMsgToWifly(&mymsg);
                 if (counter <= 10) {
                     counter++;
                 } else if (counter <= 25) {
