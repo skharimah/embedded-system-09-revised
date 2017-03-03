@@ -119,6 +119,7 @@ void TransmitCharToWifly(unsigned char value) {
 void TransmitCharToWiflyNonblocking(unsigned char value) {
     dbgOutputLoc(40);
     PLIB_USART_TransmitterByteSend(USART_ID_1, value);
+    dbgOutputVal(value);
     dbgOutputLoc(41);
 }/*
   * Function: TransmitMsgToWifly(Message msg)
@@ -147,9 +148,9 @@ void TransmitMsgToWifly(char* msg) {
         TransmitCharToWiflyNonblocking(msg[i]);
         //dbgOutputVal(msg[i]);
     }
-    uint16_t fletcherChecksum = fletcher16(msg, i);
-    TransmitCharToWiflyNonblocking(chksum[i]);
-    TransmitCharToWiflyNonblocking(chksum[i]);
+    //uint16_t fletcherChecksum = fletcher16(msg, i);
+    //TransmitCharToWiflyNonblocking(chksum[i]);
+    //TransmitCharToWiflyNonblocking(chksum[i]);
     for (i = 0; i < 4; i++) {
         while (PLIB_USART_TransmitterBufferIsFull(USART_ID_1));
         TransmitCharToWiflyNonblocking(chksum[i]);
@@ -266,7 +267,7 @@ bool ReadJSONfromWifly(char* msg, int* msglen) {
         (*msglen) = i;
         return true;
     } else {
-        bad_messages++;
+        //bad_messages++;
         return false;
     }
 
@@ -292,6 +293,7 @@ bool ReceiveMsgFromWifly(char* msg) {
     if (validJSONMessage) {
         while (i < 4 && noDataCounter < MSGFAILSIZE) {
             if (PLIB_USART_ReceiverDataIsAvailable(USART_ID_1)) {
+                noDataCounter = 0;
                 dbgOutputLoc(173);
                 chksum[i] = ReceiveCharFromWifly();
                 dbgOutputVal(chksum[i]);
@@ -303,6 +305,7 @@ bool ReceiveMsgFromWifly(char* msg) {
 
         }
         if (noDataCounter >= MSGFAILSIZE) {
+            bad_messages++;
             dbgOutputLoc(130);
             return false;
         }
@@ -329,11 +332,11 @@ bool ReceiveMsgFromWifly(char* msg) {
     // 
     if (checksum1 == checksum2) {
 
-        if (fCheck != recvFCheck) {
-            dbgOutputVal('!');
-            bad_messages++;
-            return false;
-        }
+//        if (fCheck != recvFCheck) {
+//            dbgOutputVal('!');
+//            bad_messages++;
+//            return false;
+//        }
         dbgOutputVal('T');
         //dbgOutputVal(msg->ucData[0]);
         good_messages++;

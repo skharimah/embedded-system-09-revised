@@ -235,14 +235,14 @@ void APP_JSON_Tasks(void) {
                     sum += (tens)*(jsstringValuesTuples[3].resultString[i] - '0');
                     tens = tens/10;
                 }
-
-                addIntegerKeyValuePairToJsonObject("sequence_id", sum + 1);
+                sum++;
+                addIntegerKeyValuePairToJsonObject("sequence_id", sum);
                 /* TODO: Get IR_sensor_value here */
                 addIntegerKeyValuePairToJsonObject("infrared_sensor_value", 150);
                 /* TODO: Get port number here */
-                addIntegerKeyValuePairToJsonObject("port", 2000);
+                addStringKeyValuePairToJsonObject("source", "192.168.1.102");
                 /* TODO: Get encoder_value here */
-                addStringKeyValuePairToJsonObject("destination", "TARGET_ROVER_IP_ADDRESS");
+                addStringKeyValuePairToJsonObject("destination", "192.168.1.105");
 
                 endWritingToJsonObject();
 

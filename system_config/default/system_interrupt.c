@@ -133,25 +133,25 @@ void IntHandlerDrvTmrInstance0(void) {
         unsigned int buflen = MSG_BUF_SIZE;
         int array[] = {1, 2, 3, 4, 5};
 
-        
-//        startWritingToJsonObject(buffer, buflen);
-//        addIntegerKeyValuePairToJsonObject("sequence_id", 1);
-//        addStringKeyValuePairToJsonObject("message_type", "request");
-//        addStringKeyValuePairToJsonObject("source", "192.168.1.102");
-//        addStringKeyValuePairToJsonObject("destination", "192.168.1.102");
-//        endWritingToJsonObject();
-//        
-//        
-//        //char buffer[] = "some json string";
-//
-//        int i = 0;
-//        //strcpy(messageptr, buffer);
-//        for (i = 0; buffer[i] != '\0'; i++) {
-//            messageptr[i] = buffer[i];
-//        }
-//        messageptr[i] = '\0';
-//        dbgOutputLoc(TMR_START + 7);
-//        msgToWiflyMsgQISR(&messageptr);
+
+        //        startWritingToJsonObject(buffer, buflen);
+        //        addIntegerKeyValuePairToJsonObject("sequence_id", 1);
+        //        addStringKeyValuePairToJsonObject("message_type", "request");
+        //        addStringKeyValuePairToJsonObject("source", "192.168.1.102");
+        //        addStringKeyValuePairToJsonObject("destination", "192.168.1.102");
+        //        endWritingToJsonObject();
+        //        
+        //        
+        //        //char buffer[] = "some json string";
+        //
+        //        int i = 0;
+        //        //strcpy(messageptr, buffer);
+        //        for (i = 0; buffer[i] != '\0'; i++) {
+        //            messageptr[i] = buffer[i];
+        //        }
+        //        messageptr[i] = '\0';
+        //        dbgOutputLoc(TMR_START + 7);
+        //        msgToWiflyMsgQISR(&messageptr);
         //}
     }
     if (millisec % 1000 == 0) {
@@ -195,13 +195,13 @@ void IntHandlerDrvUsartInstance0(void) {
 
     if (PLIB_INT_SourceFlagGet(INT_ID_0, INT_SOURCE_USART_1_RECEIVE)) {
         PLIB_INT_SourceDisable(INT_ID_0, INT_SOURCE_USART_1_RECEIVE);
-        
-        dbgOutputLoc(99);
-        ReceiveMsgFromWifly(mymsg);
-        //SdbgOutputVal(mymsg[0]);
-        dbgOutputLoc(100);
-        wiflyToMsgQ(mymsg);
 
+        dbgOutputLoc(99);
+        if (ReceiveMsgFromWifly(mymsg)) {
+            //dbgOutputVal(mymsg[0]);
+            dbgOutputLoc(100);
+            wiflyToMsgQ(mymsg);
+        }
         received = true;
         counter = 0;
 
@@ -214,7 +214,7 @@ void IntHandlerDrvUsartInstance0(void) {
             dbgOutputLoc(35);
             BaseType_t xTaskWokenByReceive = pdFALSE;
             //xQueueReceiveFromISR(msgQueue, (void*) &shitass, &xTaskWokenByReceive);
-            if (xQueueReceiveFromISR(msgQueue, (void*) &( mymsgptr ), &xTaskWokenByReceive)
+            if (xQueueReceiveFromISR(msgQueue, (void*) &(mymsgptr), &xTaskWokenByReceive)
                     == pdTRUE) {
                 //(&mymsg) = (&mymsg) + 16;
                 dbgOutputLoc(191);

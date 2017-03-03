@@ -182,9 +182,9 @@ int messageToQISR(QueueHandle_t queue, char* msg) {
     char * jsstring = "message";
     
     if (queue != NULL) {
-        if ((xQueueSend(queue,
+        if ((xQueueSendFromISR(queue,
                 (void *) &jsstring,
-                (TickType_t) 10 ) != pdTRUE)) {
+                NULL ) != pdTRUE)) {
             return MSG_QUEUE_IS_FULL;
         } else
             return 0;
@@ -335,7 +335,7 @@ void APP_Initialize(void) {
  */
 
 void APP_Tasks(void) {
-    UARTInit(USART_ID_1, 230400);
+    UARTInit(USART_ID_1, 57600);
     char myMsg[ MSG_BUF_SIZE ];
     //    myMsg.ucData[0] = 't';
     //    myMsg.ucData[1] = 't';
