@@ -55,6 +55,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include "system_config.h"
 #include "system_definitions.h"
 #include "app.h"
+#include "app_json.h"
 
 
 // *****************************************************************************
@@ -67,6 +68,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
  
 static void _SYS_Tasks ( void );
 static void _APP_Tasks(void);
+static void _APP_JSON_Tasks(void);
 
 
 // *****************************************************************************
@@ -88,11 +90,16 @@ void SYS_Tasks ( void )
     /* Create OS Thread for Sys Tasks. */
     xTaskCreate((TaskFunction_t) _SYS_Tasks,
                 "Sys Tasks",
-                1024, NULL, 0, NULL);
+                2048, NULL, 0, NULL);
 
     /* Create OS Thread for APP Tasks. */
     xTaskCreate((TaskFunction_t) _APP_Tasks,
                 "APP Tasks",
+                1024, NULL, 1, NULL);
+
+    /* Create OS Thread for APP_JSON Tasks. */
+    xTaskCreate((TaskFunction_t) _APP_JSON_Tasks,
+                "APP_JSON Tasks",
                 1024, NULL, 1, NULL);
 
     /**************
@@ -117,9 +124,6 @@ static void _SYS_Tasks ( void)
         SYS_DEVCON_Tasks(sysObj.sysDevcon);
 
         /* Maintain Device Drivers */
-    //DRV_USART_TasksTransmit(sysObj.drvUsart0);
-    //DRV_USART_TasksReceive(sysObj.drvUsart0);
-    //DRV_USART_TasksError (sysObj.drvUsart0);
 
         /* Maintain Middleware */
 
@@ -141,6 +145,23 @@ static void _APP_Tasks(void)
     while(1)
     {
         APP_Tasks();
+    }
+}
+
+
+/*******************************************************************************
+  Function:
+    void _APP_JSON_Tasks ( void )
+
+  Summary:
+    Maintains state machine of APP_JSON.
+*/
+
+static void _APP_JSON_Tasks(void)
+{
+    while(1)
+    {
+        APP_JSON_Tasks();
     }
 }
 

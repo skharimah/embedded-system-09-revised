@@ -167,7 +167,6 @@ ENCODER_DATA receiveFromEncoderQueue(QueueHandle_t queue) {
     return buffer;
 }
 
-
 /*******************************************************************************
   Function:
     int messageToQISR(QueueHandle_t queue, Message msg) 
@@ -177,12 +176,15 @@ ENCODER_DATA receiveFromEncoderQueue(QueueHandle_t queue) {
     See prototype in app.h.
  */
 int messageToQISR(QueueHandle_t queue, char* msg) {
-    dbgOutputVal(msg[0]);
-    dbgOutputLoc(88);
+    //dbgOutputVal(msg[0]);
+    //dbgOutputLoc(88);
+    
+    char * jsstring = "message";
+    
     if (queue != NULL) {
-        if ((xQueueSendFromISR(queue,
-                (void *) &msg,
-                NULL) != pdTRUE)) {
+        if ((xQueueSend(queue,
+                (void *) &jsstring,
+                (TickType_t) 10 ) != pdTRUE)) {
             return MSG_QUEUE_IS_FULL;
         } else
             return 0;
@@ -200,11 +202,11 @@ int messageToQISR(QueueHandle_t queue, char* msg) {
  */
 int messageToQ(QueueHandle_t queue, char* msg) {
 
-    dbgOutputLoc(89);
+    //dbgOutputLoc(89);
     if (queue != NULL) {
         if (xQueueSend(queue,
-                (void *) msg,
-                NULL) != pdTRUE) {
+                (void *) &msg,
+                NULL) != pdPASS) {
             return MSG_QUEUE_IS_FULL;
         } else
             return 0;
@@ -245,9 +247,6 @@ int appSendMotorEncoderOutputValueToMsgQ(unsigned int motorEncoderOutputVal) {
 
 }
 
-
-
-
 int UARTInit(USART_MODULE_ID id, int baudrate) {
 
     PLIB_USART_BaudSetAndEnable(id, SYS_CLK_PeripheralFrequencyGet(CLK_BUS_PERIPHERAL_2), baudrate);
@@ -276,9 +275,11 @@ bool checkConnected() {
  */
 
 void APP_Initialize(void) {
+    PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT);
+    PLIB_INT_SourceDisable(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT);
     good_messages = 0;
     bad_messages = 0;
-    
+
 
     DRV_TMR0_Initialize();
     DRV_TMR0_Start();
@@ -369,11 +370,6 @@ void APP_Tasks(void) {
         prev_ms = cur_ms;
         cur_ms = PLIB_TMR_Counter16BitGet(TMR_ID_2);
         millisec += (cur_ms - prev_ms);
-        if (getMsgFromRecvQ(myMsg) == 0) {
-            received = true;
-            dbgOutputVal(myMsg[1]);
-
-        }
 
 
         if (received) {

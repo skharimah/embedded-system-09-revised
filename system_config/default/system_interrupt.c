@@ -63,6 +63,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include <sys/attribs.h>
 #include "app.h"
 #include <string.h>
+#include "app_json.h"
 #include "system_definitions.h"
 #include "app_public.h"
 #include "debug.h"
@@ -133,24 +134,24 @@ void IntHandlerDrvTmrInstance0(void) {
         int array[] = {1, 2, 3, 4, 5};
 
         
-        startWritingToJsonObject(buffer, buflen);
-        addIntegerKeyValuePairToJsonObject("sequence_id", 1);
-        addStringKeyValuePairToJsonObject("message_type", "request");
-        addStringKeyValuePairToJsonObject("source", "192.168.1.102");
-        addStringKeyValuePairToJsonObject("destination", "192.168.1.102");
-        endWritingToJsonObject();
-        
-        
-        //char buffer[] = "some json string";
-
-        int i = 0;
-        //strcpy(messageptr, buffer);
-        for (i = 0; buffer[i] != '\0'; i++) {
-            messageptr[i] = buffer[i];
-        }
-        messageptr[i] = '\0';
-        dbgOutputLoc(TMR_START + 7);
-        msgToWiflyMsgQISR(&messageptr);
+//        startWritingToJsonObject(buffer, buflen);
+//        addIntegerKeyValuePairToJsonObject("sequence_id", 1);
+//        addStringKeyValuePairToJsonObject("message_type", "request");
+//        addStringKeyValuePairToJsonObject("source", "192.168.1.102");
+//        addStringKeyValuePairToJsonObject("destination", "192.168.1.102");
+//        endWritingToJsonObject();
+//        
+//        
+//        //char buffer[] = "some json string";
+//
+//        int i = 0;
+//        //strcpy(messageptr, buffer);
+//        for (i = 0; buffer[i] != '\0'; i++) {
+//            messageptr[i] = buffer[i];
+//        }
+//        messageptr[i] = '\0';
+//        dbgOutputLoc(TMR_START + 7);
+//        msgToWiflyMsgQISR(&messageptr);
         //}
     }
     if (millisec % 1000 == 0) {
@@ -197,7 +198,7 @@ void IntHandlerDrvUsartInstance0(void) {
         
         dbgOutputLoc(99);
         ReceiveMsgFromWifly(mymsg);
-        dbgOutputVal(mymsg[0]);
+        //SdbgOutputVal(mymsg[0]);
         dbgOutputLoc(100);
         wiflyToMsgQ(mymsg);
 
@@ -216,6 +217,7 @@ void IntHandlerDrvUsartInstance0(void) {
             if (xQueueReceiveFromISR(msgQueue, (void*) &( mymsgptr ), &xTaskWokenByReceive)
                     == pdTRUE) {
                 //(&mymsg) = (&mymsg) + 16;
+                dbgOutputLoc(191);
                 //TransmitMessageToWifly(qMsg.message, qMsg.message_size);
                 TransmitMsgToWifly(mymsgptr);
                 if (counter <= 10) {
@@ -226,6 +228,7 @@ void IntHandlerDrvUsartInstance0(void) {
                 } else {
                     counter = 0;
                 }
+                dbgOutputLoc(192);
 
             }
         }

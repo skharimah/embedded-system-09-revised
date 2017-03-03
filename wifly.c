@@ -39,7 +39,7 @@
 int msgToWiflyMsgQISR(char* msg) {
     if (messageToQISR(msgQueue, msg) != MSG_QUEUE_IS_FULL) {
         //LATASET = 0x08;
-        char buff[100];
+        //char buff[100];
         //xQueuePeekFromISR(msgQueue, (void*) buff);
         PLIB_INT_SourceEnable(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT);
         PLIB_INT_SourceFlagSet(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT);
@@ -62,10 +62,11 @@ int msgToWiflyMsgQISR(char* msg) {
 int msgToWiflyMsgQ(char* msg) {
     if (messageToQ(msgQueue, msg) != MSG_QUEUE_IS_FULL) {
         //LATASET = 0x08;
+        dbgOutputLoc(77);
         PLIB_INT_SourceEnable(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT);
         PLIB_INT_SourceFlagSet(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT);
 
-        dbgOutputLoc(77);
+        
         return 0;
     }
 
@@ -81,7 +82,7 @@ int msgToWiflyMsgQ(char* msg) {
     See prototype in app_public.h.
  */
 int wiflyToMsgQ(char* msg) {
-    dbgOutputVal(msg[0]);
+    //dbgOutputVal(msg[0]);
     if (messageToQISR(recvMsgQueue, msg) != MSG_QUEUE_IS_FULL) {
         //LATASET = 0x08;
         dbgOutputLoc(78);
@@ -144,7 +145,7 @@ void TransmitMsgToWifly(char* msg) {
     for (i = 0; msg[i] != '\0' && i < MSG_BUF_SIZE; i++) {
         while (PLIB_USART_TransmitterBufferIsFull(USART_ID_1));
         TransmitCharToWiflyNonblocking(msg[i]);
-        dbgOutputVal(msg[i]);
+        //dbgOutputVal(msg[i]);
     }
     uint16_t fletcherChecksum = fletcher16(msg, i);
     TransmitCharToWiflyNonblocking(chksum[i]);
@@ -245,7 +246,7 @@ bool ReadJSONfromWifly(char* msg, int* msglen) {
             //if ((*msglen) == 0)
             //  if (mychar != '{')
             //    return false;
-            //dbgOutputVal(mychar);
+            dbgOutputVal(mychar);
             msg[i] = mychar;
             i++;
             //(*msglen)++;
@@ -282,35 +283,41 @@ bool ReceiveMsgFromWifly(char* msg) {
     //(*msg).ucMessageID = ReceiveCharFromWifly();
     //dbgOutputVal((*msg).ucMessageID);
     dbgOutputLoc(171);
+    bool eom;
+    unsigned int noDataCounter = 0;
     bool validJSONMessage = ReadJSONfromWifly(msg, &pos);
     dbgOutputLoc(172);
-    recvFCheck += (ReceiveCharFromWifly() << 8); // read the most significant 8 bits in, shift left 8 bits
-    recvFCheck += (ReceiveCharFromWifly()); // read the least significant 8 bits in.
+    //recvFCheck += (ReceiveCharFromWifly() << 8); // read the most significant 8 bits in, shift left 8 bits
+    //recvFCheck += (ReceiveCharFromWifly()); // read the least significant 8 bits in.
     if (validJSONMessage) {
-        while (i < 4) {
+        while (i < 4 && noDataCounter < MSGFAILSIZE) {
             if (PLIB_USART_ReceiverDataIsAvailable(USART_ID_1)) {
+                dbgOutputLoc(173);
                 chksum[i] = ReceiveCharFromWifly();
-                //dbgOutputVal(chksum[i]);
+                dbgOutputVal(chksum[i]);
                 i++;
+            } else {
+                dbgOutputLoc(137);
+                noDataCounter++;
             }
 
         }
-        fCheck = fletcher16(msg, pos);
+        if (noDataCounter >= MSGFAILSIZE) {
+            dbgOutputLoc(130);
+            return false;
+        }
+        //fCheck = fletcher16(msg, pos);
 
 
 
 
-        dbgOutputLoc(173);
-        char mychar = ReceiveCharFromWifly();
-        dbgOutputVal(mychar);
+
+        //char mychar = ReceiveCharFromWifly();
+        //dbgOutputVal(mychar);
         checksum2 = charLenToInt(chksum);
         checksum(msg, chksum);
         checksum1 = charLenToInt(chksum);
         dbgOutputLoc(174);
-
-
-
-
     } else {
         bad_messages++;
         return false;
