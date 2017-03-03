@@ -62,6 +62,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include <xc.h>
 #include <sys/attribs.h>
 #include "app.h"
+#include <string.h>
 #include "system_definitions.h"
 #include "app_public.h"
 #include "debug.h"
@@ -126,26 +127,30 @@ void IntHandlerDrvTmrInstance0(void) {
 
         //Clear Interrupt Flag 
 
-        Message mymsg;
-        mymsg.ucMessageID = 'D';
+        char mymsg[MSG_BUF_SIZE];
         char buffer[MSG_BUF_SIZE];
         unsigned int buflen = MSG_BUF_SIZE;
         int array[] = {1, 2, 3, 4, 5};
 
+        
         startWritingToJsonObject(buffer, buflen);
         addIntegerKeyValuePairToJsonObject("sequence_id", 1);
         addStringKeyValuePairToJsonObject("message_type", "request");
         addStringKeyValuePairToJsonObject("source", "192.168.1.102");
         addStringKeyValuePairToJsonObject("destination", "192.168.1.102");
         endWritingToJsonObject();
+        
+        
+        //char buffer[] = "some json string";
 
         int i = 0;
+        //strcpy(messageptr, buffer);
         for (i = 0; buffer[i] != '\0'; i++) {
-            mymsg.ucData[i] = buffer[i];
+            messageptr[i] = buffer[i];
         }
-        mymsg.ucData[i] = '\0';
+        messageptr[i] = '\0';
         dbgOutputLoc(TMR_START + 7);
-        msgToWiflyMsgQISR(&mymsg);
+        msgToWiflyMsgQISR(&messageptr);
         //}
     }
     if (millisec % 1000 == 0) {
@@ -181,7 +186,9 @@ void IntHandlerDrvTmrInstance2(void) {
 }
 
 void IntHandlerDrvUsartInstance0(void) {
-    Message mymsg;
+    char mymsg[MSG_BUF_SIZE] = "";
+    char * mymsgptr = "";
+    char shitass[16];
     char mychar;
     dbgOutputLoc(UART_START);
 
@@ -189,11 +196,10 @@ void IntHandlerDrvUsartInstance0(void) {
         PLIB_INT_SourceDisable(INT_ID_0, INT_SOURCE_USART_1_RECEIVE);
         
         dbgOutputLoc(99);
-        ReceiveMsgFromWifly(&mymsg);
-        mychar = mymsg.ucMessageID;
-        dbgOutputVal(mymsg.ucData[0]);
+        ReceiveMsgFromWifly(mymsg);
+        dbgOutputVal(mymsg[0]);
         dbgOutputLoc(100);
-        wiflyToMsgQ(&mymsg);
+        wiflyToMsgQ(mymsg);
 
         received = true;
         counter = 0;
@@ -206,11 +212,12 @@ void IntHandlerDrvUsartInstance0(void) {
         while (!xQueueIsQueueEmptyFromISR(msgQueue)) {
             dbgOutputLoc(35);
             BaseType_t xTaskWokenByReceive = pdFALSE;
-            if (xQueueReceiveFromISR(msgQueue, &mymsg, &xTaskWokenByReceive)
+            //xQueueReceiveFromISR(msgQueue, (void*) &shitass, &xTaskWokenByReceive);
+            if (xQueueReceiveFromISR(msgQueue, (void*) &( mymsgptr ), &xTaskWokenByReceive)
                     == pdTRUE) {
-                
+                //(&mymsg) = (&mymsg) + 16;
                 //TransmitMessageToWifly(qMsg.message, qMsg.message_size);
-                TransmitMsgToWifly(&mymsg);
+                TransmitMsgToWifly(mymsgptr);
                 if (counter <= 10) {
                     counter++;
                 } else if (counter <= 25) {

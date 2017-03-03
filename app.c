@@ -119,9 +119,9 @@ APP_DRV_OBJECTS appDrvObject;
 
 QueueHandle_t createQueue(void) {
     QueueHandle_t queue;
-    
-    int queueSize = sizeof (struct Message *);
-    queue = xQueueCreate(10, queueSize);
+
+    int queueSize = sizeof (char *);
+    queue = xQueueCreate(20, queueSize);
     if (queue == NULL) {
         /* Queue is not created and should not be used
          * The return value will be NULL if queue is not created
@@ -175,9 +175,11 @@ ENCODER_DATA receiveFromEncoderQueue(QueueHandle_t queue) {
     Write to Wifly (transmit) Queue inside of ISR
     See prototype in app_publich.h.
  */
-int msgToWiflyMsgQISR(Message* msg) {
+int msgToWiflyMsgQISR(char* msg) {
     if (messageToQISR(msgQueue, msg) != MSG_QUEUE_IS_FULL) {
         //LATASET = 0x08;
+        char buff[100];
+        //xQueuePeekFromISR(msgQueue, (void*) buff);
         PLIB_INT_SourceEnable(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT);
         PLIB_INT_SourceFlagSet(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT);
 
@@ -196,7 +198,7 @@ int msgToWiflyMsgQISR(Message* msg) {
     Write to Wifly (transmit) Queue outside of ISR
     See prototype in app_public.h.
  */
-int msgToWiflyMsgQ(Message* msg) {
+int msgToWiflyMsgQ(char* msg) {
     if (messageToQ(msgQueue, msg) != MSG_QUEUE_IS_FULL) {
         //LATASET = 0x08;
         PLIB_INT_SourceEnable(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT);
@@ -217,8 +219,8 @@ int msgToWiflyMsgQ(Message* msg) {
     Writes message (from wifly) to the received message queue
     See prototype in app_public.h.
  */
-int wiflyToMsgQ(Message* msg) {
-    dbgOutputVal(msg->ucData[0]);
+int wiflyToMsgQ(char* msg) {
+    dbgOutputVal(msg[0]);
     if (messageToQISR(recvMsgQueue, msg) != MSG_QUEUE_IS_FULL) {
         //LATASET = 0x08;
         dbgOutputLoc(78);
@@ -236,13 +238,13 @@ int wiflyToMsgQ(Message* msg) {
     Write to Message Queue inside of ISR
     See prototype in app.h.
  */
-int messageToQISR(QueueHandle_t queue, Message* msg) {
-    dbgOutputVal(msg->ucData[0]);
+int messageToQISR(QueueHandle_t queue, char* msg) {
+    dbgOutputVal(msg[0]);
     dbgOutputLoc(88);
     if (queue != NULL) {
-        if (xQueueSendFromISR(queue,
-                (void *) msg,
-                NULL) != pdTRUE) {
+        if ((xQueueSendFromISR(queue,
+                (void *) &msg,
+                NULL) != pdTRUE)) {
             return MSG_QUEUE_IS_FULL;
         } else
             return 0;
@@ -258,7 +260,7 @@ int messageToQISR(QueueHandle_t queue, Message* msg) {
     Write to Message Queue outside of ISR
     See prototype in app.h.
  */
-int messageToQ(QueueHandle_t queue, Message* msg) {
+int messageToQ(QueueHandle_t queue, char* msg) {
 
     dbgOutputLoc(89);
     if (queue != NULL) {
@@ -346,12 +348,13 @@ void TransmitCharToWiflyNonblocking(unsigned char value) {
   * Function: TransmitMsgToWifly(Message msg)
   * 
   * Remarks: Sends the message to the server via wifly according to specs:
-  * LLLLMMMMMMMMM...MCCCC
-  * where L are the base 10 digits of the length of the following message
-  * and C is the checksum of the message, also base 10
+  * MMMMMMMMM...MFFCCCC
+  * M is the message (char array, c-string)
+  * and C is the checksum of the message, also base 10, F is the fletcher checksum
+  * (16 byte number)
   */
 
-void TransmitMsgToWifly(Message* msg) {
+void TransmitMsgToWifly(char* msg) {
     char len[4], chksum[4];
     int i;
     //    intLenToChar(msg, len);
@@ -361,12 +364,16 @@ void TransmitMsgToWifly(Message* msg) {
     //        TransmitCharToWiflyNonblocking(len[i]);
     //    }
 
-    TransmitCharToWifly(msg->ucMessageID);
+    //TransmitCharToWifly(msg);
 
-    for (i = 0; msg->ucData[i] != '\0' && i < MSG_BUF_SIZE; i++) {
+    for (i = 0; msg[i] != '\0' && i < MSG_BUF_SIZE; i++) {
         while (PLIB_USART_TransmitterBufferIsFull(USART_ID_1));
-        TransmitCharToWiflyNonblocking(msg->ucData[i]);
+        TransmitCharToWiflyNonblocking(msg[i]);
+        dbgOutputVal(msg[i]);
     }
+    uint16_t fletcherChecksum = fletcher16(msg, i);
+    TransmitCharToWiflyNonblocking(chksum[i]);
+    TransmitCharToWiflyNonblocking(chksum[i]);
     for (i = 0; i < 4; i++) {
         while (PLIB_USART_TransmitterBufferIsFull(USART_ID_1));
         TransmitCharToWiflyNonblocking(chksum[i]);
@@ -374,9 +381,9 @@ void TransmitMsgToWifly(Message* msg) {
 }
 // takes in a Messaqe, calculates the length (characters) of the message
 
-void intLenToChar(Message *msg, char *len) {
-    int i, j, length = 1;
-    for (i = 0; msg->ucData[i] != '\0'; i++) {
+void intLenToChar(char *msg, char *len) {
+    int i, j, length = 0;
+    for (i = 0; msg[i] != '\0'; i++) {
         length++;
     }
     for (j = 0; j < 4; j++) {
@@ -388,11 +395,11 @@ void intLenToChar(Message *msg, char *len) {
 // Takes in a message, computes the sum of the bits to make sure that the 
 // Data was transmitted properly
 
-void checksum(Message* msg, char *len) {
-    int i, j, sum = msg->ucMessageID;
+void checksum(char* msg, char *len) {
+    int i, j, sum = 0;
     int hex;
-    for (i = 0; msg->ucData[i] != '\0'; i++) {
-        sum = sum + msg->ucData[i];
+    for (i = 0; msg[i] != '\0'; i++) {
+        sum = sum + msg[i];
     }
     for (j = 0; j < 4; j++) {
         len[3 - j] = (sum % 10) + '0';
@@ -435,10 +442,10 @@ char ReceiveCharFromWiflyBlocking() {
     return PLIB_USART_ReceiverByteReceive(USART_ID_1);
 }
 
-int getMsgFromRecvQ(Message *msg) {
+int getMsgFromRecvQ(char *msg) {
     dbgOutputLoc(87);
     if (xQueueReceive(recvMsgQueue,
-            &msg,
+            msg,
             0
             ) == pdTRUE) {
         dbgOutputVal('R');
@@ -448,7 +455,7 @@ int getMsgFromRecvQ(Message *msg) {
     return -1;
 }
 
-bool ReadJSONfromWifly(Message* msg, int* msglen) {
+bool ReadJSONfromWifly(char* msg, int* msglen) {
     dbgOutputLoc(175);
     bool eom = false;
     int noDataCounter = 0;
@@ -464,7 +471,7 @@ bool ReadJSONfromWifly(Message* msg, int* msglen) {
             //  if (mychar != '{')
             //    return false;
             //dbgOutputVal(mychar);
-            msg->ucData[i] = mychar;
+            msg[i] = mychar;
             i++;
             //(*msglen)++;
             //if (mychar == '{')
@@ -480,23 +487,30 @@ bool ReadJSONfromWifly(Message* msg, int* msglen) {
     dbgOutputLoc(178);
     if (eom) {
         //dbgOutputVal(msg->ucData[0]);
+        (*msglen) = i;
         return true;
-    } else
+    } else {
+        bad_messages++;
         return false;
+    }
+
 }
 
-bool ReceiveMsgFromWifly(Message* msg) {
+bool ReceiveMsgFromWifly(char* msg) {
 
     dbgOutputLoc(170);
     int pos = 0;
     char chksum[4];
+    uint16_t fCheck = 0, recvFCheck = 0;
     int checksum1, checksum2;
     int i = 0;
-    (*msg).ucMessageID = ReceiveCharFromWifly();
-    dbgOutputVal((*msg).ucMessageID);
+    //(*msg).ucMessageID = ReceiveCharFromWifly();
+    //dbgOutputVal((*msg).ucMessageID);
     dbgOutputLoc(171);
     bool validJSONMessage = ReadJSONfromWifly(msg, &pos);
     dbgOutputLoc(172);
+    recvFCheck += (ReceiveCharFromWifly() << 8); // read the most significant 8 bits in, shift left 8 bits
+    recvFCheck += (ReceiveCharFromWifly()); // read the least significant 8 bits in.
     if (validJSONMessage) {
         while (i < 4) {
             if (PLIB_USART_ReceiverDataIsAvailable(USART_ID_1)) {
@@ -506,6 +520,11 @@ bool ReceiveMsgFromWifly(Message* msg) {
             }
 
         }
+        fCheck = fletcher16(msg, pos);
+
+
+
+
         dbgOutputLoc(173);
         char mychar = ReceiveCharFromWifly();
         dbgOutputVal(mychar);
@@ -513,22 +532,56 @@ bool ReceiveMsgFromWifly(Message* msg) {
         checksum(msg, chksum);
         checksum1 = charLenToInt(chksum);
         dbgOutputLoc(174);
-    } else
+
+
+
+
+    } else {
+        bad_messages++;
         return false;
+    }
 
 
     // Parse message into JSON
     // check checksum, length
     // 
     if (checksum1 == checksum2) {
+
+        if (fCheck != recvFCheck) {
+            dbgOutputVal('!');
+            bad_messages++;
+            return false;
+        }
         dbgOutputVal('T');
         //dbgOutputVal(msg->ucData[0]);
+        good_messages++;
         return true;
     } else {
         dbgOutputVal('F');
+        bad_messages++;
         return false;
     }
 
+}
+
+uint16_t fletcher16(uint8_t const *data, size_t bytes) {
+    uint16_t sum1 = 0xff, sum2 = 0xff;
+    size_t tlen;
+
+    while (bytes) {
+        tlen = ((bytes >= 20) ? 20 : bytes);
+        bytes -= tlen;
+        do {
+            sum2 += sum1 += *data++;
+            tlen--;
+        } while (tlen);
+        sum1 = (sum1 & 0xff) + (sum1 >> 8);
+        sum2 = (sum2 & 0xff) + (sum2 >> 8);
+    }
+    /* Second reduction step to reduce sums to 8 bits */
+    sum1 = (sum1 & 0xff) + (sum1 >> 8);
+    sum2 = (sum2 & 0xff) + (sum2 >> 8);
+    return (sum2 << 8) | sum1;
 }
 
 int charLenToInt(char *len) {
@@ -541,16 +594,16 @@ int charLenToInt(char *len) {
     }
     return sum;
 }
-
-char readCharFromQ(QueueHandle_t xQueue) {
-    dbgOutputLoc(77);
-    Message mymessage;
-    xQueueReceive(xQueue,
-            (void *) &mymessage,
-            portMAX_DELAY
-            );
-    return mymessage.ucMessageID;
-}
+//
+//char readCharFromQ(QueueHandle_t xQueue) {
+//    dbgOutputLoc(77);
+//    char mymessage;
+//    xQueueReceive(xQueue,
+//            (void *) &mymessage,
+//            portMAX_DELAY
+//            );
+//    return mymessage;
+//}
 
 int UARTInit(USART_MODULE_ID id, int baudrate) {
 
@@ -580,6 +633,9 @@ bool checkConnected() {
  */
 
 void APP_Initialize(void) {
+    good_messages = 0;
+    bad_messages = 0;
+    
 
     DRV_TMR0_Initialize();
     DRV_TMR0_Start();
@@ -636,7 +692,7 @@ void APP_Initialize(void) {
 
 void APP_Tasks(void) {
     UARTInit(USART_ID_1, 230400);
-    Message myMsg;
+    char myMsg[ MSG_BUF_SIZE ];
     //    myMsg.ucData[0] = 't';
     //    myMsg.ucData[1] = 't';
     //    myMsg.ucMessageID = 't';
@@ -670,9 +726,9 @@ void APP_Tasks(void) {
         prev_ms = cur_ms;
         cur_ms = PLIB_TMR_Counter16BitGet(TMR_ID_2);
         millisec += (cur_ms - prev_ms);
-        if (getMsgFromRecvQ(&myMsg) == 0) {
+        if (getMsgFromRecvQ(myMsg) == 0) {
             received = true;
-            dbgOutputVal(myMsg.ucData[0]);
+            dbgOutputVal(myMsg[1]);
 
         }
 
@@ -681,11 +737,11 @@ void APP_Tasks(void) {
 
             if (i < 100) {
                 dbgOutputLoc(155 + i);
-                dbgOutputVal(myMsg.ucData[i]);
+                dbgOutputVal(myMsg[i]);
                 i++;
             } else {
                 dbgOutputLoc(154);
-                dbgOutputVal(myMsg.ucMessageID);
+                dbgOutputVal(myMsg[0]);
                 i = 0;
             }
 

@@ -198,7 +198,7 @@ QueueHandle_t createQueue(void);
     An integer 0 for success, -1 for failure.
 
 */
-int messageToQISR(QueueHandle_t queue, Message* msg);
+int messageToQISR(QueueHandle_t queue, char* msg);
 /*******************************************************************************
   Function:
     int messageToQ(QueueHandle_t queue, Message msg)
@@ -218,7 +218,7 @@ int messageToQISR(QueueHandle_t queue, Message* msg);
     An integer 0 for success, -1 for failure.
 
 */
-int messageToQ(QueueHandle_t queue, Message* msg);
+int messageToQ(QueueHandle_t queue, char* msg);
 /*******************************************************************************
   Function:
     void intLenToChar(Message msg, char *len)
@@ -238,10 +238,11 @@ int messageToQ(QueueHandle_t queue, Message* msg);
     An integer 0 for success, -1 for failure.
 
 */
-void intLenToChar(Message *msg, char *len);
-void checksum(Message *msg, char *sum);
+void intLenToChar(char *msg, char *len);
+void checksum(char *msg, char *sum);
+uint16_t fletcher16( uint8_t const *data, size_t bytes );
 QueueHandle_t createEncoderQueue(void);
-int getMsgFromRecvQ(Message *msg);
+int getMsgFromRecvQ(char *msg);
 /*******************************************************************************
   Function:
     unsigned char receiveFromQueue(QueueHandle_t queue);
