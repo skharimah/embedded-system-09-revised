@@ -62,9 +62,12 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include <xc.h>
 #include <sys/attribs.h>
 #include "app.h"
+#include "motortask.h"
+#include "mapgeneratortask.h"
 #include "system_definitions.h"
 #include "app_public.h"
 #include "debug.h"
+#include "motorTask.h"
 
 // *****************************************************************************
 // *****************************************************************************
@@ -108,11 +111,12 @@ void IntHandlerDrvTmrInstance0(void) {
         leftTicks = PLIB_TMR_Counter16BitGet(TMR_ID_3);
         rightTicks = PLIB_TMR_Counter16BitGet(TMR_ID_4);
         
-        dbgOutputVal(leftTicks - leftTicksPrev);
+        //dbgOutputVal(leftTicks - leftTicksPrev);
         //Send encoder data to queue
         ENCODER_DATA ticksMessage;
         ticksMessage.leftTicks = leftTicks;
         ticksMessage.rightTicks = rightTicks;
+        app1SendEncoderValToMsgQ(ticksMessage);
         unsigned char val;
         count++;
 
@@ -203,7 +207,7 @@ void IntHandlerDrvTmrInstance0(void) {
 
 void IntHandlerDrvTmrInstance1(void) {
     //dbgOutputVal(leftMotorTicks);
-    dbgOutputLoc(212);
+    //dbgOutputLoc(212);
     PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_TIMER_3);
     DRV_TMR1_Tasks();
 }
@@ -212,7 +216,7 @@ void IntHandlerDrvTmrInstance1(void) {
 
 void IntHandlerDrvTmrInstance2(void) {
     //dbgOutputVal(rightMotorTicks);
-    dbgOutputLoc(221);
+    //dbgOutputLoc(221);
     PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_TIMER_4);
     DRV_TMR2_Tasks();
 }
@@ -228,11 +232,11 @@ void IntHandlerDrvUsartInstance0(void) {
     if (PLIB_INT_SourceFlagGet(INT_ID_0, INT_SOURCE_USART_1_RECEIVE)) {
         PLIB_INT_SourceDisable(INT_ID_0, INT_SOURCE_USART_1_RECEIVE);
         PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_USART_1_RECEIVE);
-        dbgOutputLoc(99);
+        //dbgOutputLoc(99);
         mymsg = ReceiveMsgFromWifly();
         mychar = mymsg.ucMessageID;
         //dbgOutputVal(mychar);
-        dbgOutputLoc(100);
+        //dbgOutputLoc(100);
         wiflyToMsgQ(mymsg);
 
         received = true;
@@ -241,9 +245,9 @@ void IntHandlerDrvUsartInstance0(void) {
         PLIB_INT_SourceEnable(INT_ID_0, INT_SOURCE_USART_1_RECEIVE);
         
     } else if (PLIB_INT_SourceFlagGet(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT)) {
-        dbgOutputLoc(WIFLY_TRANS);
+        //dbgOutputLoc(WIFLY_TRANS);
         while (!xQueueIsQueueEmptyFromISR(msgQueue)) {
-            dbgOutputLoc(35);
+            //dbgOutputLoc(35);
             BaseType_t xTaskWokenByReceive = pdFALSE;
             if (xQueueReceiveFromISR(msgQueue, (void *) &mymsg, &xTaskWokenByReceive)
                     == pdTRUE) {
@@ -263,13 +267,13 @@ void IntHandlerDrvUsartInstance0(void) {
         }
         PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT);
         PLIB_INT_SourceDisable(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT);
-        dbgOutputLoc(42);
+        //dbgOutputLoc(42);
     } else if (PLIB_INT_SourceFlagGet(INT_ID_0, INT_SOURCE_USART_1_ERROR)) {
-        dbgOutputVal('E');
-        dbgOutputLoc(WIFLY_ERROR);
+        //dbgOutputVal('E');
+        //dbgOutputLoc(WIFLY_ERROR);
         PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_USART_1_ERROR);
     }
-    dbgOutputLoc(43);
+    //dbgOutputLoc(43);
 
     //dbgOutputLoc(UART_STOP);
 }

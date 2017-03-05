@@ -32,7 +32,7 @@ extern "C" {
 #define MSG_BUF_SIZE 100
     
 DRV_HANDLE usbHandle;// = DRV_USART_Open(DRV_USART_INDEX_0, DRV_IO_INTENT_READWRITE);
-QueueHandle_t motorMsgQueue;
+QueueHandle_t encoderQueue;
 QueueHandle_t msgQueue;
 QueueHandle_t recvMsgQueue;
 
@@ -42,6 +42,14 @@ typedef struct AMessage
     char ucData[ MSG_BUF_SIZE ];
  } Message;
 
+ typedef struct
+{
+    //Ticks of the right motor encoder
+    int rightTicks;
+    
+    //Ticks of the left motor encoder
+    int leftTicks;
+} ENCODER_DATA;
 /*******************************************************************************
   Function:
     int app1SendTimerValToMsgQ(unsigned int)
@@ -76,6 +84,15 @@ void TransmitCharToWifly(unsigned char value);
 void TransmitMsgToWifly(Message msg);
 
 char ReceiveCharFromWifly();
+
+
+/*******************************************************************************
+ Encoder Queue Functions
+ */
+ENCODER_DATA receiveFromEncoderQueue(QueueHandle_t queue);
+
+int app1SendEncoderValToMsgQ(ENCODER_DATA encoderTicks);
+
 
 /*******************************************************************************
   Function:

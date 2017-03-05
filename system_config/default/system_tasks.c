@@ -55,6 +55,8 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include "system_config.h"
 #include "system_definitions.h"
 #include "app.h"
+#include "motortask.h"
+#include "mapgeneratortask.h"
 
 
 // *****************************************************************************
@@ -67,6 +69,8 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
  
 static void _SYS_Tasks ( void );
 static void _APP_Tasks(void);
+static void _MOTORTASK_Tasks(void);
+static void _MAPGENERATORTASK_Tasks(void);
 
 
 // *****************************************************************************
@@ -95,6 +99,16 @@ void SYS_Tasks ( void )
                 "APP Tasks",
                 1024, NULL, 1, NULL);
 
+    /* Create OS Thread for MOTORTASK Tasks. */
+    xTaskCreate((TaskFunction_t) _MOTORTASK_Tasks,
+                "MOTORTASK Tasks",
+                1024, NULL, 1, NULL);
+
+    /* Create OS Thread for MAPGENERATORTASK Tasks. */
+    xTaskCreate((TaskFunction_t) _MAPGENERATORTASK_Tasks,
+                "MAPGENERATORTASK Tasks",
+                1024, NULL, 1, NULL);
+
     /**************
      * Start RTOS * 
      **************/
@@ -117,9 +131,6 @@ static void _SYS_Tasks ( void)
         SYS_DEVCON_Tasks(sysObj.sysDevcon);
 
         /* Maintain Device Drivers */
-    //DRV_USART_TasksTransmit(sysObj.drvUsart0);
-    //DRV_USART_TasksReceive(sysObj.drvUsart0);
-    //DRV_USART_TasksError (sysObj.drvUsart0);
 
         /* Maintain Middleware */
 
@@ -141,6 +152,40 @@ static void _APP_Tasks(void)
     while(1)
     {
         APP_Tasks();
+    }
+}
+
+
+/*******************************************************************************
+  Function:
+    void _MOTORTASK_Tasks ( void )
+
+  Summary:
+    Maintains state machine of MOTORTASK.
+*/
+
+static void _MOTORTASK_Tasks(void)
+{
+    while(1)
+    {
+        MOTORTASK_Tasks();
+    }
+}
+
+
+/*******************************************************************************
+  Function:
+    void _MAPGENERATORTASK_Tasks ( void )
+
+  Summary:
+    Maintains state machine of MAPGENERATORTASK.
+*/
+
+static void _MAPGENERATORTASK_Tasks(void)
+{
+    while(1)
+    {
+        MAPGENERATORTASK_Tasks();
     }
 }
 

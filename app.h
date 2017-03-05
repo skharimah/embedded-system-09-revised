@@ -120,15 +120,7 @@ typedef struct
 
 } APP_DATA;
 
-//Encoder Message Struct
-typedef struct
-{
-    //Ticks of the right motor encoder
-    int rightTicks;
-    
-    //Ticks of the left motor encoder
-    int leftTicks;
-} ENCODER_DATA;
+
 
 /* Driver objects.
 
@@ -149,7 +141,8 @@ typedef struct
 	 
 } APP_DRV_OBJECTS;
 
-
+//Task Stack Sizes
+#define MOTOR_STACK_SIZE 100
 // *****************************************************************************
 // *****************************************************************************
 // Section: Function Prototypes
