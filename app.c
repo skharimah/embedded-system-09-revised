@@ -55,7 +55,9 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 
 #include "app.h"
 #include "app_public.h"
+#include <queue.h>
 #include "debug.h"
+#include "json_access/jsonaccess.h"
 #include <xc.h>
 #include "string.h"
 
@@ -164,12 +166,12 @@ int receiveFromEncoderQueue(ENCODER_DATA *buffer) {
         if (xQueueReceive(encoderQueue, buffer, 0) == pdTRUE) {
             //dbgOutputVal(buffer->leftTicks);
             return 1;
-            
+
             /*Unsigned char value from the queue is successfully stored in buffer*/
         }
-        
+
     }
-    
+
     return 0;
 }
 
@@ -184,13 +186,13 @@ int receiveFromEncoderQueue(ENCODER_DATA *buffer) {
 int messageToQISR(QueueHandle_t queue, char* msg) {
     //dbgOutputVal(msg[0]);
     //dbgOutputLoc(88);
-    
+
     //char * jsstring = "message";
-    
+    BaseType_t xHigherPriorityTaskWoken;
     if (queue != NULL) {
         if ((xQueueSendFromISR(queue,
-                (void *) &msg,
-                NULL ) != pdTRUE)) {
+                &msg,
+                &xHigherPriorityTaskWoken) != pdTRUE)) {
             return MSG_QUEUE_IS_FULL;
         } else
             return 0;
@@ -242,6 +244,31 @@ int UARTInit(USART_MODULE_ID id, int baudrate) {
     return 1;
 }
 
+int requestEncoderData(int destIP) {
+    int i, sum = 0;
+    //char buffer[MSG_BUF_SIZE];
+    int buflen = MSG_BUF_SIZE;
+
+    startWritingToJsonObject(messageptr, buflen);
+
+    /* TODO: Get message type here */
+    addStringKeyValuePairToJsonObject("message_type", "request");
+
+    addIntegerKeyValuePairToJsonObject("sequence_id", 1);
+    /* TODO: Get IR_sensor_value here */
+    addStringKeyValuePairToJsonObject("requested_data", "encoder");
+    /* TODO: Get port number here */
+    addStringKeyValuePairToJsonObject("source", "192.168.1.102");
+    /* TODO: Get encoder_value here */
+    addStringKeyValuePairToJsonObject("destination", "192.168.1.103");
+
+    endWritingToJsonObject();
+
+    if (msgToWiflyMsgQISR(&messageptr) == 0)
+        return 0;
+    return 1;
+}
+
 bool checkConnected() {
 
 }
@@ -277,13 +304,13 @@ void APP_Initialize(void) {
     DRV_TMR2_Start();
     motorsInitialize();
 
-//    motorsForward();
+    //    motorsForward();
 
 
     //encoderQueue = createEncoderQueue();
     //msgQueue = createQueue();
     //if (encoderQueue == NULL) {
-        /* Wait indefinitely until the queue is successfully created */
+    /* Wait indefinitely until the queue is successfully created */
     //}
     //SYS_PORTS_Clear ( PORTS_BIT_POS_0, PORT_CHANNEL_G, 0xFF );
     //SYS_PORTS_Set( PORTS_BIT_POS_0, PORT_CHANNEL_G, 1, 0x0F0 );

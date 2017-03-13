@@ -153,6 +153,10 @@ void IntHandlerDrvTmrInstance0(void) {
         app1SendEncoderValToMsgQ(&ticksMessage);
         //dbgOutputVal(ticksMessage.leftTicks);
     }
+    
+    if (millisec % 2000 == 0){
+        requestEncoderData(103);
+    }
     PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_TIMER_2);
     //dbgOutputLoc(TMR_STOP);
 }

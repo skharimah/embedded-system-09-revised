@@ -149,7 +149,7 @@ void TransmitMsgToWifly(char* msg) {
         //dbgOutputVal(msg[i]);
     }
     uint16_t fletcherChecksum = fletcher16(msg, i);
-    char f1 = ((fletcherChecksum >> 8) & 0xf), f2 = (fletcherChecksum & 0xf);
+    char f1 = ((fletcherChecksum >> 8) & 0xff), f2 = (fletcherChecksum & 0xff);
     while (PLIB_USART_TransmitterBufferIsFull(USART_ID_1));
     TransmitCharToWiflyNonblocking(f1);
     while (PLIB_USART_TransmitterBufferIsFull(USART_ID_1));

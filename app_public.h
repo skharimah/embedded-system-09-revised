@@ -31,7 +31,7 @@ extern "C" {
     
 #define MSG_BUF_SIZE 200
     
-    char messageptr[MSG_BUF_SIZE];
+    char messageptr[200];
     
     const char* DEVNAME;// = "sensor";
     const char* IPADDRESS;// = "192.168.1.102";
@@ -83,7 +83,7 @@ int app1SendTimerValToMsgQ(unsigned int millisecondsElapsed);
 int charToMsgQFromISR(QueueHandle_t queue, unsigned char value);
 int app1SendCharToMsgQ(unsigned char value);
 int charToMsgQ(char val);
-
+int requestEncoderData(int destIP);
 int msgToWiflyMsgQISR(char* msg);
 int msgToWiflyMsgQ(char* msg);
 int writeStringUART(char* string);

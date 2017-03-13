@@ -196,7 +196,7 @@ void APP_JSON_Tasks(void) {
                 jsstringValuesTuples[2] = getValueFromJsonString("requested_data", myMsg);
                 jsstringValuesTuples[3] = getValueFromJsonString("source", myMsg);
                 jsstringValuesTuples[4] = getValueFromJsonString("destination", myMsg);
-                jsstringValuesTuples[5] = getValueFromJsonString("port", myMsg);
+                //jsstringValuesTuples[5] = getValueFromJsonString("port", myMsg);
 
                 for (i = 0; i < jsstringValuesTuples[0].size; i++) {
                     message_type[i] = jsstringValuesTuples[0].resultString[i];
@@ -215,44 +215,47 @@ void APP_JSON_Tasks(void) {
             {
                 char resultBuff[25];
                 dbgOutputLoc(111);
-                int i, sum=0;
+                int i, sum = 0;
+                if (jsstringValuesTuples[0].resultString[2] == 'q') {
 
+                    startWritingToJsonObject(buffer, buflen);
 
-                startWritingToJsonObject(buffer, buflen);
+                    /* TODO: Get message type here */
+                    addStringKeyValuePairToJsonObject("message_type", "response");
+                    /* TODO: Get encoder_value here */
+                    addIntegerKeyValuePairToJsonObject("encoder_value", 12);
 
-                /* TODO: Get message type here */
-                addStringKeyValuePairToJsonObject("message_type", "response");
-                /* TODO: Get encoder_value here */
-                addIntegerKeyValuePairToJsonObject("encoder_value", 12);
+                    addIntegerKeyValuePairToJsonObject("good_messages", good_messages);
 
-                addIntegerKeyValuePairToJsonObject("good_messages", good_messages);
+                    addIntegerKeyValuePairToJsonObject("bad_messages", bad_messages);
 
-                addIntegerKeyValuePairToJsonObject("bad_messages", bad_messages);
-                
-                int tens = 1;
-                if (jsstringValuesTuples[3].size > 1)
-                    tens = 10 * (jsstringValuesTuples[3].size-1);
-                for (i = 0; i < jsstringValuesTuples[3].size; i++) {
-                    sum += (tens)*(jsstringValuesTuples[3].resultString[i] - '0');
-                    tens = tens/10;
+                    int tens = 1;
+                    if (jsstringValuesTuples[3].size > 1)
+                        tens = 10 * (jsstringValuesTuples[3].size - 1);
+                    for (i = 0; i < jsstringValuesTuples[3].size; i++) {
+                        sum += (tens)*(jsstringValuesTuples[3].resultString[i] - '0');
+                        tens = tens / 10;
+                    }
+                    sum++;
+                    addIntegerKeyValuePairToJsonObject("sequence_id", sum);
+                    /* TODO: Get IR_sensor_value here */
+                    addIntegerKeyValuePairToJsonObject("infrared_sensor_value", 150);
+                    /* TODO: Get port number here */
+                    addStringKeyValuePairToJsonObject("source", "192.168.1.102");
+                    /* TODO: Get encoder_value here */
+                    addStringKeyValuePairToJsonObject("destination", "192.168.1.105");
+
+                    endWritingToJsonObject();
+
+                    app_jsonData.state = APP_JSON_STATE_SENDING_MESSAGE;
+
+                    for (i = 0; i < buflen; i++) {
+                        dbgOutputVal(buffer[i]);
+                    }
+                    break;
                 }
-                sum++;
-                addIntegerKeyValuePairToJsonObject("sequence_id", sum);
-                /* TODO: Get IR_sensor_value here */
-                addIntegerKeyValuePairToJsonObject("infrared_sensor_value", 150);
-                /* TODO: Get port number here */
-                addStringKeyValuePairToJsonObject("source", "192.168.1.103");
-                /* TODO: Get encoder_value here */
-                addStringKeyValuePairToJsonObject("destination", "192.168.1.105");
-
-                endWritingToJsonObject();
-
-                app_jsonData.state = APP_JSON_STATE_SENDING_MESSAGE;
-                
-                for (i = 0; i < buflen; i++){
-                    dbgOutputVal(buffer[i]);
-                }
-                break;
+                else
+                    app_jsonData.state = APP_JSON_STATE_WAITING_FOR_MESSAGE;
             }
 
             case APP_JSON_STATE_WRITING_REQUEST:
