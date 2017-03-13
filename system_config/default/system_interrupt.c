@@ -189,7 +189,6 @@ void IntHandlerDrvTmrInstance2(void) {
 void IntHandlerDrvUsartInstance0(void) {
     char mymsg[MSG_BUF_SIZE] = "";
     char * mymsgptr = "";
-    char shitass[16];
     char mychar;
     dbgOutputLoc(UART_START);
 
@@ -204,7 +203,7 @@ void IntHandlerDrvUsartInstance0(void) {
         }
         received = true;
         counter = 0;
-
+        dbgOutputLoc(42);
         PLIB_INT_SourceEnable(INT_ID_0, INT_SOURCE_USART_1_RECEIVE);
         PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_USART_1_RECEIVE);
 

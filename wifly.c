@@ -102,9 +102,9 @@ int wiflyToMsgQ(char* msg) {
 void TransmitCharToWifly(unsigned char value) {
     dbgOutputLoc(39);
     while (PLIB_USART_TransmitterBufferIsFull(USART_ID_1)) {
-        dbgOutputLoc(7);
+        //dbgOutputLoc(7);
     }
-    dbgOutputLoc(40);
+    //dbgOutputLoc(40);
     PLIB_USART_TransmitterByteSend(USART_ID_1, value);
     dbgOutputLoc(41);
 }
@@ -117,10 +117,10 @@ void TransmitCharToWifly(unsigned char value) {
  *      Sends a character over UART to the wifly (non blocking)
  */
 void TransmitCharToWiflyNonblocking(unsigned char value) {
-    dbgOutputLoc(40);
+    //dbgOutputLoc(40);
     PLIB_USART_TransmitterByteSend(USART_ID_1, value);
     dbgOutputVal(value);
-    dbgOutputLoc(41);
+    //dbgOutputLoc(41);
 }/*
   * Function: TransmitMsgToWifly(Message msg)
   * 
@@ -148,9 +148,12 @@ void TransmitMsgToWifly(char* msg) {
         TransmitCharToWiflyNonblocking(msg[i]);
         //dbgOutputVal(msg[i]);
     }
-    //uint16_t fletcherChecksum = fletcher16(msg, i);
-    //TransmitCharToWiflyNonblocking(chksum[i]);
-    //TransmitCharToWiflyNonblocking(chksum[i]);
+    uint16_t fletcherChecksum = fletcher16(msg, i);
+    char f1 = ((fletcherChecksum >> 8) & 0xf), f2 = (fletcherChecksum & 0xf);
+    while (PLIB_USART_TransmitterBufferIsFull(USART_ID_1));
+    TransmitCharToWiflyNonblocking(f1);
+    while (PLIB_USART_TransmitterBufferIsFull(USART_ID_1));
+    TransmitCharToWiflyNonblocking(f2);
     for (i = 0; i < 4; i++) {
         while (PLIB_USART_TransmitterBufferIsFull(USART_ID_1));
         TransmitCharToWiflyNonblocking(chksum[i]);
@@ -196,9 +199,9 @@ void checksum(char* msg, char *len) {
  *      The character received from the wifly
  */
 char ReceiveCharFromWifly() {
-    dbgOutputLoc(166);
+    //dbgOutputLoc(166);
     char retchar = PLIB_USART_ReceiverByteReceive(USART_ID_1);
-    dbgOutputLoc(167);
+    //dbgOutputLoc(167);
     return retchar;
 }
 
@@ -220,7 +223,7 @@ char ReceiveCharFromWiflyBlocking() {
 }
 
 int getMsgFromRecvQ(char *msg) {
-    dbgOutputLoc(87);
+    //dbgOutputLoc(87);
     if (xQueueReceive(recvMsgQueue,
             msg,
             0
@@ -255,18 +258,19 @@ bool ReadJSONfromWifly(char* msg, int* msglen) {
 
 
         } else {
-            dbgOutputLoc(177);
+            //dbgOutputLoc(177);
             noDataCounter++;
         }
         if (mychar == '}')
             eom = true;
     }
-    dbgOutputLoc(178);
+    //dbgOutputLoc(178);
     if (eom) {
         //dbgOutputVal(msg->ucData[0]);
         (*msglen) = i;
         return true;
     } else {
+        dbgOutputLoc(9);
         //bad_messages++;
         return false;
     }
@@ -278,7 +282,7 @@ bool ReceiveMsgFromWifly(char* msg) {
     dbgOutputLoc(170);
     int pos = 0;
     char chksum[4];
-    uint16_t fCheck = 0, recvFCheck = 0;
+    uint16_t fCheck = 0, rFCheck = 0, recvFCheck[2] = {0,0};
     int checksum1, checksum2;
     int i = 0;
     //(*msg).ucMessageID = ReceiveCharFromWifly();
@@ -291,6 +295,23 @@ bool ReceiveMsgFromWifly(char* msg) {
     //recvFCheck += (ReceiveCharFromWifly() << 8); // read the most significant 8 bits in, shift left 8 bits
     //recvFCheck += (ReceiveCharFromWifly()); // read the least significant 8 bits in.
     if (validJSONMessage) {
+        while (i < 2 && noDataCounter < MSGFAILSIZE) {
+            if (PLIB_USART_ReceiverDataIsAvailable(USART_ID_1)) {
+                noDataCounter = 0;
+                dbgOutputLoc(183);
+                recvFCheck[i] = ReceiveCharFromWifly();
+                
+                dbgOutputVal(recvFCheck[i]);
+                i++;
+            } else {
+                //dbgOutputLoc(137);
+                noDataCounter++;
+            }
+        }
+        rFCheck += (recvFCheck[0] << 8);
+        rFCheck += recvFCheck[1];
+        
+            i = 0;
         while (i < 4 && noDataCounter < MSGFAILSIZE) {
             if (PLIB_USART_ReceiverDataIsAvailable(USART_ID_1)) {
                 noDataCounter = 0;
@@ -299,7 +320,7 @@ bool ReceiveMsgFromWifly(char* msg) {
                 dbgOutputVal(chksum[i]);
                 i++;
             } else {
-                dbgOutputLoc(137);
+                //dbgOutputLoc(137);
                 noDataCounter++;
             }
 
@@ -309,7 +330,7 @@ bool ReceiveMsgFromWifly(char* msg) {
             dbgOutputLoc(130);
             return false;
         }
-        //fCheck = fletcher16(msg, pos);
+        fCheck = fletcher16(msg, pos);
 
 
 
@@ -332,16 +353,17 @@ bool ReceiveMsgFromWifly(char* msg) {
     // 
     if (checksum1 == checksum2) {
 
-//        if (fCheck != recvFCheck) {
-//            dbgOutputVal('!');
-//            bad_messages++;
-//            return false;
-//        }
+        if (fCheck != rFCheck) {
+            dbgOutputVal('!');
+            bad_messages++;
+            return false;
+        }
         dbgOutputVal('T');
         //dbgOutputVal(msg->ucData[0]);
         good_messages++;
         return true;
-    } else {
+    }
+    else {
         dbgOutputVal('F');
         bad_messages++;
         return false;

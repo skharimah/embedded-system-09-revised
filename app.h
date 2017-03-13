@@ -84,7 +84,7 @@ extern "C" {
 
 // *****************************************************************************
     
-#define MSGFAILSIZE 1000
+#define MSGFAILSIZE 50000
     
     
     typedef enum{

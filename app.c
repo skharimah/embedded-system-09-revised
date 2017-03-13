@@ -179,11 +179,11 @@ int messageToQISR(QueueHandle_t queue, char* msg) {
     //dbgOutputVal(msg[0]);
     //dbgOutputLoc(88);
     
-    char * jsstring = "message";
+    //char * jsstring = "message";
     
     if (queue != NULL) {
         if ((xQueueSendFromISR(queue,
-                (void *) &jsstring,
+                (void *) &msg,
                 NULL ) != pdTRUE)) {
             return MSG_QUEUE_IS_FULL;
         } else
@@ -358,7 +358,7 @@ void APP_Tasks(void) {
     bool connected = false;
     bool received = false;
     while (1) {
-        dbgOutputLoc(APPTASKS);
+        //dbgOutputLoc(APPTASKS);
         leftTicksPrev = leftTicks;
         rightTicksPrev = rightTicks;
 
@@ -387,7 +387,7 @@ void APP_Tasks(void) {
         }
 
 
-        dbgOutputLoc(APPTASKS + 1);
+        //dbgOutputLoc(APPTASKS + 1);
         switch (appState) {
             case RUN:
                 break;
