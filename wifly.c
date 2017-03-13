@@ -66,7 +66,7 @@ int msgToWiflyMsgQ(char* msg) {
         PLIB_INT_SourceEnable(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT);
         PLIB_INT_SourceFlagSet(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT);
 
-        
+
         return 0;
     }
 
@@ -199,9 +199,9 @@ void checksum(char* msg, char *len) {
  *      The character received from the wifly
  */
 char ReceiveCharFromWifly() {
-    //dbgOutputLoc(166);
+    dbgOutputLoc(166);
     char retchar = PLIB_USART_ReceiverByteReceive(USART_ID_1);
-    //dbgOutputLoc(167);
+    dbgOutputLoc(167);
     return retchar;
 }
 
@@ -223,7 +223,7 @@ char ReceiveCharFromWiflyBlocking() {
 }
 
 int getMsgFromRecvQ(char *msg) {
-    //dbgOutputLoc(87);
+    dbgOutputLoc(87);
     if (xQueueReceive(recvMsgQueue,
             msg,
             0
@@ -258,13 +258,13 @@ bool ReadJSONfromWifly(char* msg, int* msglen) {
 
 
         } else {
-            //dbgOutputLoc(177);
+            dbgOutputLoc(177);
             noDataCounter++;
         }
         if (mychar == '}')
             eom = true;
     }
-    //dbgOutputLoc(178);
+    dbgOutputLoc(178);
     if (eom) {
         //dbgOutputVal(msg->ucData[0]);
         (*msglen) = i;
@@ -282,7 +282,7 @@ bool ReceiveMsgFromWifly(char* msg) {
     dbgOutputLoc(170);
     int pos = 0;
     char chksum[4];
-    uint16_t fCheck = 0, rFCheck = 0, recvFCheck[2] = {0,0};
+    uint16_t fCheck = 0, rFCheck = 0, recvFCheck[2] = {0, 0};
     int checksum1, checksum2;
     int i = 0;
     //(*msg).ucMessageID = ReceiveCharFromWifly();
@@ -300,7 +300,7 @@ bool ReceiveMsgFromWifly(char* msg) {
                 noDataCounter = 0;
                 dbgOutputLoc(183);
                 recvFCheck[i] = ReceiveCharFromWifly();
-                
+
                 dbgOutputVal(recvFCheck[i]);
                 i++;
             } else {
@@ -310,8 +310,8 @@ bool ReceiveMsgFromWifly(char* msg) {
         }
         rFCheck += (recvFCheck[0] << 8);
         rFCheck += recvFCheck[1];
-        
-            i = 0;
+
+        i = 0;
         while (i < 4 && noDataCounter < MSGFAILSIZE) {
             if (PLIB_USART_ReceiverDataIsAvailable(USART_ID_1)) {
                 noDataCounter = 0;
@@ -320,7 +320,7 @@ bool ReceiveMsgFromWifly(char* msg) {
                 dbgOutputVal(chksum[i]);
                 i++;
             } else {
-                //dbgOutputLoc(137);
+                dbgOutputLoc(137);
                 noDataCounter++;
             }
 
@@ -358,12 +358,13 @@ bool ReceiveMsgFromWifly(char* msg) {
             bad_messages++;
             return false;
         }
+
         dbgOutputVal('T');
         //dbgOutputVal(msg->ucData[0]);
         good_messages++;
         return true;
-    }
-    else {
+
+    } else {
         dbgOutputVal('F');
         bad_messages++;
         return false;

@@ -61,21 +61,27 @@ void motorsForwardDistance(int ticks) {
     
 }*/
 
+//Set speed to number between 0 and 2500
+void motorsSetSpeed(int speed) {
+    //Change PWM to set speed
+    PLIB_OC_PulseWidth16BitSet(0,speed);
+    PLIB_OC_PulseWidth16BitSet(1,speed);
+}
+
 //Configure the motors to move forwards
-void motorsForward() {
+void motorsForward(int speed) {
     SYS_PORTS_PinWrite(PORTS_ID_0, PORT_CHANNEL_G, PORTS_BIT_POS_8, 1); //51
     
     SYS_PORTS_PinWrite(PORTS_ID_0, PORT_CHANNEL_D, PORTS_BIT_POS_11, 1); //49
     
     //Set Motors to speed
-    PLIB_OC_PulseWidth16BitSet(0,500);
-    PLIB_OC_PulseWidth16BitSet(1,500);
+    motorsSetSpeed(speed);
     
    // dbgOutputVal(leftMotorTicks);
 }
 
 //Configure the motors to move backwards 
-void motorsBackward(void) {
+void motorsBackward(int speed) {
     
     
     SYS_PORTS_PinWrite(PORTS_ID_0, PORT_CHANNEL_G, PORTS_BIT_POS_8, 0); //51
@@ -83,30 +89,27 @@ void motorsBackward(void) {
     SYS_PORTS_PinWrite(PORTS_ID_0, PORT_CHANNEL_D, PORTS_BIT_POS_11, 0);
     
     //Set Motors to speed
-    PLIB_OC_PulseWidth16BitSet(0,500);
-    PLIB_OC_PulseWidth16BitSet(1,500);
+    motorsSetSpeed(speed);
 }
 
 //Configure the motors to turn left
-void motorsTurnLeft(void) {
+void motorsTurnLeft(int speed) {
     SYS_PORTS_PinWrite(PORTS_ID_0, PORT_CHANNEL_G, PORTS_BIT_POS_8, 0); //51
     
     SYS_PORTS_PinWrite(PORTS_ID_0, PORT_CHANNEL_D, PORTS_BIT_POS_11, 1);
     
     //Set Motors to speed
-    PLIB_OC_PulseWidth16BitSet(0,500);
-    PLIB_OC_PulseWidth16BitSet(1,500);
+    motorsSetSpeed(speed);
 }
 
 //Configure the motors to turn right
-void motorsTurnRight(void) {
+void motorsTurnRight(int speed) {
     SYS_PORTS_PinWrite(PORTS_ID_0, PORT_CHANNEL_G, PORTS_BIT_POS_8, 1); //51
     
     SYS_PORTS_PinWrite(PORTS_ID_0, PORT_CHANNEL_D, PORTS_BIT_POS_11, 0);
     
     //Set Motors to speed
-    PLIB_OC_PulseWidth16BitSet(0,500);
-    PLIB_OC_PulseWidth16BitSet(1,500);
+    motorsSetSpeed(speed);
 }
 
 //Stop motors
@@ -116,39 +119,32 @@ void motorsStop(void) {
     PLIB_OC_PulseWidth16BitSet(1,0);
 }
 
-//Set speed to number between 0 and 2500
-void motorsSetSpeed(int speed) {
-    //Change PWM to set speed
-    PLIB_OC_PulseWidth16BitSet(0,speed);
-    PLIB_OC_PulseWidth16BitSet(1,speed);
-}
-
 //Milestone 2 turning demo
 void motorsTurnDemo(int itterate) {
     switch(itterate) {
             case(0):
                 dbgOutputVal(itterate);
-                motorsTurnLeft();
+                motorsTurnLeft(0);
                 break;
             case(1):
                 dbgOutputVal(itterate);
-                motorsForward();
+                motorsForward(0);
                 break;
             case(2):
                 dbgOutputVal(itterate);
-                motorsTurnLeft();
+                motorsTurnLeft(0);
                 break;
             case(3):
                 dbgOutputVal(itterate);
-                motorsBackward();
+                motorsBackward(0);
                 break;
             case(4):
                 dbgOutputVal(itterate);
-                motorsTurnRight();
+                motorsTurnRight(0);
                 break;
             case(5):
                 dbgOutputVal(itterate);
-                motorsForward();
+                motorsForward(0);
                 break;
             default:
                 while(1){dbgOutputVal(0xFF);}

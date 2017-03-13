@@ -5,7 +5,7 @@
     Microchip Technology Inc.
 
   File Name:
-    app.h
+    mapgeneratortask.h
 
   Summary:
     This header file provides prototypes and definitions for the application.
@@ -43,8 +43,8 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
  *******************************************************************************/
 //DOM-IGNORE-END
 
-#ifndef _APP_H
-#define _APP_H
+#ifndef _MAPGENERATORTASK_H
+#define _MAPGENERATORTASK_H
 
 // *****************************************************************************
 // *****************************************************************************
@@ -58,15 +58,6 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include <stdlib.h>
 #include "system_config.h"
 #include "system_definitions.h"
-#include "queue.h"
-#include "app_public.h"
-#include "motor.h"
-
-#include "peripheral/usart/plib_usart.h"
-#include "peripheral/devcon/plib_devcon.h"
-#include "system/debug/sys_debug.h"
-//#include "driver/usart/src/drv_usart_static_local.h"
-
 
 // DOM-IGNORE-BEGIN
 #ifdef __cplusplus  // Provide C++ Compatibility
@@ -83,20 +74,26 @@ extern "C" {
 // *****************************************************************************
 
 // *****************************************************************************
-    
-#define MSGFAILSIZE 50000
+/* Application states
 
-    
-    
-    typedef enum{
-        T = 0,
-        E,
-                A,
-                M,
-                FIRSTSPACE,
-                NINE,
-                SECONDSPACE
-    }DBG_POS;
+  Summary:
+    Application states enumeration
+
+  Description:
+    This enumeration defines the valid application states.  These states
+    determine the behavior of the application at various times.
+*/
+
+typedef enum
+{
+	/* Application's state machine's initial state. */
+	MAPGENERATORTASK_STATE_INIT=0,
+	MAPGENERATORTASK_STATE_SERVICE_TASKS,
+
+	/* TODO: Define states used by the application state machine. */
+
+} MAPGENERATORTASK_STATES;
+
 
 // *****************************************************************************
 /* Application Data
@@ -113,154 +110,31 @@ extern "C" {
 
 typedef struct
 {
-    /* Flag to indicate an interrupt has occured */
-	bool InterruptFlag;
+    /* The application's current state */
+    MAPGENERATORTASK_STATES state;
 
-    /* Pointer to hold the present character of string to be transmitted */
-    const char *stringPointer;
+    /* TODO: Define any additional data used by the application. */
 
-    /* Data received from UART */
-    char data;
-
-} APP_DATA;
+} MAPGENERATORTASK_DATA;
 
 
-
-/* Driver objects.
-
-  Summary:
-    Holds driver objects.
-
-  Description:
-    This structure contains driver objects returned by the driver init routines
-    to the application. These objects are passed to the driver tasks routines.
-
-  Remarks:
-    None.
+// *****************************************************************************
+// *****************************************************************************
+// Section: Application Callback Routines
+// *****************************************************************************
+// *****************************************************************************
+/* These routines are called by drivers when certain events occur.
 */
-
-typedef struct
-{
-	//SYS_MODULE_OBJ   drvObject;
-	 
-} APP_DRV_OBJECTS;
-
-//Task Stack Sizes
-#define MOTOR_STACK_SIZE 100
+	
 // *****************************************************************************
 // *****************************************************************************
-// Section: Function Prototypes
+// Section: Application Initialization and State Machine Functions
 // *****************************************************************************
 // *****************************************************************************
 
 /*******************************************************************************
   Function:
-    QueueHandle_t createQueue(void)
-
-  Summary:
-    Create a message queue at a fixed size and type.
-
-  Description:
-    This function will create a message queue capable of containing 10 unsigned 
-    integer values.
-
-  Parameters:
-    None.
-
-  Returns:
-    A message queue handler of type QueueHandle_t.
-
-*/
-
-QueueHandle_t createQueue(void);
-/*******************************************************************************
-  Function:
-    int messageToQISR(QueueHandle_t queue, Message msg)
-
-  Summary:
-    Send a message to a previously created message queue
-
-  Description:
-    This function will send a Message struct to a message queue, and is safe for
-    use within an ISR
-
-  Parameters:
-    QueueHandle_t queue: The handle for the queue you want to write to
-    Message msg: The message to write to the queue
-
-  Returns:
-    An integer 0 for success, -1 for failure.
-
-*/
-int messageToQISR(QueueHandle_t queue, char* msg);
-/*******************************************************************************
-  Function:
-    int messageToQ(QueueHandle_t queue, Message msg)
-
-  Summary:
-    Send a message to a previously created message queue
-
-  Description:
-    This function will send a Message struct to a message queue, but is NOT safe
-    for use within an ISR.
-
-  Parameters:
-    QueueHandle_t queue: The handle for the queue you want to write to
-    Message msg: The message to write to the queue
-
-  Returns:
-    An integer 0 for success, -1 for failure.
-
-*/
-int messageToQ(QueueHandle_t queue, char* msg);
-/*******************************************************************************
-  Function:
-    void intLenToChar(Message msg, char *len)
-
-  Summary:
-    Send a message to a previously created message queue
-
-  Description:
-    This function will send a Message struct to a message queue, but is NOT safe
-    for use within an ISR.
-
-  Parameters:
-    QueueHandle_t queue: The handle for the queue you want to write to
-    Message msg: The message to write to the queue
-
-  Returns:
-    An integer 0 for success, -1 for failure.
-
-*/
-void intLenToChar(char *msg, char *len);
-void checksum(char *msg, char *sum);
-uint16_t fletcher16( uint8_t const *data, size_t bytes );
-QueueHandle_t createEncoderQueue(void);
-int getMsgFromRecvQ(char *msg);
-/*******************************************************************************
-  Function:
-    unsigned char receiveFromQueue(QueueHandle_t queue);
-
-  Summary:
-    Receive from the specified queue.
-
-  Description:
-    This function receives from the queue.
-    Additional functions to carry out specific instructions may be needed.
-
-  Parameters:
-    Queue handle for the queue this function is to read from.
-
-  Returns:
-    Returns the char item received from the queue
-    If no item is successfully retrieved it will return unsigned char '0'.
-*/
-
-unsigned char receiveFromQueue(QueueHandle_t queue);
-
-/*******************************************************************************
-  Function:
-    void APP_Initialize ( void )
+    void MAPGENERATORTASK_Initialize ( void )
 
   Summary:
      MPLAB Harmony application initialization routine.
@@ -282,19 +156,19 @@ unsigned char receiveFromQueue(QueueHandle_t queue);
 
   Example:
     <code>
-    APP_Initialize();
+    MAPGENERATORTASK_Initialize();
     </code>
 
   Remarks:
     This routine must be called from the SYS_Initialize function.
 */
 
-void APP_Initialize ( void );
+void MAPGENERATORTASK_Initialize ( void );
 
 
 /*******************************************************************************
   Function:
-    void APP_Tasks ( void )
+    void MAPGENERATORTASK_Tasks ( void )
 
   Summary:
     MPLAB Harmony Demo application tasks function
@@ -315,27 +189,17 @@ void APP_Initialize ( void );
 
   Example:
     <code>
-    APP_Tasks();
+    MAPGENERATORTASK_Tasks();
     </code>
 
   Remarks:
     This routine must be called from SYS_Tasks() routine.
  */
 
-void APP_Tasks( void );
-
-// *****************************************************************************
-// *****************************************************************************
-// Section: extern declarations
-// *****************************************************************************
-// *****************************************************************************
-
-extern APP_DRV_OBJECTS appDrvObject;
-
-extern APP_DATA appData;
+void MAPGENERATORTASK_Tasks( void );
 
 
-#endif /* _APP_H */
+#endif /* _MAPGENERATORTASK_H */
 
 //DOM-IGNORE-BEGIN
 #ifdef __cplusplus
@@ -346,3 +210,4 @@ extern APP_DATA appData;
 /*******************************************************************************
  End of File
  */
+

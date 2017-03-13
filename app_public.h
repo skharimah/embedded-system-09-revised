@@ -37,7 +37,7 @@ extern "C" {
     const char* IPADDRESS;// = "192.168.1.102";
     
 DRV_HANDLE usbHandle;// = DRV_USART_Open(DRV_USART_INDEX_0, DRV_IO_INTENT_READWRITE);
-QueueHandle_t motorMsgQueue;
+QueueHandle_t encoderQueue;
 QueueHandle_t msgQueue;
 QueueHandle_t recvMsgQueue;
 typedef enum  {RUN, RECV, TRANS} State;
@@ -52,6 +52,14 @@ State appState;
  //char message[ MSG_BUF_SIZE ];
  int good_messages, bad_messages;
 
+ typedef struct
+{
+    //Ticks of the right motor encoder
+    int rightTicks;
+    
+    //Ticks of the left motor encoder
+    int leftTicks;
+} ENCODER_DATA;
 /*******************************************************************************
   Function:
     int app1SendTimerValToMsgQ(unsigned int)
@@ -87,6 +95,15 @@ void TransmitCharToWifly(unsigned char value);
 void TransmitMsgToWifly(char* msg);
 
 char ReceiveCharFromWifly();
+
+
+/*******************************************************************************
+ Encoder Queue Functions
+ */
+int receiveFromEncoderQueue(ENCODER_DATA *buffer);
+QueueHandle_t createEncoderQueue(void);
+int app1SendEncoderValToMsgQ(ENCODER_DATA *encoderTicks);
+
 
 /*******************************************************************************
   Function:

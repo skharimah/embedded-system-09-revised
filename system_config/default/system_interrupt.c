@@ -64,6 +64,9 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include "app.h"
 #include <string.h>
 #include "app_json.h"
+#include "motortask.h"
+#include "mapgeneratortask.h"
+#include "app_json.h"
 #include "system_definitions.h"
 #include "app_public.h"
 #include "debug.h"
@@ -94,16 +97,18 @@ DBG_POS namepos = T;
 unsigned char out;
 unsigned int ch = 1;
 
+
 unsigned int millisec = 0;
 int itterate = 0;
 int leftTicks = 0;
 int rightTicks;
 unsigned int count = 0;
 int leftTicksPrev = 0;
+int rightTicksPrev = 0;
 
 void IntHandlerDrvTmrInstance0(void) {
     millisec++;
-    dbgOutputLoc(TMR_START);
+    //dbgOutputLoc(TMR_START);
 
 
     //dbgOutputLoc(millisec);
@@ -122,7 +127,7 @@ void IntHandlerDrvTmrInstance0(void) {
 
         LATAINV = 0x8;
 
-        dbgOutputLoc(TMR_START + 3);
+        //dbgOutputLoc(TMR_START + 3);
 
 
 
@@ -132,40 +137,24 @@ void IntHandlerDrvTmrInstance0(void) {
         char buffer[MSG_BUF_SIZE];
         unsigned int buflen = MSG_BUF_SIZE;
         int array[] = {1, 2, 3, 4, 5};
-
-
-        //        startWritingToJsonObject(buffer, buflen);
-        //        addIntegerKeyValuePairToJsonObject("sequence_id", 1);
-        //        addStringKeyValuePairToJsonObject("message_type", "request");
-        //        addStringKeyValuePairToJsonObject("source", "192.168.1.102");
-        //        addStringKeyValuePairToJsonObject("destination", "192.168.1.102");
-        //        endWritingToJsonObject();
-        //        
-        //        
-        //        //char buffer[] = "some json string";
-        //
-        //        int i = 0;
-        //        //strcpy(messageptr, buffer);
-        //        for (i = 0; buffer[i] != '\0'; i++) {
-        //            messageptr[i] = buffer[i];
-        //        }
-        //        messageptr[i] = '\0';
-        //        dbgOutputLoc(TMR_START + 7);
-        //        msgToWiflyMsgQISR(&messageptr);
-        //}
     }
-    if (millisec % 1000 == 0) {
-        //motorsTurnDemo(itterate);
-        //motorsSpeedDemo(itterate);
-        if (itterate == 5)
-            itterate = 0;
-        else
-            itterate++;
-
-
+    if (millisec % 100 == 0) {
+        leftTicksPrev = leftTicks;
+        rightTicksPrev = rightTicks;
+        leftTicks = PLIB_TMR_Counter16BitGet(TMR_ID_3);
+        rightTicks = PLIB_TMR_Counter16BitGet(TMR_ID_4);
+        //dbgOutputLoc(TMR_START + 2);
+        //dbgOutputVal(leftTicks - leftTicksPrev);
+        //Send encoder data to queue
+        ENCODER_DATA ticksMessage;
+        ticksMessage.leftTicks = leftTicks - leftTicksPrev;
+        ticksMessage.rightTicks = rightTicks - rightTicksPrev;
+        
+        app1SendEncoderValToMsgQ(&ticksMessage);
+        //dbgOutputVal(ticksMessage.leftTicks);
     }
     PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_TIMER_2);
-    dbgOutputLoc(TMR_STOP);
+    //dbgOutputLoc(TMR_STOP);
 }
 
 //Left Encoder Interrupt
@@ -194,11 +183,10 @@ void IntHandlerDrvUsartInstance0(void) {
 
     if (PLIB_INT_SourceFlagGet(INT_ID_0, INT_SOURCE_USART_1_RECEIVE)) {
         PLIB_INT_SourceDisable(INT_ID_0, INT_SOURCE_USART_1_RECEIVE);
-
-        dbgOutputLoc(99);
+        //dbgOutputLoc(99);
         if (ReceiveMsgFromWifly(mymsg)) {
             //dbgOutputVal(mymsg[0]);
-            dbgOutputLoc(100);
+            //dbgOutputLoc(100);
             wiflyToMsgQ(mymsg);
         }
         received = true;
@@ -208,9 +196,9 @@ void IntHandlerDrvUsartInstance0(void) {
         PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_USART_1_RECEIVE);
 
     } else if (PLIB_INT_SourceFlagGet(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT)) {
-        dbgOutputLoc(WIFLY_TRANS);
+        //dbgOutputLoc(WIFLY_TRANS);
         while (!xQueueIsQueueEmptyFromISR(msgQueue)) {
-            dbgOutputLoc(35);
+            //dbgOutputLoc(35);
             BaseType_t xTaskWokenByReceive = pdFALSE;
             //xQueueReceiveFromISR(msgQueue, (void*) &shitass, &xTaskWokenByReceive);
             if (xQueueReceiveFromISR(msgQueue, (void*) &(mymsgptr), &xTaskWokenByReceive)
@@ -233,13 +221,13 @@ void IntHandlerDrvUsartInstance0(void) {
         }
         PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT);
         PLIB_INT_SourceDisable(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT);
-        dbgOutputLoc(42);
+        //dbgOutputLoc(42);
     } else if (PLIB_INT_SourceFlagGet(INT_ID_0, INT_SOURCE_USART_1_ERROR)) {
         //dbgOutputVal('E');
         dbgOutputLoc(WIFLY_ERROR);
         PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_USART_1_ERROR);
     }
-    dbgOutputLoc(43);
+    //dbgOutputLoc(43);
 
     //dbgOutputLoc(UART_STOP);
 }

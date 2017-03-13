@@ -140,7 +140,8 @@ QueueHandle_t createQueue(void) {
 
 QueueHandle_t createEncoderQueue(void) {
     QueueHandle_t queue;
-    queue = xQueueCreate(10, sizeof (struct ENCODER_DATA *));
+    int queueSize = sizeof (struct ENCODER_DATA *);
+    queue = xQueueCreate(10, queueSize);
     if (queue == NULL) {
         /* Queue is not created and should not be used
          * The return value will be NULL if queue is not created
@@ -157,14 +158,19 @@ QueueHandle_t createEncoderQueue(void) {
     See prototype in app.h.
  */
 
-ENCODER_DATA receiveFromEncoderQueue(QueueHandle_t queue) {
-    ENCODER_DATA buffer;
-    if (queue != NULL) {
-        if (xQueueReceive(queue, &buffer, portMAX_DELAY) == pdTRUE) {
+int receiveFromEncoderQueue(ENCODER_DATA *buffer) {
+    dbgOutputLoc(99);
+    if (encoderQueue != NULL) {
+        if (xQueueReceive(encoderQueue, buffer, 0) == pdTRUE) {
+            //dbgOutputVal(buffer->leftTicks);
+            return 1;
+            
             /*Unsigned char value from the queue is successfully stored in buffer*/
         }
+        
     }
-    return buffer;
+    
+    return 0;
 }
 
 /*******************************************************************************
@@ -214,30 +220,10 @@ int messageToQ(QueueHandle_t queue, char* msg) {
         return MSG_QUEUE_DOES_NOT_EXIST;
 }
 
-//int app1SendEncoderValToMsgQ(ENCODER_DATA encoderTicks) {
-//    if (encoderQueue != NULL) {
-//        if (xQueueSendFromISR(encoderQueue,
-//                (void *) &encoderTicks,
-//                NULL) != pdTRUE) {
-//            return MSG_QUEUE_IS_FULL;
-//        } else
-//            return 0;
-//    } else
-//        return MSG_QUEUE_DOES_NOT_EXIST;
-//
-//}
-
-/*******************************************************************************
-  Function:
-    int appSendMotorEncoderOutputValueToMsgQ(unsigned int motorEncoderOutputVal)
-
-  Remarks:
-    See prototype in app_public.h.
- */
-int appSendMotorEncoderOutputValueToMsgQ(unsigned int motorEncoderOutputVal) {
-    if (motorMsgQueue != NULL) {
-        if (xQueueSendFromISR(motorMsgQueue,
-                (void *) &motorEncoderOutputVal,
+int app1SendEncoderValToMsgQ(ENCODER_DATA *encoderTicks) {
+    if (encoderQueue != NULL) {
+        if (xQueueSendFromISR(encoderQueue,
+                (void *) encoderTicks,
                 NULL) != pdTRUE) {
             return MSG_QUEUE_IS_FULL;
         } else
@@ -289,21 +275,16 @@ void APP_Initialize(void) {
 
     DRV_TMR2_Initialize();
     DRV_TMR2_Start();
-
     motorsInitialize();
 
-    motorsForward();
+//    motorsForward();
 
 
-    encoderQueue = createEncoderQueue();
+    //encoderQueue = createEncoderQueue();
     //msgQueue = createQueue();
-    if (encoderQueue == NULL) {
+    //if (encoderQueue == NULL) {
         /* Wait indefinitely until the queue is successfully created */
-    }
-
-
-
-
+    //}
     //SYS_PORTS_Clear ( PORTS_BIT_POS_0, PORT_CHANNEL_G, 0xFF );
     //SYS_PORTS_Set( PORTS_BIT_POS_0, PORT_CHANNEL_G, 1, 0x0F0 );
     //TRISGCLR = 0x0F0;
@@ -371,7 +352,6 @@ void APP_Tasks(void) {
         cur_ms = PLIB_TMR_Counter16BitGet(TMR_ID_2);
         millisec += (cur_ms - prev_ms);
 
-
         if (received) {
 
             if (i < 100) {
@@ -398,6 +378,7 @@ void APP_Tasks(void) {
             default:
                 break;
         }
+
         //
         //        bool sentOnce = false;
         //
