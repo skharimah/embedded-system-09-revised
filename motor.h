@@ -49,16 +49,16 @@
     void testFunc(int ticks);
     
     //Configure the motors to move forwards
-    void motorsForward();
+    void motorsForward(int speed);
     
     //Configure the motors to move backwards
-    void motorsBackward();
+    void motorsBackward(int speed);
     
     //Configure the motors to turn left
-    void motorsTurnRight();
+    void motorsTurnRight(int speed);
     
     //Configure the motors to turn right
-    void motorsTurnLeft();
+    void motorsTurnLeft(int speed);
     
     //Configure the motors to stop
     void motorsStop();

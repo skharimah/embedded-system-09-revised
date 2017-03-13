@@ -29,18 +29,28 @@ extern "C" {
     
     
     
-#define MSG_BUF_SIZE 100
+#define MSG_BUF_SIZE 200
+    
+    char messageptr[MSG_BUF_SIZE];
+    
+    const char* DEVNAME;// = "sensor";
+    const char* IPADDRESS;// = "192.168.1.102";
     
 DRV_HANDLE usbHandle;// = DRV_USART_Open(DRV_USART_INDEX_0, DRV_IO_INTENT_READWRITE);
 QueueHandle_t encoderQueue;
 QueueHandle_t msgQueue;
 QueueHandle_t recvMsgQueue;
+typedef enum  {RUN, RECV, TRANS} State;
+State appState;
 
-typedef struct AMessage
- {
-    char ucMessageID;
-    char ucData[ MSG_BUF_SIZE ];
- } Message;
+//typedef struct AMessage
+// {
+//    char ucMessageID;
+//    char ucData[ MSG_BUF_SIZE ];
+// } Message;
+ 
+ //char message[ MSG_BUF_SIZE ];
+ int good_messages, bad_messages;
 
  typedef struct
 {
@@ -74,14 +84,15 @@ int charToMsgQFromISR(QueueHandle_t queue, unsigned char value);
 int app1SendCharToMsgQ(unsigned char value);
 int charToMsgQ(char val);
 
-int msgToWiflyMsgQISR(Message msg);
+int msgToWiflyMsgQISR(char* msg);
+int msgToWiflyMsgQ(char* msg);
 int writeStringUART(char* string);
 
-Message ReceiveMsgFromWifly();
+bool ReceiveMsgFromWifly(char* msg);
 
 void TransmitCharToWifly(unsigned char value);
 
-void TransmitMsgToWifly(Message msg);
+void TransmitMsgToWifly(char* msg);
 
 char ReceiveCharFromWifly();
 
@@ -89,9 +100,9 @@ char ReceiveCharFromWifly();
 /*******************************************************************************
  Encoder Queue Functions
  */
-ENCODER_DATA receiveFromEncoderQueue(QueueHandle_t queue);
-
-int app1SendEncoderValToMsgQ(ENCODER_DATA encoderTicks);
+int receiveFromEncoderQueue(ENCODER_DATA *buffer);
+QueueHandle_t createEncoderQueue(void);
+int app1SendEncoderValToMsgQ(ENCODER_DATA *encoderTicks);
 
 
 /*******************************************************************************

@@ -62,12 +62,15 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include <xc.h>
 #include <sys/attribs.h>
 #include "app.h"
+#include <string.h>
+#include "app_json.h"
 #include "motortask.h"
 #include "mapgeneratortask.h"
+#include "app_json.h"
 #include "system_definitions.h"
 #include "app_public.h"
 #include "debug.h"
-#include "motorTask.h"
+#include "json_access/jsonaccess.h"
 
 // *****************************************************************************
 // *****************************************************************************
@@ -94,120 +97,83 @@ DBG_POS namepos = T;
 unsigned char out;
 unsigned int ch = 1;
 
+
 unsigned int millisec = 0;
 int itterate = 0;
 int leftTicks = 0;
 int rightTicks;
 unsigned int count = 0;
 int leftTicksPrev = 0;
+int rightTicksPrev = 0;
 
 void IntHandlerDrvTmrInstance0(void) {
     millisec++;
+    //dbgOutputLoc(TMR_START);
 
 
     //dbgOutputLoc(millisec);
     if (millisec % 500 == 0) {//Get timer values
-        leftTicksPrev = leftTicks;
-        leftTicks = PLIB_TMR_Counter16BitGet(TMR_ID_3);
-        rightTicks = PLIB_TMR_Counter16BitGet(TMR_ID_4);
-        
-        //dbgOutputVal(leftTicks - leftTicksPrev);
-        //Send encoder data to queue
-        ENCODER_DATA ticksMessage;
-        ticksMessage.leftTicks = leftTicks;
-        ticksMessage.rightTicks = rightTicks;
-        app1SendEncoderValToMsgQ(ticksMessage);
         unsigned char val;
         count++;
 
-        //dbgOutputVal('.');
         LATAINV = 0x8;
-        //Inverts ChipKit LD4 to display functioning timer
-        //LATAINV = 0x8;
 
-        //assign next letter of string to unsigned character
-        //out = name[namepos];
-
-        //output to I/O pins through dbgOutputVal functions
-        //dbgOutputVal(out);
-        //dbgUARTVal(out);
-
-        //Reset the string iterator
-        //if(namepos == SECONDSPACE) {
-        //    namepos = T;
-        //}
-        //else {
-        //    namepos++;
-        //}
-
-
-
+        //dbgOutputLoc(TMR_START + 3);
 
 
 
         //Clear Interrupt Flag 
-        switch (DRV_USART_ClientStatus(usbHandle)) {
-            case DRV_USART_CLIENT_STATUS_ERROR:
-                SYS_DEBUG(0, "UART ERROR");
-                val = 'E';
-                break;
-            case DRV_USART_CLIENT_STATUS_BUSY:
-                SYS_DEBUG(0, "UART BUSY");
-                val = 'B';
-                break;
-            case DRV_USART_CLIENT_STATUS_CLOSED:
-                SYS_DEBUG(0, "UART CLOSED");
-                val = 'C';
-                break;
-            case DRV_USART_CLIENT_STATUS_READY:
-                SYS_DEBUG(0, "UART READY");
-                //writeStringUART(mystring);
-                val = 'D';
 
-                break;
-            default:
-                val = 'U';
-        }
-        //dbgUARTVal(val);
-        //if (received) {
-        //charToMsgQ(val);
-        Message mymsg;
-        int i, j, temp = 0;
-        for (i = 0; mystring[i] != '\0'; i++) {
-            mymsg.ucData[i] = mystring[i];
-            temp++;
-        }
-        int length = count;
-        /* for (j = temp; j < temp + 4; j++) {
-             mymsg.ucData[temp + 3 - j] = (length % 10) + '0';
+        char mymsg[MSG_BUF_SIZE];
+        char buffer[MSG_BUF_SIZE];
+        unsigned int buflen = MSG_BUF_SIZE;
+        int array[] = {1, 2, 3, 4, 5};
 
-             length = (length - (length % 10)) / 10;
-         }*/
 
-        mymsg.ucData[i] = '\0';
-        mymsg.ucMessageID = val;
-        msgToWiflyMsgQISR(mymsg);
+        //        startWritingToJsonObject(buffer, buflen);
+        //        addIntegerKeyValuePairToJsonObject("sequence_id", 1);
+        //        addStringKeyValuePairToJsonObject("message_type", "request");
+        //        addStringKeyValuePairToJsonObject("source", "192.168.1.102");
+        //        addStringKeyValuePairToJsonObject("destination", "192.168.1.102");
+        //        endWritingToJsonObject();
+        //        
+        //        
+        //        //char buffer[] = "some json string";
+        //
+        //        int i = 0;
+        //        //strcpy(messageptr, buffer);
+        //        for (i = 0; buffer[i] != '\0'; i++) {
+        //            messageptr[i] = buffer[i];
+        //        }
+        //        messageptr[i] = '\0';
+        //        dbgOutputLoc(TMR_START + 7);
+        //        msgToWiflyMsgQISR(&messageptr);
         //}
-
     }
-    if (millisec % 1000 == 0) {
-        //motorsTurnDemo(itterate);
-        //motorsSpeedDemo(itterate);
-        if (itterate == 5)
-            itterate = 0;
-        else
-            itterate++;
-
-
+    if (millisec % 100 == 0) {
+        leftTicksPrev = leftTicks;
+        rightTicksPrev = rightTicks;
+        leftTicks = PLIB_TMR_Counter16BitGet(TMR_ID_3);
+        rightTicks = PLIB_TMR_Counter16BitGet(TMR_ID_4);
+        //dbgOutputLoc(TMR_START + 2);
+        //dbgOutputVal(leftTicks - leftTicksPrev);
+        //Send encoder data to queue
+        ENCODER_DATA ticksMessage;
+        ticksMessage.leftTicks = leftTicks - leftTicksPrev;
+        ticksMessage.rightTicks = rightTicks - rightTicksPrev;
+        
+        app1SendEncoderValToMsgQ(&ticksMessage);
+        //dbgOutputVal(ticksMessage.leftTicks);
     }
     PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_TIMER_2);
+    //dbgOutputLoc(TMR_STOP);
 }
 
 //Left Encoder Interrupt
 
 void IntHandlerDrvTmrInstance1(void) {
     //dbgOutputVal(leftMotorTicks);
-    //dbgOutputLoc(212);
+    dbgOutputLoc(212);
     PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_TIMER_3);
     DRV_TMR1_Tasks();
 }
@@ -216,44 +182,45 @@ void IntHandlerDrvTmrInstance1(void) {
 
 void IntHandlerDrvTmrInstance2(void) {
     //dbgOutputVal(rightMotorTicks);
-    //dbgOutputLoc(221);
+    dbgOutputLoc(221);
     PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_TIMER_4);
     DRV_TMR2_Tasks();
 }
 
 void IntHandlerDrvUsartInstance0(void) {
-    Message mymsg;
+    char mymsg[MSG_BUF_SIZE] = "";
+    char * mymsgptr = "";
+    char shitass[16];
     char mychar;
     //dbgOutputLoc(UART_START);
-    //    DRV_USART_TasksTransmit(sysObj.drvUsart0);
-    //    DRV_USART_TasksReceive(sysObj.drvUsart0);
-    //    DRV_USART_TasksError(sysObj.drvUsart0);
 
     if (PLIB_INT_SourceFlagGet(INT_ID_0, INT_SOURCE_USART_1_RECEIVE)) {
         PLIB_INT_SourceDisable(INT_ID_0, INT_SOURCE_USART_1_RECEIVE);
-        PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_USART_1_RECEIVE);
-        //dbgOutputLoc(99);
-        mymsg = ReceiveMsgFromWifly();
-        mychar = mymsg.ucMessageID;
-        //dbgOutputVal(mychar);
-        //dbgOutputLoc(100);
-        wiflyToMsgQ(mymsg);
 
+        //dbgOutputLoc(99);
+        if (ReceiveMsgFromWifly(mymsg)) {
+            //dbgOutputVal(mymsg[0]);
+            //dbgOutputLoc(100);
+            wiflyToMsgQ(mymsg);
+        }
         received = true;
         counter = 0;
-        
+
         PLIB_INT_SourceEnable(INT_ID_0, INT_SOURCE_USART_1_RECEIVE);
-        
+        PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_USART_1_RECEIVE);
+
     } else if (PLIB_INT_SourceFlagGet(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT)) {
         //dbgOutputLoc(WIFLY_TRANS);
         while (!xQueueIsQueueEmptyFromISR(msgQueue)) {
             //dbgOutputLoc(35);
             BaseType_t xTaskWokenByReceive = pdFALSE;
-            if (xQueueReceiveFromISR(msgQueue, (void *) &mymsg, &xTaskWokenByReceive)
+            //xQueueReceiveFromISR(msgQueue, (void*) &shitass, &xTaskWokenByReceive);
+            if (xQueueReceiveFromISR(msgQueue, (void*) &(mymsgptr), &xTaskWokenByReceive)
                     == pdTRUE) {
-
+                //(&mymsg) = (&mymsg) + 16;
+                //dbgOutputLoc(191);
                 //TransmitMessageToWifly(qMsg.message, qMsg.message_size);
-                TransmitMsgToWifly(mymsg);
+                TransmitMsgToWifly(mymsgptr);
                 if (counter <= 10) {
                     counter++;
                 } else if (counter <= 25) {
@@ -262,6 +229,7 @@ void IntHandlerDrvUsartInstance0(void) {
                 } else {
                     counter = 0;
                 }
+                //dbgOutputLoc(192);
 
             }
         }

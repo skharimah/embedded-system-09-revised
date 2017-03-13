@@ -69,6 +69,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include "app.h"
 #include "motortask.h"
 #include "mapgeneratortask.h"
+#include "app_json.h"
 
 
 // DOM-IGNORE-BEGIN

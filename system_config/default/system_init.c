@@ -196,6 +196,7 @@ void SYS_Initialize ( void* data )
     APP_Initialize();
     MOTORTASK_Initialize();
     MAPGENERATORTASK_Initialize();
+    APP_JSON_Initialize();
 }
 
 
