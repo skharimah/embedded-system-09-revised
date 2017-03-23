@@ -184,7 +184,7 @@ void MOTORTASK_Tasks ( void )
                     leftTicks = encoderReceived.leftTicks;
                     rightTicks = encoderReceived.rightTicks;
                     dbgOutputLoc(19);
-                    dbgOutputVal(encoderReceived.rightTicks);
+                    //dbgOutputVal(encoderReceived.rightTicks);
                 }
                 motortaskData.state = MOTOR_RECEIVE_MESSAGE;
                 break;

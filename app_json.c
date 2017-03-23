@@ -133,6 +133,7 @@ void APP_JSON_Initialize(void) {
  */
 
 void APP_JSON_Tasks(void) {
+    char stupidError[200] = "{\"message_type\":\"request\",\"requested_data\":\"run\",\"sequence_id\":\"1\",\"destination\":\"192.168.1.105\",\"source\":\"192.168.1.102\"}";
     //    char *jsstring = "{\"message_type\":\"response\","
     //    "\"source\":\"SOURCE_ROVER_IP_ADDRESS\","
     //    "\"destination\":\"TARGET_ROVER_IP_ADDRESS\","
@@ -151,8 +152,14 @@ void APP_JSON_Tasks(void) {
 
     char *keys[] = {"message_type", "source", "destination", "sequence_id", "port"};
     char myMsg[ MSG_BUF_SIZE ];
+    char *myMsgPtr = "";
     unsigned int buflen = MSG_BUF_SIZE;
-    char buffer[MSG_BUF_SIZE];
+    char buffer[200] = {};
+    char buffer1[20] = {};
+    char buffer2[20] = {};
+    char data_requested[20] = {};
+    
+    int i;
 
     while (1) {
         switch (app_jsonData.state) {
@@ -173,9 +180,11 @@ void APP_JSON_Tasks(void) {
                 dbgOutputLoc(109);
                 /* TODO: Check messageQ to see if the PIC needs a new information*/
                 //app_jsonData.state = APP_JSON_STATE_WRITING_REQUEST;
-                if (getMsgFromRecvQ(myMsg) == 0) {
+                if (getMsgFromRecvQ(myMsgPtr) == 0) {
                     //received = true;
-                    dbgOutputVal(myMsg[1]);
+                    //dbgOutputVal(recvMsg[0]);
+                    
+                    
                     app_jsonData.state = APP_JSON_STATE_PARSING_MESSAGE;
 
                 }
@@ -186,27 +195,64 @@ void APP_JSON_Tasks(void) {
 
             case APP_JSON_STATE_PARSING_MESSAGE:
             {
+                //char * msgPtr = &myMsg[0];
                 dbgOutputLoc(110);
 
-                int i, j;
+                int j;
                 int tupleArraySize = sizeof (keys) / sizeof (keys[0]);
-
-                jsstringValuesTuples[0] = getValueFromJsonString("message_type", myMsg);
-                jsstringValuesTuples[1] = getValueFromJsonString("sequence_id", myMsg);
-                jsstringValuesTuples[2] = getValueFromJsonString("requested_data", myMsg);
-                jsstringValuesTuples[3] = getValueFromJsonString("source", myMsg);
-                jsstringValuesTuples[4] = getValueFromJsonString("destination", myMsg);
+                struct Tuple msgType = getValueFromJsonString("message_type", recvMsg);
+                struct Tuple newDest = getValueFromJsonString("source", recvMsg);
+                struct Tuple data_req = getValueFromJsonString("requested_data", recvMsg);
+                //jsstringValuesTuples[0] = getValueFromJsonString("message_type", myMsg);
+                //jsstringValuesTuples[1] = getValueFromJsonString("sequence_id", myMsg);
+//                jsstringValuesTuples[2] = getValueFromJsonString("requested_data", myMsg);
+//                jsstringValuesTuples[3] = getValueFromJsonString("source", myMsg);
+//                jsstringValuesTuples[4] = getValueFromJsonString("destination", myMsg);
                 //jsstringValuesTuples[5] = getValueFromJsonString("port", myMsg);
 
-                for (i = 0; i < jsstringValuesTuples[0].size; i++) {
-                    message_type[i] = jsstringValuesTuples[0].resultString[i];
+                if (msgType.size > 0) {
+                    dbgOutputLoc(171);
+                    
+                    for (i = 0; i < msgType.size; i++) {
+                        buffer1[i] = msgType.resultString[i];
+                    }
+                    //dbgOutputVal(buffer1[0]);
+                    
+                    
+                    app_jsonData.state = APP_JSON_STATE_WRITING_RESPONSE;
+                }
+                else{
+                    dbgOutputLoc(172);
+                    dbgOutputVal('b');
+                }
+                if (newDest.size > 0) {
+                    dbgOutputLoc(173);
+                    
+                    for (i = 0; i < newDest.size; i++) {
+                        buffer2[i] = newDest.resultString[i];
+                    }
+                    dbgOutputVal(buffer2[0]);
+                }
+                else{
+                    dbgOutputLoc(174);
+                    dbgOutputVal('b');
+                }
+                if (data_req.size > 0) {
+                    dbgOutputLoc(175);
+                    
+                    for (i = 0; i < data_req.size; i++) {
+                        data_requested[i] = data_req.resultString[i];
+                    }
+                    dbgOutputVal(data_requested[0]);
+                }
+                else{
+                    dbgOutputLoc(176);
+                    dbgOutputVal('b');
                 }
 
-                for (i = 0; i < jsstringValuesTuples[1].size; i++) {
-                    message_type[i] = jsstringValuesTuples[1].resultString[i];
-                }
-
-                app_jsonData.state = APP_JSON_STATE_WRITING_RESPONSE;
+                
+                
+                
 
                 break;
             }
@@ -216,14 +262,31 @@ void APP_JSON_Tasks(void) {
                 char resultBuff[25];
                 dbgOutputLoc(111);
                 int i, sum = 0;
-                if (jsstringValuesTuples[0].resultString[2] == 'q') {
+                if (buffer1[2] == 'q') {
 
-                    startWritingToJsonObject(buffer, buflen);
+                    if (strcmp(data_requested, "stop") == 0){
+                        dbgOutputLoc(113);
+                        strcpy(appMsg, "stop");
+                        myMsgPtr = &appMsg;
+                        messageToQ(appRecvQueue, myMsgPtr);
+                    }
+                    else if (strcmp(data_requested, "run") == 0){
+                        dbgOutputLoc(222);
+                        strcpy(appMsg, "run");
+                        myMsgPtr = &appMsg;
+                        messageToQ(appRecvQueue, myMsgPtr);
+                    }
+                    else if (strcmp(data_requested, "pause") == 0){
+                        dbgOutputLoc(222);
+                        strcpy(appMsg, "pause");
+                        myMsgPtr = &appMsg;
+                        messageToQ(appRecvQueue, myMsgPtr);
+                    }
+                    startWritingToJsonObject(messageptr, buflen);
 
                     /* TODO: Get message type here */
                     addStringKeyValuePairToJsonObject("message_type", "response");
                     /* TODO: Get encoder_value here */
-                    addIntegerKeyValuePairToJsonObject("encoder_value", 12);
 
                     addIntegerKeyValuePairToJsonObject("good_messages", good_messages);
 
@@ -239,22 +302,24 @@ void APP_JSON_Tasks(void) {
                     sum++;
                     addIntegerKeyValuePairToJsonObject("sequence_id", sum);
                     /* TODO: Get IR_sensor_value here */
-                    addIntegerKeyValuePairToJsonObject("infrared_sensor_value", 150);
+                    //addIntegerKeyValuePairToJsonObject("infrared_sensor_value", 150);
                     /* TODO: Get port number here */
                     addStringKeyValuePairToJsonObject("source", "192.168.1.102");
                     /* TODO: Get encoder_value here */
-                    addStringKeyValuePairToJsonObject("destination", "192.168.1.105");
+                    addStringKeyValuePairToJsonObject("destination", buffer2);
 
                     endWritingToJsonObject();
 
                     app_jsonData.state = APP_JSON_STATE_SENDING_MESSAGE;
+                    memset(recvMsg, 0, MSG_BUF_SIZE);
+                    memset(data_requested, 0, 20);
+                    
 
-                    for (i = 0; i < buflen; i++) {
-                        dbgOutputVal(buffer[i]);
-                    }
+//                    for (i = 0; i < MSG_BUF_SIZE; i++) {
+//                        dbgOutputVal(recvMsg[i]);
+//                    }
                     break;
-                }
-                else
+                } else
                     app_jsonData.state = APP_JSON_STATE_WAITING_FOR_MESSAGE;
             }
 
@@ -266,9 +331,11 @@ void APP_JSON_Tasks(void) {
 
             case APP_JSON_STATE_SENDING_MESSAGE:
             {
-                msgToWiflyMsgQ(&buffer);
+                msgToWiflyMsgQ(&messageptr);
+                //msgToWiflyMsgQ(&stupidError);
                 app_jsonData.state = APP_JSON_STATE_WAITING_FOR_MESSAGE;
                 break;
+                dbgOutputVal(0);
             }
 
             default:

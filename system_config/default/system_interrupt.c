@@ -113,6 +113,8 @@ void IntHandlerDrvTmrInstance0(void) {
 
     //dbgOutputLoc(millisec);
     if (millisec % 500 == 0) {//Get timer values
+        if (blink_led)
+            ledBlink();
         leftTicksPrev = leftTicks;
         leftTicks = PLIB_TMR_Counter16BitGet(TMR_ID_3);
         rightTicks = PLIB_TMR_Counter16BitGet(TMR_ID_4);
@@ -126,6 +128,8 @@ void IntHandlerDrvTmrInstance0(void) {
         count++;
 
         LATAINV = 0x8;
+        
+        //PLIB_PORTS_PinToggle ( PORTS_ID_0, LED_PORT, LED_PIN);
 
         //dbgOutputLoc(TMR_START + 3);
 
@@ -182,16 +186,17 @@ void IntHandlerDrvTmrInstance2(void) {
 void IntHandlerDrvUsartInstance0(void) {
     char mymsg[MSG_BUF_SIZE] = "";
     char * mymsgptr = "";
+    char * msgptr = &recvMsg;
     char mychar;
     dbgOutputLoc(UART_START);
 
     if (PLIB_INT_SourceFlagGet(INT_ID_0, INT_SOURCE_USART_1_RECEIVE)) {
         PLIB_INT_SourceDisable(INT_ID_0, INT_SOURCE_USART_1_RECEIVE);
         //dbgOutputLoc(99);
-        if (ReceiveMsgFromWifly(mymsg)) {
+        if (ReceiveMsgFromWifly(msgptr)) {
             //dbgOutputVal(mymsg[0]);
             //dbgOutputLoc(100);
-            wiflyToMsgQ(mymsg);
+            wiflyToMsgQ(msgptr);
         }
         received = true;
         counter = 0;

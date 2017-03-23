@@ -225,7 +225,7 @@ char ReceiveCharFromWiflyBlocking() {
 int getMsgFromRecvQ(char *msg) {
     dbgOutputLoc(87);
     if (xQueueReceive(recvMsgQueue,
-            msg,
+            &(msg),
             0
             ) == pdTRUE) {
         dbgOutputVal('R');
@@ -234,6 +234,7 @@ int getMsgFromRecvQ(char *msg) {
 
     return -1;
 }
+
 
 bool ReadJSONfromWifly(char* msg, int* msglen) {
     dbgOutputLoc(175);
@@ -258,7 +259,7 @@ bool ReadJSONfromWifly(char* msg, int* msglen) {
 
 
         } else {
-            dbgOutputLoc(177);
+            //dbgOutputLoc(177);
             noDataCounter++;
         }
         if (mychar == '}')
@@ -308,8 +309,11 @@ bool ReceiveMsgFromWifly(char* msg) {
                 noDataCounter++;
             }
         }
-        rFCheck += (recvFCheck[0] << 8);
-        rFCheck += recvFCheck[1];
+        noDataCounter = 0;
+        rFCheck = (recvFCheck[0] << 8 & 0xFF00) | (recvFCheck[1] & 0xFF); //sum2
+        //rFCheck += recvFCheck[1]; //sum1
+        dbgOutputLoc(rFCheck >> 8); // sum2
+        dbgOutputVal(rFCheck & 0xFF); // sum1
 
         i = 0;
         while (i < 4 && noDataCounter < MSGFAILSIZE) {
@@ -320,7 +324,7 @@ bool ReceiveMsgFromWifly(char* msg) {
                 dbgOutputVal(chksum[i]);
                 i++;
             } else {
-                dbgOutputLoc(137);
+                //dbgOutputLoc(137);
                 noDataCounter++;
             }
 
@@ -331,6 +335,8 @@ bool ReceiveMsgFromWifly(char* msg) {
             return false;
         }
         fCheck = fletcher16(msg, pos);
+        dbgOutputLoc(fCheck >> 8); // sum2
+        dbgOutputVal(fCheck & 0xFF); // sum1
 
 
 

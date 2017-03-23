@@ -134,6 +134,27 @@ QueueHandle_t createQueue(void) {
 
 /*******************************************************************************
   Function:
+    QueueHandle_t createQueue (void)
+
+  Remarks:
+    See prototype in app.h.
+ */
+
+QueueHandle_t createAppQueue(void) {
+    QueueHandle_t queue;
+
+    int queueSize = 6;
+    queue = xQueueCreate(5, queueSize);
+    if (queue == NULL) {
+        /* Queue is not created and should not be used
+         * The return value will be NULL if queue is not created
+         */
+    }
+    return queue;
+}
+
+/*******************************************************************************
+  Function:
     void createEncoderQueue (void)
 
   Remarks:
@@ -175,6 +196,31 @@ int receiveFromEncoderQueue(ENCODER_DATA *buffer) {
     return 0;
 }
 
+int getMsgFromQ( QueueHandle_t queue, char *msg) {
+    dbgOutputLoc(87);
+    if (xQueueReceive(queue,
+            &(msg),
+            0
+            ) == pdTRUE) {
+        dbgOutputVal('R');
+        return 0;
+    }
+
+    return -1;
+}
+int tempGetMsgFromQ( QueueHandle_t queue, char *msg) {
+    dbgOutputLoc(87);
+    if (xQueueReceive(queue,
+            (void*) &(msg),
+            0
+            ) == pdTRUE) {
+        dbgOutputVal('R');
+        return 0;
+    }
+
+    return -1;
+}
+
 /*******************************************************************************
   Function:
     int messageToQISR(QueueHandle_t queue, Message msg) 
@@ -191,7 +237,7 @@ int messageToQISR(QueueHandle_t queue, char* msg) {
     BaseType_t xHigherPriorityTaskWoken;
     if (queue != NULL) {
         if ((xQueueSendFromISR(queue,
-                &msg,
+                (void *) &msg,
                 &xHigherPriorityTaskWoken) != pdTRUE)) {
             return MSG_QUEUE_IS_FULL;
         } else
@@ -264,9 +310,9 @@ int requestEncoderData(int destIP) {
 
     endWritingToJsonObject();
 
-    if (msgToWiflyMsgQISR(&messageptr) == 0)
+    //if (msgToWiflyMsgQISR(&messageptr) == 0)
         return 0;
-    return 1;
+    //return 1;
 }
 
 bool checkConnected() {
@@ -292,6 +338,7 @@ void APP_Initialize(void) {
     PLIB_INT_SourceDisable(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT);
     good_messages = 0;
     bad_messages = 0;
+    blink_led = false;
 
 
     DRV_TMR0_Initialize();
@@ -332,6 +379,11 @@ void APP_Initialize(void) {
     if (recvMsgQueue == NULL) {
         /* Wait indefinitely until the queue is successfully created */
     }
+    
+    appRecvQueue = createQueue();
+    if (appRecvQueue == NULL) {
+        /* Wait indefinitely until the queue is successfully created */
+    }
 }
 
 /******************************************************************************
@@ -350,57 +402,88 @@ void APP_Tasks(void) {
     //    myMsg.ucMessageID = 't';
     //recvMsg = malloc(Message);
     char myChar;
-    appState = RUN;
+    appState = STOP;
+//    PLIB_INT_SourceDisable(INT_ID_0, INT_SOURCE_TIMER_2);
+//    PLIB_INT_SourceDisable(INT_ID_0, INT_SOURCE_TIMER_3);
+//    PLIB_INT_SourceDisable(INT_ID_0, INT_SOURCE_TIMER_4);
     //Initialize encoder receive message
     ENCODER_DATA encoderReceived;
     encoderReceived.leftTicks = 0;
     encoderReceived.rightTicks = 0;
 
-    int leftTicks = 0;
-    int rightTicks = 0;
-    int leftTicksPrev = 0;
-    int rightTicksPrev = 0;
+//    int leftTicks = 0;
+//    int rightTicks = 0;
+//    int leftTicksPrev = 0;
+//    int rightTicksPrev = 0;
+    //int blinkms = 0;
+    char * myMsgPtr = "";
     int i = 101;
     int millisec = 0;
-    int prev_ms, cur_ms = PLIB_TMR_Counter16BitGet(TMR_ID_2);
+    int prev_ms = 0, cur_ms = PLIB_TMR_Counter16BitGet(TMR_ID_2);
     bool connected = false;
     bool received = false;
     while (1) {
-        //dbgOutputLoc(APPTASKS);
-        leftTicksPrev = leftTicks;
-        rightTicksPrev = rightTicks;
+        if (xQueueReceive(appRecvQueue, (void*) &(myMsgPtr), 0) == pdTRUE) {
+        //if (tempGetMsgFromQ(appRecvQueue, myMsgPtr) == 0) {
+                    received = true;
+                    if (myMsgPtr > 0)
+                        dbgOutputVal(myMsgPtr[0]);
+                    dbgOutputLoc(APPRECVMSG);
+                    if (strcmp(myMsgPtr, "stop") == 0){
+                        blink_led = false;
+                        ledOff();
+                        dbgOutputLoc(APPSTOP);
+                        PLIB_INT_SourceDisable(INT_ID_0, INT_SOURCE_TIMER_2);
+                        PLIB_INT_SourceDisable(INT_ID_0, INT_SOURCE_TIMER_3);
+                        PLIB_INT_SourceDisable(INT_ID_0, INT_SOURCE_TIMER_4);
+                        appState = STOP;
+                        memset(myMsgPtr, 0, MSG_BUF_SIZE);
+                    }
+                    if (strcmp(myMsgPtr, "run") == 0){
+                        blink_led = false;
+                        PLIB_INT_SourceEnable(INT_ID_0, INT_SOURCE_TIMER_2);
+                        PLIB_INT_SourceEnable(INT_ID_0, INT_SOURCE_TIMER_3);
+                        PLIB_INT_SourceEnable(INT_ID_0, INT_SOURCE_TIMER_4);
+                        dbgOutputLoc(APPRUN);
+                        ledOn();
+                        appState = RUN;
+                        memset(myMsgPtr, 0, MSG_BUF_SIZE);
+                    }
+                    if (strcmp(myMsgPtr, "pause") == 0){
+                        blink_led = true;
+                        dbgOutputLoc(APPPAUSE);
+                        PLIB_INT_SourceEnable(INT_ID_0, INT_SOURCE_TIMER_2);
+                        PLIB_INT_SourceDisable(INT_ID_0, INT_SOURCE_TIMER_3);
+                        PLIB_INT_SourceDisable(INT_ID_0, INT_SOURCE_TIMER_4);
+                        
+                        appState = PAUSE;
+                        memset(myMsgPtr, 0, MSG_BUF_SIZE);
+                    }
 
-        //Receive encoder data
-        //encoderReceived = receiveFromEncoderQueue(encoderQueue);
-        leftTicks = encoderReceived.leftTicks;
-        rightTicks = encoderReceived.rightTicks;
-
-        prev_ms = cur_ms;
-        cur_ms = PLIB_TMR_Counter16BitGet(TMR_ID_2);
-        millisec += (cur_ms - prev_ms);
-
-        if (received) {
-
-            if (i < 100) {
-                dbgOutputLoc(155 + i);
-                dbgOutputVal(myMsg[i]);
-                i++;
-            } else {
-                dbgOutputLoc(154);
-                dbgOutputVal(myMsg[0]);
-                i = 0;
-            }
-
-        }
+                }
 
 
         //dbgOutputLoc(APPTASKS + 1);
         switch (appState) {
             case RUN:
+                
+                if (received){
+                    received = false; 
+                }  
                 break;
             case RECV:
                 break;
             case TRANS:
+                break;
+            case PAUSE:
+                if (received){
+                    received = false; 
+                }  
+                break;
+            case STOP:
+                if (received){
+                    received = false;
+                }
                 break;
             default:
                 break;

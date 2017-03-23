@@ -30,8 +30,12 @@ extern "C" {
     
     
 #define MSG_BUF_SIZE 200
+#define LED_PIN 0 // D6 - silkscreen 47 - LED
+#define LED_PORT PORT_CHANNEL_F
     
     char messageptr[200];
+    char recvMsg[200];
+    char appMsg[200];
     
     const char* DEVNAME;// = "sensor";
     const char* IPADDRESS;// = "192.168.1.102";
@@ -40,7 +44,8 @@ DRV_HANDLE usbHandle;// = DRV_USART_Open(DRV_USART_INDEX_0, DRV_IO_INTENT_READWR
 QueueHandle_t encoderQueue;
 QueueHandle_t msgQueue;
 QueueHandle_t recvMsgQueue;
-typedef enum  {RUN, RECV, TRANS} State;
+QueueHandle_t appRecvQueue;
+typedef enum  {RUN, RECV, TRANS, PAUSE, STOP} State;
 State appState;
 
 //typedef struct AMessage
@@ -87,7 +92,7 @@ int requestEncoderData(int destIP);
 int msgToWiflyMsgQISR(char* msg);
 int msgToWiflyMsgQ(char* msg);
 int writeStringUART(char* string);
-
+int getMsgFromQ( QueueHandle_t queue, char *msg);
 bool ReceiveMsgFromWifly(char* msg);
 
 void TransmitCharToWifly(unsigned char value);

@@ -19,6 +19,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif  
+    
+#include <stdbool.h>
 /* Pin Definitions */
 #define PIN0_PORT PORT_CHANNEL_E
 #define PIN1_PORT PORT_CHANNEL_E
@@ -64,8 +66,18 @@ extern "C" {
 #define WIFLY_ERROR 131
 #define STRING_START 20
 #define STRING_STOP 21
-#define APPTASKS 1  
+#define APPTASKS 1 
+#define APPPAUSE 9
+#define APPSTOP 8
+#define APPRUN 7
+#define APPRECVMSG 6
+#define LEDBLINK 211
+#define LEDON 210
+#define LEDOFF 209    
     
+    
+    
+    bool blink_led;
 typedef enum {
     /* Describe structure member. */
     MSG_QUEUE_DOES_NOT_EXIST = 1,
@@ -116,6 +128,9 @@ int dbgUARTVal(unsigned char val);
 */
 
 int dbgOutputLoc(unsigned char val);
+
+void ledOn();
+void ledOff();
 
 
 /* Provide C++ Compatibility */
