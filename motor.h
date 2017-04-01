@@ -27,6 +27,7 @@
 /* This section lists the other files that are included in this file.
  */
 #include "app.h"
+#include "app_public.h"
 #include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -49,28 +50,34 @@
     void testFunc(int ticks);
     
     //Configure the motors to move forwards
-    void motorsForward(int speed);
+    void motorsForward(int leftSpeed, int rightSpeed);
     
     //Configure the motors to move backwards
-    void motorsBackward(int speed);
+    void motorsBackward(int leftSpeed, int rightSpeed);
     
     //Configure the motors to turn left
-    void motorsTurnRight(int speed);
+    void motorsTurnRight(int leftSpeed, int rightSpeed);
     
     //Configure the motors to turn right
-    void motorsTurnLeft(int speed);
+    void motorsTurnLeft(int leftSpeed, int rightSpeed);
     
     //Configure the motors to stop
     void motorsStop();
     
     //Set motors to specific speed
-    void motorsSpeed(int speed);
+    void motorsSetSpeed(int leftSpeed, int rightSpeed);
     
     //Milestone 2 motor control demo
     void motorsTurnDemo(int itterate);
     
     //Milestone 2 motor speed control demo
     void motorsSpeedDemo(int itterate);
+    
+    //Figure 8 movement
+    //MOTOR_MESSAGE figureEightDemo(int itterate);
+    
+    //Manipulate motor speed
+    int pidControl(int motorSpeed, int ticks, int targetSpeed, float kp, float ki, float kd);
 /* *****************************************************************************
  End of File
  */

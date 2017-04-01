@@ -97,6 +97,8 @@ DBG_POS namepos = T;
 unsigned char out;
 unsigned int ch = 1;
 
+int toggle = 1;
+
 
 unsigned int millisec = 0;
 int itterate = 0;
@@ -109,9 +111,9 @@ int rightTicksPrev = 0;
 void IntHandlerDrvTmrInstance0(void) {
     millisec++;
     //dbgOutputLoc(TMR_START);
+    
 
-
-    //dbgOutputLoc(millisec);
+    //dbgutputLoc(millisec);
     if (millisec % 500 == 0) {//Get timer values
         leftTicksPrev = leftTicks;
         leftTicks = PLIB_TMR_Counter16BitGet(TMR_ID_3);
@@ -119,12 +121,11 @@ void IntHandlerDrvTmrInstance0(void) {
         dbgOutputLoc(TMR_START + 2);
         //dbgOutputVal(leftTicks - leftTicksPrev);
         //Send encoder data to queue
-        ENCODER_DATA ticksMessage;
-        ticksMessage.leftTicks = leftTicks;
-        ticksMessage.rightTicks = rightTicks;
+
         unsigned char val;
         count++;
 
+        
         LATAINV = 0x8;
 
         //dbgOutputLoc(TMR_START + 3);
@@ -146,13 +147,126 @@ void IntHandlerDrvTmrInstance0(void) {
         //dbgOutputLoc(TMR_START + 2);
         //dbgOutputVal(leftTicks - leftTicksPrev);
         //Send encoder data to queue
-        ENCODER_DATA ticksMessage;
+        MOTOR_MESSAGE ticksMessage;
+        ticksMessage.messageType = 'E';
         ticksMessage.leftTicks = leftTicks - leftTicksPrev;
         ticksMessage.rightTicks = rightTicks - rightTicksPrev;
         
-        app1SendEncoderValToMsgQ(&ticksMessage);
+        if(ticksMessage.leftTicks > 0 && ticksMessage.leftTicks < 100 && ticksMessage.rightTicks > 0 && ticksMessage.rightTicks < 100) {
+            if(xQueueSendFromISR(encoderQueue, &ticksMessage, NULL) != pdTRUE) {
+                //send failed
+            }
+        }
         //dbgOutputVal(ticksMessage.leftTicks);
     }
+    if(millisec % 5000 == 0) {
+        MOTOR_MESSAGE motorMessage;
+        if(toggle == -1) {
+            motorMessage.messageType = 'M';
+            motorMessage.motorState = MOTOR_FORWARD;
+            motorMessage.dist = 1000;
+        }
+        else if(toggle == 1)
+            motorMessage.messageType = 'R';
+        if(xQueueSendFromISR(encoderQueue, &motorMessage, NULL) != pdTRUE) {
+            //send failed
+        }
+        toggle *= -1;
+      /*MOTOR_MESSAGE msg;
+        msg.messageType = 'M';
+        switch(itterate) {
+            case(0):
+                msg.dist = 500;
+                msg.motorState = MOTOR_FORWARD;
+                break;
+            case(1):
+                msg.dist = NINTY_DEG;
+                msg.motorState = MOTOR_TURN_LEFT;
+                break;
+            case(2):
+                msg.dist = 500;
+                msg.motorState = MOTOR_FORWARD;
+                break;
+            case(3):
+                msg.dist = NINTY_DEG;
+                msg.motorState = MOTOR_TURN_LEFT;
+                break;
+            case(4):
+                msg.dist = 500;
+                msg.motorState = MOTOR_FORWARD;
+                break;
+            case(5):
+                msg.dist = NINTY_DEG;
+                msg.motorState = MOTOR_TURN_LEFT;
+                break;
+            case(6):
+                msg.dist = 500;
+                msg.motorState = MOTOR_FORWARD;
+                break;
+            case(7):
+                msg.dist = NINTY_DEG;
+                msg.motorState = MOTOR_TURN_LEFT;
+                break;
+            case(8):
+                msg.dist = 500;
+                msg.motorState = MOTOR_FORWARD;
+                break;
+            case(9):
+                msg.dist = NINTY_DEG;
+                msg.motorState = MOTOR_TURN_RIGHT;
+                break;
+            case(10):
+                msg.dist = 500;
+                msg.motorState = MOTOR_FORWARD;
+                break;
+            case(11):
+                msg.dist = NINTY_DEG;
+                msg.motorState = MOTOR_TURN_RIGHT;
+                break;
+            case(12):
+                msg.dist = 500;
+                msg.motorState = MOTOR_FORWARD;
+                break;
+            case(13):
+                msg.dist = NINTY_DEG;
+                msg.motorState = MOTOR_TURN_RIGHT;
+                break;
+            case(14):
+                msg.dist = 500;
+                msg.motorState = MOTOR_FORWARD;
+                break;
+            case(15):
+                msg.dist = NINTY_DEG;
+                msg.motorState = MOTOR_TURN_RIGHT;
+                break;
+            default:
+                //while(1){dbgOutputVal(0xFF);}
+                break;
+       
+        }
+        
+        if(xQueueSendFromISR(encoderQueue, &msg, NULL) != pdTRUE) {
+            //send failed
+        }
+        itterate++;
+        if(itterate == 16)
+            itterate = 0;
+    }*/
+    }
+    /*Testing Tick Distance
+    if (millisec % 1000 == 0)   {
+        if(toggle == 5) {
+            //dbgOutputLoc(99);
+            toggle = 0;
+            motorsForward(400, 400);
+        }
+        else {
+            //dbgOutputLoc(100);
+            motorsForward(0, 0);
+        }
+        
+        toggle++;
+    }*/
     PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_TIMER_2);
     //dbgOutputLoc(TMR_STOP);
 }
@@ -184,10 +298,10 @@ void IntHandlerDrvUsartInstance0(void) {
     if (PLIB_INT_SourceFlagGet(INT_ID_0, INT_SOURCE_USART_1_RECEIVE)) {
         PLIB_INT_SourceDisable(INT_ID_0, INT_SOURCE_USART_1_RECEIVE);
         //dbgOutputLoc(99);
-        if (ReceiveMsgFromWifly(mymsg)) {
+        if (ReceiveMsgFromWifly(jsonMsg)) {
             //dbgOutputVal(mymsg[0]);
             //dbgOutputLoc(100);
-            wiflyToMsgQ(mymsg);
+            wiflyToMsgQ(jsonMsg);
         }
         received = true;
         counter = 0;

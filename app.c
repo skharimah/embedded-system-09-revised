@@ -158,7 +158,7 @@ QueueHandle_t createEncoderQueue(void) {
     See prototype in app.h.
  */
 
-int receiveFromEncoderQueue(ENCODER_DATA *buffer) {
+int receiveFromEncoderQueue(MOTOR_MESSAGE *buffer) {
     dbgOutputLoc(99);
     if (encoderQueue != NULL) {
         if (xQueueReceive(encoderQueue, buffer, 0) == pdTRUE) {
@@ -220,7 +220,7 @@ int messageToQ(QueueHandle_t queue, char* msg) {
         return MSG_QUEUE_DOES_NOT_EXIST;
 }
 
-int app1SendEncoderValToMsgQ(ENCODER_DATA *encoderTicks) {
+int app1SendEncoderValToMsgQ(MOTOR_MESSAGE *encoderTicks) {
     if (encoderQueue != NULL) {
         if (xQueueSendFromISR(encoderQueue,
                 (void *) encoderTicks,
@@ -325,7 +325,7 @@ void APP_Tasks(void) {
     char myChar;
     appState = RUN;
     //Initialize encoder receive message
-    ENCODER_DATA encoderReceived;
+    MOTOR_MESSAGE encoderReceived;
     encoderReceived.leftTicks = 0;
     encoderReceived.rightTicks = 0;
 

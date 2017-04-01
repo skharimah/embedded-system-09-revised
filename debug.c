@@ -96,6 +96,7 @@ int dbgOutputVal(unsigned char outputVal){
         PLIB_PORTS_PinWrite ( PORTS_ID_0, PIN16_PORT, PIN16, 0);  
     return 0;
 }
+
 /*******************************************************************************
   Function:
     int dbgUARTVal(unsigned char)

@@ -1,15 +1,11 @@
 /* ************************************************************************** */
 /** Descriptive File Name
-
   @Company
     Company Name
-
   @File Name
     filename.h
-
   @Summary
     Brief description of the file.
-
   @Description
     Describe the purpose of this file.
  */
@@ -42,21 +38,16 @@ extern "C" {
  /*******************************************************************************
   Function:
     void intLenToChar(Message msg, char *len)
-
   Summary:
     Send a message to a previously created message queue
-
   Description:
     This function will send a Message struct to a message queue, but is NOT safe
     for use within an ISR.
-
   Parameters:
     QueueHandle_t queue: The handle for the queue you want to write to
     Message msg: The message to write to the queue
-
   Returns:
     An integer 0 for success, -1 for failure.
-
 */
 void intLenToChar(char *msg, char *len);
 void checksum(char *msg, char *sum);

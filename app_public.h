@@ -31,7 +31,12 @@ extern "C" {
     
 #define MSG_BUF_SIZE 200
     
-    char messageptr[MSG_BUF_SIZE];
+    char messageptr[200];
+    char recvMsg[200];
+    char appMsg[200];
+    char encoderValMsg[20];
+    char jsonMsg[250];
+    
     
     const char* DEVNAME;// = "sensor";
     const char* IPADDRESS;// = "192.168.1.102";
@@ -40,8 +45,10 @@ DRV_HANDLE usbHandle;// = DRV_USART_Open(DRV_USART_INDEX_0, DRV_IO_INTENT_READWR
 QueueHandle_t encoderQueue;
 QueueHandle_t msgQueue;
 QueueHandle_t recvMsgQueue;
-typedef enum  {RUN, RECV, TRANS} State;
+QueueHandle_t appRecvQueue;
+typedef enum  {RUN, RECV, TRANS, PAUSE, STOP} State;
 State appState;
+
 
 //typedef struct AMessage
 // {
@@ -54,12 +61,24 @@ State appState;
 
  typedef struct
 {
+    //Tracks the type of message
+    char messageType;
+    
+    //Motor control
+    int motorState;
+    
     //Ticks of the right motor encoder
     int rightTicks;
     
     //Ticks of the left motor encoder
     int leftTicks;
-} ENCODER_DATA;
+    
+    //Distance to move
+    int dist;
+} MOTOR_MESSAGE;
+
+//motorTask states
+
 /*******************************************************************************
   Function:
     int app1SendTimerValToMsgQ(unsigned int)
@@ -86,6 +105,7 @@ int charToMsgQ(char val);
 
 int msgToWiflyMsgQISR(char* msg);
 int msgToWiflyMsgQ(char* msg);
+int taskToMsgQ(char* msg);
 int writeStringUART(char* string);
 
 bool ReceiveMsgFromWifly(char* msg);
@@ -96,13 +116,14 @@ void TransmitMsgToWifly(char* msg);
 
 char ReceiveCharFromWifly();
 
+int msgToJSONMsgQ(char* msg);
 
 /*******************************************************************************
  Encoder Queue Functions
  */
-int receiveFromEncoderQueue(ENCODER_DATA *buffer);
+int receiveFromEncoderQueue(MOTOR_MESSAGE *buffer);
 QueueHandle_t createEncoderQueue(void);
-int app1SendEncoderValToMsgQ(ENCODER_DATA *encoderTicks);
+int app1SendEncoderValToMsgQ(MOTOR_MESSAGE *encoderTicks);
 
 
 /*******************************************************************************

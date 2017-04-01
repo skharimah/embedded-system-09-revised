@@ -117,7 +117,7 @@ void MOTORTASK_Initialize ( void )
     /* Place the App state machine in its initial state. */
     motortaskData.state = MOTORTASK_STATE_INIT;
     dbgOutputLoc(10);
-    encoderQueue = createEncoderQueue();
+    encoderQueue = xQueueCreate(10, sizeof(MOTOR_MESSAGE));
     
     if (encoderQueue == NULL) {
         /* Wait indefinitely until the queue is successfully created */
@@ -140,22 +140,108 @@ void MOTORTASK_Initialize ( void )
 void MOTORTASK_Tasks ( void )
 {
     dbgOutputLoc(15);
-    ENCODER_DATA encoderReceived;
-    encoderReceived.leftTicks = 0;
-    encoderReceived.rightTicks = 0;
+    MOTOR_MESSAGE msgReceived;
+    msgReceived.leftTicks = 0;
+    msgReceived.rightTicks = 0;
 
     int leftTicks = 0;
     int rightTicks = 0;
     int leftTicksPrev = 0;
     int rightTicksPrev = 0;
     
-    int motorSpeed = 400;
+    //PID Variables
+    float kpl = .3;
+    float kil = .2;
+    float kdl = .01;
+    
+    float kpr = .25;
+    float kir = .2;
+    float kdr = .01;
+    
+    int targetSpeed = 400; 
+    int leftMotorSpeed = 400;
+    int rightMotorSpeed = 400;
+    
+    //UART output variables
+    char tickChar[5];
+    int i;
+    
+    //Motor turn variables
+    int moving = 0;
+    int leftCounter;
+    int rightCounter;
+    int dest = FORTYFIVE_DEG;
+    
+    //motor distance variables
     
     motorsInitialize();
     
     while(1) {
         //dbgOutputLoc(16);
         
+        //Set previous encoder values
+        leftTicksPrev = leftTicks;
+        rightTicksPrev = rightTicks;
+        
+        //Check Queue for new message
+        if(xQueueReceive(encoderQueue, &msgReceived, 0) == pdTRUE) {
+            //change location of encoder value checks
+            if(msgReceived.messageType == 'M' && moving == 0) {
+                motortaskData.state = msgReceived.motorState;
+                dest = msgReceived.dist;
+            } 
+            if(msgReceived.messageType == 'E') {
+                if( (msgReceived.leftTicks != 0) && (msgReceived.leftTicks != 0))   {
+                    leftTicks = msgReceived.leftTicks;
+                    rightTicks = msgReceived.rightTicks;
+                    dbgOutputLoc(19);
+
+                    dbgOutputVal(rightTicks);
+
+                    //Output ticks to UART
+                    sprintf(tickChar, "L%d", leftTicks);
+                    for(i = 0; tickChar[i] != NULL; i++)
+                        dbgOutputVal(tickChar[i]);
+                    dbgOutputVal(' ');
+                    sprintf(tickChar, "R%d", rightTicks);
+                    for(i = 0; tickChar[i] != NULL; i++)
+                        dbgOutputVal(tickChar[i]);
+                    dbgOutputVal('\n');      
+                
+                    //adjust speed
+                    leftMotorSpeed = pidControl(leftMotorSpeed, rightTicks, targetSpeed, kpl, kil, kdl);
+                    rightMotorSpeed = pidControl(rightMotorSpeed, leftTicks, targetSpeed, kpr, kir, kdr);
+                    
+                    
+                    motortaskData.state = SEND_ENCODER_VALUES;
+                }
+            }
+        }
+        //Button Pressed
+        if(PLIB_PORTS_PinGet( PORTS_ID_0, PORT_CHANNEL_D, 6) == 0) {
+            //LED ON (to do)
+            
+            //stop motors
+            motorsStop();
+            //Wait for reset
+            while(msgReceived.messageType != 'R') {
+                if(xQueueReceive(encoderQueue, &msgReceived, 0) == pdTRUE) {
+                    
+                }
+            }
+        }
+        
+        //Handle move distance
+        if(moving == 1) {
+            motorsSetSpeed(leftMotorSpeed, rightMotorSpeed);
+            leftCounter = PLIB_TMR_Counter16BitGet(TMR_ID_3);
+            rightCounter = PLIB_TMR_Counter16BitGet(TMR_ID_3);
+            //LATAINV = 0x8;
+            if(leftCounter > dest && rightCounter > dest) {
+                moving = 0;
+                motortaskData.state = MOTOR_DO_NOTHING;
+            }
+        }
         /* Check the application's current state. */
         switch ( motortaskData.state )
         {
@@ -164,7 +250,7 @@ void MOTORTASK_Tasks ( void )
             {
                 bool appInitialized = true;
                 //Initialize encoder receive message
-
+                
                 if (appInitialized)
                 {
 
@@ -176,45 +262,74 @@ void MOTORTASK_Tasks ( void )
             case MOTORTASK_STATE_SERVICE_TASKS:
             {
                 dbgOutputLoc(17);
-                leftTicksPrev = leftTicks;
-                rightTicksPrev = rightTicks;
-                dbgOutputLoc(18);
-                //Receive encoder data
-                if(receiveFromEncoderQueue(&encoderReceived)) {
-                    leftTicks = encoderReceived.leftTicks;
-                    rightTicks = encoderReceived.rightTicks;
-                    dbgOutputLoc(19);
-                    dbgOutputVal(encoderReceived.rightTicks);
-                }
-                motortaskData.state = MOTOR_RECEIVE_MESSAGE;
+                
                 break;
             }
-            case MOTOR_RECEIVE_MESSAGE:
+            case MOTOR_DO_NOTHING:
             {
                 dbgOutputLoc(130);
-                motortaskData.state = MOTOR_FORWARD;
+
+                //Stop motors
+                motorsStop();
+                
                 break;
             }
             
             case MOTOR_FORWARD:
             {
+                PLIB_TMR_Counter16BitSet(TMR_ID_3, 0);
+                PLIB_TMR_Counter16BitSet(TMR_ID_4, 0);
+                moving = 1;
                 dbgOutputLoc(131);
-                motorsForward(motorSpeed);
-                motortaskData.state = MOTOR_TURN;
+                motorsForward(leftMotorSpeed, rightMotorSpeed);
+                motortaskData.state = MOTOR_STATE_IDLE;
                 break;
             }
             
-            case MOTOR_TURN:
+            case MOTOR_BACKWARD:
             {
+                dbgOutputLoc(131);
+                motorsBackward(leftMotorSpeed, rightMotorSpeed);
+      
+                break;
+            }
+            
+            case MOTOR_TURN_LEFT:
+            {
+                PLIB_TMR_Counter16BitSet(TMR_ID_3, 0);
+                PLIB_TMR_Counter16BitSet(TMR_ID_4, 0);
                 dbgOutputLoc(132);
-                motortaskData.state = MOTORTASK_STATE_SERVICE_TASKS;
-                //motortaskData.state = MOTOR_RECEIVE_MESSAGE;
+                moving = 1;
+                motorsTurnLeft(leftMotorSpeed, rightMotorSpeed);
+                
+                motortaskData.state = MOTOR_STATE_IDLE;
                 break;
             }
             
-            case MOTOR_ADJUST_SPEED:
+            case MOTOR_TURN_RIGHT:
             {
+                PLIB_TMR_Counter16BitSet(TMR_ID_3, 0);
+                PLIB_TMR_Counter16BitSet(TMR_ID_4, 0);
+                dbgOutputLoc(132);
+                moving = 1;
+                motorsTurnRight(leftMotorSpeed, rightMotorSpeed);
                 
+                motortaskData.state = MOTOR_STATE_IDLE;
+                break;
+            }
+                        
+            case SEND_ENCODER_VALUES:
+            {
+                sprintf(encoderValMsg, "L%d R%d", leftTicks, rightTicks);
+                msgToJSONMsgQ(&encoderValMsg);
+                
+                /*for (i = 0; encoderValMsg[i] != NULL; i++)
+                    dbgUARTVal(encoderValMsg[i]);*/
+                motortaskData.state = MOTORTASK_STATE_SERVICE_TASKS;
+            }
+            
+            case MOTOR_STATE_IDLE:
+            {
                 break;
             }
 
