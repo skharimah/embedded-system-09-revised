@@ -35,7 +35,7 @@ extern "C" {
     char recvMsg[200];
     char appMsg[200];
     char encoderValMsg[20];
-    char jsonMsg[250];
+    char jsonMsg[200];
     
     
     const char* DEVNAME;// = "sensor";

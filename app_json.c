@@ -227,8 +227,8 @@ void APP_JSON_Tasks(void) {
                 struct Tuple msgType = getValueFromJsonString("message_type", myMsgPtr);
                 struct Tuple newDest = getValueFromJsonString("source", myMsgPtr);
                 struct Tuple data_req = getValueFromJsonString("requested_data", myMsgPtr);
-                //struct Tuple motor_command = getValueFromJsonString("motor_command", myMsgPtr);
-                //struct Tuple motor_distance = getValueFromJsonString("motor_dist", myMsgPtr);
+                struct Tuple motor_command = getValueFromJsonString("motor_command", myMsgPtr);
+                struct Tuple motor_distance = getValueFromJsonString("motor_dist", myMsgPtr);
                 
                 //jsstringValuesTuples[0] = getValueFromJsonString("message_type", myMsg);
                 //jsstringValuesTuples[1] = getValueFromJsonString("sequence_id", myMsg);
@@ -277,7 +277,7 @@ void APP_JSON_Tasks(void) {
                     dbgOutputLoc(176);
                     dbgOutputVal('b');
                 }
-                /*if (motor_command.size > 0) {
+                if (motor_command.size > 0) {
                     dbgOutputLoc(175);
                     
                     for (i = 0; i < motor_command.size; i++) {
@@ -300,7 +300,7 @@ void APP_JSON_Tasks(void) {
                 else{
                     dbgOutputLoc(176);
                     dbgOutputVal('b');
-                }*/
+                }
                 
                 
                 

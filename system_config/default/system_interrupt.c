@@ -159,7 +159,7 @@ void IntHandlerDrvTmrInstance0(void) {
         }
         //dbgOutputVal(ticksMessage.leftTicks);
     }
-    if(millisec % 5000 == 0) {
+    /*if(millisec % 5000 == 0) {
         MOTOR_MESSAGE motorMessage;
         if(toggle == -1) {
             motorMessage.messageType = 'M';
@@ -251,8 +251,8 @@ void IntHandlerDrvTmrInstance0(void) {
         itterate++;
         if(itterate == 16)
             itterate = 0;
-    }*/
     }
+    }*/
     /*Testing Tick Distance
     if (millisec % 1000 == 0)   {
         if(toggle == 5) {
