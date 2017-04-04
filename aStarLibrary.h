@@ -4,6 +4,8 @@
 ;===================================================================
 ;Last updated 06/16/03 -- Visual C++ version
  */
+#ifndef ASTARLIBRARY_H
+#define ASTARLIBRARY_H
 typedef enum rovers{
     NA = 0,
             SENSOR,
@@ -578,4 +580,4 @@ int abs (int a){
 }
 
 	
-
+#endif
