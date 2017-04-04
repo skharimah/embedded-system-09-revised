@@ -180,6 +180,7 @@ void checksum(char* msg, char *len) {
     int hex;
     for (i = 0; msg[i] != '\0'; i++) {
         sum = sum + msg[i];
+        sum = sum % 10000;
     }
     for (j = 0; j < 4; j++) {
         len[3 - j] = (sum % 10) + '0';

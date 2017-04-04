@@ -124,6 +124,9 @@ typedef struct
 
 } APP_DATA;
 
+// Pathfinding data
+int xLoc [4]; int yLoc [4]; int speed [4];
+
 
 
 /* Driver objects.

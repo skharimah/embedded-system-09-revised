@@ -30,12 +30,15 @@ extern "C" {
     
     
 #define MSG_BUF_SIZE 200
+#define MAP_BUF_SIZE 500
 #define LED_PIN 0 // D6 - silkscreen 47 - LED
 #define LED_PORT PORT_CHANNEL_F
+
     
     char messageptr[200];
     char recvMsg[200];
     char appMsg[200];
+    char mapMsg[MAP_BUF_SIZE];
     
     const char* DEVNAME;// = "sensor";
     const char* IPADDRESS;// = "192.168.1.102";
@@ -45,7 +48,7 @@ QueueHandle_t encoderQueue;
 QueueHandle_t msgQueue;
 QueueHandle_t recvMsgQueue;
 QueueHandle_t appRecvQueue;
-typedef enum  {RUN, RECV, TRANS, PAUSE, STOP} State;
+typedef enum  {INIT, RUN, RECV, TRANS, PAUSE, STOP, RESET} State;
 State appState;
 
 //typedef struct AMessage

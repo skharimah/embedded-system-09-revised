@@ -121,11 +121,11 @@ int dbgOutputVal(unsigned char outputVal){
  */
 int dbgUARTVal(unsigned char val){
     
-    if (!(DRV_USART_TRANSFER_STATUS_TRANSMIT_FULL & DRV_USART_TransferStatus(usbHandle)) ){
+    //if (!(DRV_USART_TRANSFER_STATUS_TRANSMIT_FULL & DRV_USART_TransferStatus(usbHandle)) ){
         
         DRV_USART_WriteByte(usbHandle, val);
         return 0;
-    }
+    //}
     return 1;
 }
 
