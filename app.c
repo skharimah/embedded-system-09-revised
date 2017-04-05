@@ -52,12 +52,14 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 // Section: Included Files 
 // *****************************************************************************
 // *****************************************************************************
-
 #include "app.h"
 #include "app_public.h"
+#include <queue.h>
 #include "debug.h"
+#include "json_access/jsonaccess.h"
 #include <xc.h>
 #include "string.h"
+#include "aStarLibrary.h"
 
 // *****************************************************************************
 // *****************************************************************************
@@ -242,10 +244,127 @@ int UARTInit(USART_MODULE_ID id, int baudrate) {
     return 1;
 }
 
-bool checkConnected() {
+void MoveSprite(int ID) {
+    
+    int northSouth;
+    int eastWest;
+    MOTOR_MESSAGE msg;
+    msg.messageType = 'M';
+    msg.motorState = MOTOR_PATH_FIND;
+    msg.dist = 0;
+            
+    //1.Read path information
+    ReadPath(ID, xLoc[ID], yLoc[ID], 1);
 
+    //2.Move sprite. xLoc/yLoc = current location of sprite. xPath and
+    //	yPath = coordinates of next step on the path that were/are
+    //	read using the readPath function.
+    if (yLoc[ID] > yPath[ID]) { //yLoc[ID] - speed[ID];	
+        dbgUARTVal('s');
+        dbgUARTVal('o');
+        dbgUARTVal('u');
+        dbgUARTVal('t');
+        dbgUARTVal('h');
+        northSouth = -1; // SOUTH
+    }
+    else if (yLoc[ID] < yPath[ID]) { //yLoc[ID] + speed[ID];
+        dbgUARTVal('n');
+        dbgUARTVal('o');
+        dbgUARTVal('r');
+        dbgUARTVal('t');
+        dbgUARTVal('h');
+        northSouth = 1; // NORTH
+    }
+    else
+        northSouth = 0;
+    if (xLoc[ID] > xPath[ID]) { //xLoc[ID] - speed[ID];
+        dbgUARTVal('w');
+        dbgUARTVal('e');
+        dbgUARTVal('s');
+        dbgUARTVal('t');
+        eastWest = -1; //WEST
+    }
+    else if (xLoc[ID] < xPath[ID]) { //xLoc[ID] + speed[ID];
+        dbgUARTVal('e');
+        dbgUARTVal('a');
+        dbgUARTVal('s');
+        dbgUARTVal('t');
+        eastWest = 1; //EAST
+    }
+    else
+        eastWest = 0;
+    dbgUARTVal('\n');
+
+    if(northSouth == 1 && eastWest == 0) {
+        msg.dir = NORTH;
+        msg.dist = BLOCK_DIST;
+    }
+    else if(northSouth == -1 && eastWest == 0) {
+        msg.dir = SOUTH;
+        msg.dist = BLOCK_DIST;
+    }
+    else if(northSouth == 0 && eastWest == 1) {
+        msg.dir = EAST;
+        msg.dist = BLOCK_DIST;
+    }
+    else if(northSouth == 0 && eastWest == -1) {
+        msg.dir = WEST;
+        msg.dist = BLOCK_DIST;   
+    }
+    else if(northSouth == 1 && eastWest == 1) {
+        msg.dir = NORTHEAST;
+        msg.dist = HYPT_DIST;
+    }
+    else if(northSouth == 1 && eastWest == -1) {
+        msg.dir = NORTHWEST;
+        msg.dist = HYPT_DIST;
+    }
+    else if(northSouth == -1 && eastWest == 1) {
+        msg.dir = SOUTHEAST;
+        msg.dist = HYPT_DIST;
+    }
+    else if(northSouth == -1 && eastWest == -1) {
+        msg.dir = SOUTHWEST;
+        msg.dist = HYPT_DIST;
+    }
+    else {
+        //Do something
+       
+    }
+
+
+    if(msg.dist != 0) {
+        LATAINV = 0x8;
+        if(xQueueSend(encoderQueue, &msg, NULL) != pdTRUE) {
+                //send failed
+        }
+    }
+
+    //	
+    ////3.When sprite reaches the end location square	(end of its current
+    ////	path) ...		
+    //	if (pathLocation[ID] == pathLength[ID]) 
+    //	{
+    ////		Center the chaser in the square (not really necessary, but 
+    ////		it looks a little better for the chaser, which moves in 3 pixel
+    ////		increments and thus isn't always centered when it reaches its
+    ////		target).
+    //		if (abs(xLoc[ID] - xPath[ID]) < speed[ID]) xLoc[ID] = xPath[ID];
+    //		if (abs(yLoc[ID] - yPath[ID]) < speed[ID]) yLoc[ID] = yPath[ID];
+    //	}
 }
 
+//function for parsing msg from app_json
+int subStrToInt(char *len, int from, int to) {
+    int i;
+    int powTen = 1;
+    int sum = 0;
+    for (i = from; i <= to; i++) {
+        sum = sum + (len[i] - '0') * powTen;
+        powTen = powTen * 10;
+    }
+    return sum;
+}
 // *****************************************************************************
 // *****************************************************************************
 // Section: Application Initialization and State Machine Functions
@@ -255,12 +374,34 @@ bool checkConnected() {
 /*******************************************************************************
   Function:
     void APP_Initialize ( void )
-
   Remarks:
     See prototype in app.h.
  */
 
 void APP_Initialize(void) {
+    int i, j;
+
+    for (i = 0; i < mapWidth; i++)
+        for (j = 0; j < mapHeight; j++)
+            walkability [i][j].walkability = walkable;
+
+    //wall from (1, 5) to right side
+    for (i = 1; i < mapWidth; i++)
+        //for (j = 0; j < mapHeight; j++)
+        walkability [i][5].walkability = unwalkable;
+    
+    //wall from (3,5) to (3,18)
+    for (i = 5; i < 18; i++)
+        walkability [3][i].walkability = unwalkable;
+    
+    // wall from (7,10) to top
+    for (i = 10; i < mapHeight; i++)
+        walkability [7][i].walkability = unwalkable;
+    
+    //wall across map
+    /*for (i = 0; i < mapHeight; i++)
+        walkability [7][i].walkability = unwalkable;*/
+    
     PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT);
     PLIB_INT_SourceDisable(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT);
     good_messages = 0;
@@ -277,13 +418,13 @@ void APP_Initialize(void) {
     DRV_TMR2_Start();
     motorsInitialize();
 
-//    motorsForward();
+    //    motorsForward();
 
 
     //encoderQueue = createEncoderQueue();
     //msgQueue = createQueue();
     //if (encoderQueue == NULL) {
-        /* Wait indefinitely until the queue is successfully created */
+    /* Wait indefinitely until the queue is successfully created */
     //}
     //SYS_PORTS_Clear ( PORTS_BIT_POS_0, PORT_CHANNEL_G, 0xFF );
     //SYS_PORTS_Set( PORTS_BIT_POS_0, PORT_CHANNEL_G, 1, 0x0F0 );
@@ -305,75 +446,177 @@ void APP_Initialize(void) {
     if (recvMsgQueue == NULL) {
         /* Wait indefinitely until the queue is successfully created */
     }
+
+    appRecvQueue = createQueue();
+    if (appRecvQueue == NULL) {
+        /* Wait indefinitely until the queue is successfully created */
+    }
 }
 
 /******************************************************************************
   Function:
     void APP_Tasks ( void )
-
   Remarks:
     See prototype in app.h.
  */
 
 void APP_Tasks(void) {
     UARTInit(USART_ID_1, 57600);
+    int ID = 1;
+    int goalX = 10;
+    int goalY = 7;
+
     char myMsg[ MSG_BUF_SIZE ];
     //    myMsg.ucData[0] = 't';
     //    myMsg.ucData[1] = 't';
     //    myMsg.ucMessageID = 't';
     //recvMsg = malloc(Message);
     char myChar;
-    appState = RUN;
+    appState = INIT;
+    //    PLIB_INT_SourceDisable(INT_ID_0, INT_SOURCE_TIMER_2);
+    //    PLIB_INT_SourceDisable(INT_ID_0, INT_SOURCE_TIMER_3);
+    //    PLIB_INT_SourceDisable(INT_ID_0, INT_SOURCE_TIMER_4);
     //Initialize encoder receive message
-    MOTOR_MESSAGE encoderReceived;
-    encoderReceived.leftTicks = 0;
-    encoderReceived.rightTicks = 0;
 
-    int leftTicks = 0;
-    int rightTicks = 0;
-    int leftTicksPrev = 0;
-    int rightTicksPrev = 0;
+    //    int leftTicks = 0;
+    //    int rightTicks = 0;
+    //    int leftTicksPrev = 0;
+    //    int rightTicksPrev = 0;
+    //int blinkms = 0;
+    char * myMsgPtr = "";
     int i = 101;
     int millisec = 0;
-    int prev_ms, cur_ms = PLIB_TMR_Counter16BitGet(TMR_ID_2);
+    int prev_ms = 0, cur_ms = PLIB_TMR_Counter16BitGet(TMR_ID_2);
     bool connected = false;
     bool received = false;
+    
+    //app_JSON parsing vars
+    int xCoord;
+    int yCoord;
+    int obs;
+    int rType;
     while (1) {
-        //dbgOutputLoc(APPTASKS);
-        leftTicksPrev = leftTicks;
-        rightTicksPrev = rightTicks;
-
-        //Receive encoder data
-        //encoderReceived = receiveFromEncoderQueue(encoderQueue);
-        leftTicks = encoderReceived.leftTicks;
-        rightTicks = encoderReceived.rightTicks;
-
-        prev_ms = cur_ms;
-        cur_ms = PLIB_TMR_Counter16BitGet(TMR_ID_2);
-        millisec += (cur_ms - prev_ms);
-
-        if (received) {
-
-            if (i < 100) {
-                dbgOutputLoc(155 + i);
-                dbgOutputVal(myMsg[i]);
-                i++;
-            } else {
-                dbgOutputLoc(154);
-                dbgOutputVal(myMsg[0]);
-                i = 0;
+        if (xQueueReceive(appRecvQueue, (void*) &(myMsgPtr), 0) == pdTRUE) {
+            //if (tempGetMsgFromQ(appRecvQueue, myMsgPtr) == 0) {
+            received = true;
+            if (myMsgPtr > 0)
+                dbgOutputVal(myMsgPtr[0]);
+            dbgOutputLoc(APPRECVMSG);
+            if (strcmp(myMsgPtr, "stop") == 0) {
+                dbgOutputLoc(APPSTOP);
+                PLIB_INT_SourceDisable(INT_ID_0, INT_SOURCE_TIMER_2);
+                PLIB_INT_SourceDisable(INT_ID_0, INT_SOURCE_TIMER_3);
+                PLIB_INT_SourceDisable(INT_ID_0, INT_SOURCE_TIMER_4);
+                appState = STOP;
+                memset(myMsgPtr, 0, MSG_BUF_SIZE);
             }
+            if (strcmp(myMsgPtr, "run") == 0) {
+                PLIB_INT_SourceEnable(INT_ID_0, INT_SOURCE_TIMER_2);
+                PLIB_INT_SourceEnable(INT_ID_0, INT_SOURCE_TIMER_3);
+                PLIB_INT_SourceEnable(INT_ID_0, INT_SOURCE_TIMER_4);
+                dbgOutputLoc(APPRUN);
+                appState = RUN;
+                memset(myMsgPtr, 0, MSG_BUF_SIZE);
+            }
+            if (strcmp(myMsgPtr, "pause") == 0) {
+                dbgOutputLoc(APPPAUSE);
+                PLIB_INT_SourceEnable(INT_ID_0, INT_SOURCE_TIMER_2);
+                PLIB_INT_SourceDisable(INT_ID_0, INT_SOURCE_TIMER_3);
+                PLIB_INT_SourceDisable(INT_ID_0, INT_SOURCE_TIMER_4);
 
+                appState = PAUSE;
+                memset(myMsgPtr, 0, MSG_BUF_SIZE);
+            }
+            if (strcmp(myMsgPtr, "done") == 0) {
+                appState = RUN;
+                xLoc[ID] = xPath[ID]; //xLoc[ID] + speed[ID];
+                yLoc[ID] = yPath[ID]; //yLoc[ID] - speed[ID];
+                memset(myMsgPtr, 0, MSG_BUF_SIZE);	
+            }
+            if (myMsgPtr[0] == 'M') {
+                xCoord = subStrToInt(myMsgPtr, 2, 3);
+                yCoord = subStrToInt(myMsgPtr, 5, 6);
+                rType = subStrToInt(myMsgPtr, 8, 8);
+                if(rType == 1) {
+                    walkability [xCoord][yCoord].walkability = unwalkable;
+                    walkability [xCoord][yCoord].rover = OBSTACLE;
+                }
+                else
+                {
+                    walkability [xCoord][yCoord].rover = rType;
+                }
+                //walkability [xCoord][yCoord].walkability = unwalkable;
+                //walkability [xCoord][yCoord].rover = obs;
+                memset(myMsgPtr, 0, MSG_BUF_SIZE);
+            }
         }
 
 
         //dbgOutputLoc(APPTASKS + 1);
         switch (appState) {
+            case INIT:
+                /*dbgUARTVal('S');
+                dbgUARTVal('T');
+                dbgUARTVal('A');
+                dbgUARTVal('R');
+                dbgUARTVal('T');*/
+                if(goalX != -1 && goalY != -1)
+                {
+                    pathStatus[ID] = FindPath(ID, xLoc[ID], yLoc[ID], goalX, goalY);
+                    appState = RUN;
+                }
+                break;
             case RUN:
+                //int FindPath (int pathfinderID,int startingX, int startingY, int targetX, int targetY)
+
+
+
+
+
+                //2.Move smiley.
+                if (pathStatus[ID] == found) {
+                    MoveSprite(ID);
+                    appState = WAIT;
+                }
+                else {
+                    //dbgUARTVal('X');
+                    appState = INIT;
+                }
+
+                if (xLoc[ID] == goalX && yLoc[ID] == goalY) {
+                    appState = WAIT;
+
+                    /*dbgUARTVal('G');
+                    dbgUARTVal('O');
+                    dbgUARTVal('A');
+                    dbgUARTVal('L');
+                    dbgUARTVal('\n');*/
+                }
+
+
+
+                if (received) {
+                    received = false;
+                }
+                break;
+            case RESET:
+                appState = INIT;
                 break;
             case RECV:
                 break;
             case TRANS:
+                break;
+            case PAUSE:
+                if (received) {
+                    received = false;
+                }
+                break;
+            case STOP:
+                if (received) {
+                    received = false;
+                }
+                break;
+            case WAIT:
                 break;
             default:
                 break;

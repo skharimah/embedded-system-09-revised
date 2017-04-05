@@ -71,6 +71,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include "app_public.h"
 #include "debug.h"
 #include "json_access/jsonaccess.h"
+#include <queue.h>
 
 // *****************************************************************************
 // *****************************************************************************
@@ -97,7 +98,7 @@ DBG_POS namepos = T;
 unsigned char out;
 unsigned int ch = 1;
 
-int toggle = 1;
+int toggle = 0;
 
 
 unsigned int millisec = 0;
@@ -107,11 +108,22 @@ int rightTicks;
 unsigned int count = 0;
 int leftTicksPrev = 0;
 int rightTicksPrev = 0;
+int i = 0;
 
 void IntHandlerDrvTmrInstance0(void) {
     millisec++;
-    //dbgOutputLoc(TMR_START);
     
+    if(millisec % 50 == 0) {
+        if(PLIB_PORTS_PinGet( PORTS_ID_0, PORT_CHANNEL_G, 6) == 0) {
+            buttonHistory[i] = 1;
+        }
+        else
+            buttonHistory[i] = 0;
+        i++;
+        if(i == 10)
+            i = 0;
+                                                                                                                 
+    }
 
     //dbgutputLoc(millisec);
     if (millisec % 500 == 0) {//Get timer values
@@ -126,7 +138,7 @@ void IntHandlerDrvTmrInstance0(void) {
         count++;
 
         
-        LATAINV = 0x8;
+        //LATAINV = 0x8;
 
         //dbgOutputLoc(TMR_START + 3);
 
@@ -161,17 +173,30 @@ void IntHandlerDrvTmrInstance0(void) {
     }
     /*if(millisec % 5000 == 0) {
         MOTOR_MESSAGE motorMessage;
-        if(toggle == -1) {
+        if(toggle == 0) {
             motorMessage.messageType = 'M';
-            motorMessage.motorState = MOTOR_FORWARD;
-            motorMessage.dist = 1000;
+            motorMessage.motorState = MOTOR_PATH_FIND;
+            motorMessage.dist = 1080;
+            motorMessage.dir = NORTH;
         }
-        else if(toggle == 1)
+        else if(toggle == 2) {
+            motorMessage.messageType = 'M';
+            motorMessage.motorState = MOTOR_PATH_FIND;
+            motorMessage.dist = 1000;
+            motorMessage.dir = SOUTH;
+        }
+        else if(toggle == 1) {
             motorMessage.messageType = 'R';
+        }
+        else if(toggle == 3) {
+            motorMessage.messageType = 'R';
+        }
         if(xQueueSendFromISR(encoderQueue, &motorMessage, NULL) != pdTRUE) {
             //send failed
         }
-        toggle *= -1;
+        toggle += 1;
+        if(toggle == 4)
+            toggle = 0;
       /*MOTOR_MESSAGE msg;
         msg.messageType = 'M';
         switch(itterate) {
@@ -267,6 +292,7 @@ void IntHandlerDrvTmrInstance0(void) {
         
         toggle++;
     }*/
+    
     PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_TIMER_2);
     //dbgOutputLoc(TMR_STOP);
 }

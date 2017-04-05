@@ -64,8 +64,14 @@ extern "C" {
 #define WIFLY_ERROR 131
 #define STRING_START 20
 #define STRING_STOP 21
-#define APPTASKS 1  
-    
+#define APPTASKS 1 
+#define APPPAUSE 9
+#define APPSTOP 8
+#define APPRUN 7
+#define APPRECVMSG 6
+#define LEDBLINK 211
+#define LEDON 210
+#define LEDOFF 209  
 typedef enum {
     /* Describe structure member. */
     MSG_QUEUE_DOES_NOT_EXIST = 1,
