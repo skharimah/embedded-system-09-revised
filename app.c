@@ -462,6 +462,11 @@ void APP_Initialize(void) {
 
 void APP_Tasks(void) {
     UARTInit(USART_ID_1, 57600);
+    
+    DRV_ADC_Open();    //start ADC
+   
+   
+    
     int ID = 1;
     int goalX = 10;
     int goalY = 7;

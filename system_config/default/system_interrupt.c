@@ -58,6 +58,8 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 // Section: Included Files
 // *****************************************************************************
 // *****************************************************************************
+#define ADC_NUM_SAMPLE_PER_AVERAGE 8
+
 
 #include <xc.h>
 #include <sys/attribs.h>
@@ -78,6 +80,27 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 // Section: System Interrupt Vector Functions
 // *****************************************************************************
 // *****************************************************************************
+void IntHandlerDrvAdc(void)
+{
+    
+    int i;
+    
+    
+    
+    for(i=0;i<ADC_NUM_SAMPLE_PER_AVERAGE;i++){
+        sensorValue1 += PLIB_ADC_ResultGetByIndex(ADC_ID_1, (2*i));
+        sensorValue2 += PLIB_ADC_ResultGetByIndex(ADC_ID_1, (2*i+1));
+    }
+	
+    sensorValue1 = sensorValue1 / (ADC_NUM_SAMPLE_PER_AVERAGE);
+    sensorValue2 = sensorValue2 / (ADC_NUM_SAMPLE_PER_AVERAGE);
+    
+   
+    
+    PLIB_ADC_SampleAutoStartEnable(ADC_ID_1);
+    /* Clear ADC Interrupt Flag */
+    PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_ADC_1);
+}
 
 /* Timer 2 Interrupt.
  * This interrupt sends a message to the queue (using app1SendTimerValToMsgQ
@@ -93,6 +116,9 @@ char name[7] = {'T', 'E', 'A', 'M', ' ', '9', ' '};
 char mystring[100] = "Team 9: Hard at work!"; //{'R', 'E', 'A', 'D', 'Y', '.', ' ', '\0'};
 bool received = true;
 int counter = 0;
+
+char sensorBuf[MSG_BUF_SIZE];
+unsigned char outVal;
 
 DBG_POS namepos = T;
 unsigned char out;
@@ -136,7 +162,7 @@ void IntHandlerDrvTmrInstance0(void) {
 
         unsigned char val;
         count++;
-
+        
         
         //LATAINV = 0x8;
 
@@ -152,6 +178,17 @@ void IntHandlerDrvTmrInstance0(void) {
         int array[] = {1, 2, 3, 4, 5};
     }
     if (millisec % 100 == 0) {
+        
+        
+         //test sensor values
+        snprintf(sensorBuf, MSG_BUF_SIZE, "%d" ,sensorValue1);
+        int j;
+        for(j=0; j!='\0'; j++){
+            outVal = sensorBuf[j];
+            dbgUARTVal(outVal);
+        }
+        
+        
         leftTicksPrev = leftTicks;
         rightTicksPrev = rightTicks;
         leftTicks = PLIB_TMR_Counter16BitGet(TMR_ID_3);
