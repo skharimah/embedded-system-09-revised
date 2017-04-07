@@ -52,7 +52,6 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 // Section: Included Files 
 // *****************************************************************************
 // *****************************************************************************
-
 #include "app.h"
 #include "include.h"
 #include "app_public.h"
@@ -293,36 +292,17 @@ int UARTInit(USART_MODULE_ID id, int baudrate) {
     return 1;
 }
 
-int requestEncoderData(int destIP) {
-    int i, sum = 0;
-    //char buffer[MSG_BUF_SIZE];
-    int buflen = MSG_BUF_SIZE;
 
-    startWritingToJsonObject(messageptr, buflen);
-
-    /* TODO: Get message type here */
-    addStringKeyValuePairToJsonObject("message_type", "request");
-
-    addIntegerKeyValuePairToJsonObject("sequence_id", 1);
-    /* TODO: Get IR_sensor_value here */
-    addStringKeyValuePairToJsonObject("requested_data", "encoder");
-    /* TODO: Get port number here */
-    addStringKeyValuePairToJsonObject("source", "192.168.1.102");
-    /* TODO: Get encoder_value here */
-    addStringKeyValuePairToJsonObject("destination", "192.168.1.103");
-
-    endWritingToJsonObject();
-
-    //if (msgToWiflyMsgQISR(&messageptr) == 0)
-    return 0;
-    //return 1;
-}
-
-bool checkConnected() {
-
-}
 
 void MoveSprite(int ID) {
+    
+    int northSouth;
+    int eastWest;
+    MOTOR_MESSAGE msg;
+    msg.messageType = 'M';
+    msg.motorState = MOTOR_PATH_FIND;
+    msg.dist = 0;
+            
     //1.Read path information
     ReadPath(ID, xLoc[ID], yLoc[ID], 1);
 
@@ -335,32 +315,80 @@ void MoveSprite(int ID) {
         dbgUARTVal('u');
         dbgUARTVal('t');
         dbgUARTVal('h');
+        northSouth = -1; // SOUTH
     }
-    if (yLoc[ID] < yPath[ID]) { //yLoc[ID] + speed[ID];
+    else if (yLoc[ID] < yPath[ID]) { //yLoc[ID] + speed[ID];
         dbgUARTVal('n');
         dbgUARTVal('o');
         dbgUARTVal('r');
         dbgUARTVal('t');
         dbgUARTVal('h');
+        northSouth = 1; // NORTH
     }
+    else
+        northSouth = 0;
     if (xLoc[ID] > xPath[ID]) { //xLoc[ID] - speed[ID];
         dbgUARTVal('w');
         dbgUARTVal('e');
         dbgUARTVal('s');
         dbgUARTVal('t');
+        eastWest = -1; //WEST
     }
-    if (xLoc[ID] < xPath[ID]) { //xLoc[ID] + speed[ID];
+    else if (xLoc[ID] < xPath[ID]) { //xLoc[ID] + speed[ID];
         dbgUARTVal('e');
         dbgUARTVal('a');
         dbgUARTVal('s');
         dbgUARTVal('t');
+        eastWest = 1; //EAST
     }
+    else
+        eastWest = 0;
     dbgUARTVal('\n');
 
+    if(northSouth == 1 && eastWest == 0) {
+        msg.dir = NORTH;
+        msg.dist = BLOCK_DIST;
+    }
+    else if(northSouth == -1 && eastWest == 0) {
+        msg.dir = SOUTH;
+        msg.dist = BLOCK_DIST;
+    }
+    else if(northSouth == 0 && eastWest == 1) {
+        msg.dir = EAST;
+        msg.dist = BLOCK_DIST;
+    }
+    else if(northSouth == 0 && eastWest == -1) {
+        msg.dir = WEST;
+        msg.dist = BLOCK_DIST;   
+    }
+    else if(northSouth == 1 && eastWest == 1) {
+        msg.dir = NORTHEAST;
+        msg.dist = HYPT_DIST;
+    }
+    else if(northSouth == 1 && eastWest == -1) {
+        msg.dir = NORTHWEST;
+        msg.dist = HYPT_DIST;
+    }
+    else if(northSouth == -1 && eastWest == 1) {
+        msg.dir = SOUTHEAST;
+        msg.dist = HYPT_DIST;
+    }
+    else if(northSouth == -1 && eastWest == -1) {
+        msg.dir = SOUTHWEST;
+        msg.dist = HYPT_DIST;
+    }
+    else {
+        //Do something
+       
+    }
 
-    xLoc[ID] = xPath[ID];
-    yLoc[ID] = yPath[ID];
 
+    if(msg.dist != 0) {
+        LATAINV = 0x8;
+        if(xQueueSend(encoderQueue, &msg, NULL) != pdTRUE) {
+                //send failed
+        }
+    }
 
     //	
     ////3.When sprite reaches the end location square	(end of its current
@@ -376,6 +404,18 @@ void MoveSprite(int ID) {
     //	}
 }
 
+
+//function for parsing msg from app_json
+int subStrToInt(char *len, int from, int to) {
+    int i;
+    int powTen = 1;
+    int sum = 0;
+    for (i = from; i <= to; i++) {
+        sum = sum + (len[i] - '0') * powTen;
+        powTen = powTen * 10;
+    }
+    return sum;
+}
 // *****************************************************************************
 // *****************************************************************************
 // Section: Application Initialization and State Machine Functions
@@ -385,7 +425,6 @@ void MoveSprite(int ID) {
 /*******************************************************************************
   Function:
     void APP_Initialize ( void )
-
   Remarks:
     See prototype in app.h.
  */
@@ -396,10 +435,23 @@ void APP_Initialize(void) {
     for (i = 0; i < mapWidth; i++)
         for (j = 0; j < mapHeight; j++)
             walkability [i][j].walkability = walkable;
-
+    //wall from (1, 5) to right side
     for (i = 1; i < mapWidth; i++)
         //for (j = 0; j < mapHeight; j++)
         walkability [i][5].walkability = unwalkable;
+    
+    //wall from (3,5) to (3,18)
+    for (i = 5; i < 18; i++)
+        walkability [3][i].walkability = unwalkable;
+    
+    // wall from (7,10) to top
+    for (i = 10; i < mapHeight; i++)
+        walkability [7][i].walkability = unwalkable;
+    
+    //wall across map
+    /*for (i = 0; i < mapHeight; i++)
+        walkability [7][i].walkability = unwalkable;*/
+
     PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT);
     PLIB_INT_SourceDisable(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT);
     good_messages = 0;
@@ -455,13 +507,15 @@ void APP_Initialize(void) {
 /******************************************************************************
   Function:
     void APP_Tasks ( void )
-
   Remarks:
     See prototype in app.h.
  */
 
 void APP_Tasks(void) {
     UARTInit(USART_ID_1, 57600);
+
+    DRV_ADC_Open();    //start ADC
+
     int ID = 1;
     int goalX = 10;
     int goalY = 7;
@@ -476,10 +530,7 @@ void APP_Tasks(void) {
     //    PLIB_INT_SourceDisable(INT_ID_0, INT_SOURCE_TIMER_2);
     //    PLIB_INT_SourceDisable(INT_ID_0, INT_SOURCE_TIMER_3);
     //    PLIB_INT_SourceDisable(INT_ID_0, INT_SOURCE_TIMER_4);
-    //Initialize encoder receive message
-    MOTOR_MESSAGE encoderReceived;
-    encoderReceived.leftTicks = 0;
-    encoderReceived.rightTicks = 0;
+
 
     //    int leftTicks = 0;
     //    int rightTicks = 0;
@@ -492,6 +543,13 @@ void APP_Tasks(void) {
     int prev_ms = 0, cur_ms = PLIB_TMR_Counter16BitGet(TMR_ID_2);
     bool connected = false;
     bool received = false;
+    
+    //app_JSON parsing vars
+    int xCoord;
+    int yCoord;
+    int obs;
+    int rType;
+    int friendly;
     while (1) {
         if (xQueueReceive(appRecvQueue, (void*) &(myMsgPtr), 0) == pdTRUE) {
             //if (tempGetMsgFromQ(appRecvQueue, myMsgPtr) == 0) {
@@ -502,6 +560,7 @@ void APP_Tasks(void) {
             if (strcmp(myMsgPtr, "stop") == 0) {
                 blink_led = false;
                 ledOff();
+
                 dbgOutputLoc(APPSTOP);
                 PLIB_INT_SourceDisable(INT_ID_0, INT_SOURCE_TIMER_2);
                 PLIB_INT_SourceDisable(INT_ID_0, INT_SOURCE_TIMER_3);
@@ -511,16 +570,20 @@ void APP_Tasks(void) {
             }
             if (strcmp(myMsgPtr, "run") == 0) {
                 blink_led = false;
+
                 PLIB_INT_SourceEnable(INT_ID_0, INT_SOURCE_TIMER_2);
                 PLIB_INT_SourceEnable(INT_ID_0, INT_SOURCE_TIMER_3);
                 PLIB_INT_SourceEnable(INT_ID_0, INT_SOURCE_TIMER_4);
                 dbgOutputLoc(APPRUN);
                 ledOn();
+
                 appState = RUN;
                 memset(myMsgPtr, 0, MSG_BUF_SIZE);
             }
             if (strcmp(myMsgPtr, "pause") == 0) {
+
                 blink_led = true;
+
                 dbgOutputLoc(APPPAUSE);
                 PLIB_INT_SourceEnable(INT_ID_0, INT_SOURCE_TIMER_2);
                 PLIB_INT_SourceDisable(INT_ID_0, INT_SOURCE_TIMER_3);
@@ -530,23 +593,45 @@ void APP_Tasks(void) {
                 memset(myMsgPtr, 0, MSG_BUF_SIZE);
             }
             if (strcmp(myMsgPtr, "done") == 0) {
+                appState = RUN;
                 xLoc[ID] = xPath[ID]; //xLoc[ID] + speed[ID];
-                yLoc[ID] = yPath[ID]; //yLoc[ID] - speed[ID];	
+                yLoc[ID] = yPath[ID]; //yLoc[ID] - speed[ID];
+                memset(myMsgPtr, 0, MSG_BUF_SIZE);	
             }
-
+            if (myMsgPtr[0] == 'M') {
+                xCoord = subStrToInt(myMsgPtr, 2, 3);
+                yCoord = subStrToInt(myMsgPtr, 5, 6);
+                rType = subStrToInt(myMsgPtr, 8, 8);
+                friendly = subStrToInt(myMsgPtr, 10, 10);
+                
+                if(rType == 1) {
+                    walkability [xCoord][yCoord].walkability = unwalkable;
+                    walkability [xCoord][yCoord].rover = OBSTACLE;
+                }
+                else
+                {
+                    walkability [xCoord][yCoord].rover = rType;
+                }
+                //walkability [xCoord][yCoord].walkability = unwalkable;
+                //walkability [xCoord][yCoord].rover = obs;
+                memset(myMsgPtr, 0, MSG_BUF_SIZE);
+            }
         }
 
 
         //dbgOutputLoc(APPTASKS + 1);
         switch (appState) {
             case INIT:
-                dbgUARTVal('S');
+                /*dbgUARTVal('S');
                 dbgUARTVal('T');
                 dbgUARTVal('A');
                 dbgUARTVal('R');
-                dbgUARTVal('T');
-                pathStatus[ID] = FindPath(ID, xLoc[ID], yLoc[ID], goalX, goalY);
-                appState = RUN;
+                dbgUARTVal('T');*/
+                if(goalX != -1 && goalY != -1)
+                {
+                    pathStatus[ID] = FindPath(ID, xLoc[ID], yLoc[ID], goalX, goalY);
+                    appState = RUN;
+                }
                 break;
             case RUN:
                 //int FindPath (int pathfinderID,int startingX, int startingY, int targetX, int targetY)
@@ -556,20 +641,26 @@ void APP_Tasks(void) {
 
 
                 //2.Move smiley.
-                if (pathStatus[ID] == found) MoveSprite(ID);
+
+
+                if (pathStatus[ID] == found) {
+                    MoveSprite(ID);
+                    appState = WAIT;
+                }
                 else {
-                    dbgUARTVal('X');
+                    //dbgUARTVal('X');
                     appState = INIT;
                 }
 
                 if (xLoc[ID] == goalX && yLoc[ID] == goalY) {
-                    appState = RESET;
 
-                    dbgUARTVal('G');
+                    appState = WAIT;
+
+                    /*dbgUARTVal('G');
                     dbgUARTVal('O');
                     dbgUARTVal('A');
                     dbgUARTVal('L');
-                    dbgUARTVal('\n');
+                    dbgUARTVal('\n');*/
                 }
 
 
@@ -579,8 +670,6 @@ void APP_Tasks(void) {
                 }
                 break;
             case RESET:
-                xLoc[ID] = 0;
-                yLoc[ID] = 0;
                 appState = INIT;
                 break;
             case RECV:
@@ -596,6 +685,8 @@ void APP_Tasks(void) {
                 if (received) {
                     received = false;
                 }
+                break;
+            case WAIT:
                 break;
             default:
                 break;

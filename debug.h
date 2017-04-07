@@ -78,6 +78,7 @@ extern "C" {
     
     
     bool blink_led;
+
 typedef enum {
     /* Describe structure member. */
     MSG_QUEUE_DOES_NOT_EXIST = 1,

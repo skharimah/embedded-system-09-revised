@@ -1,15 +1,11 @@
 /*******************************************************************************
   MPLAB Harmony Application Header File
-
   Company:
     Microchip Technology Inc.
-
   File Name:
     app.h
-
   Summary:
     This header file provides prototypes and definitions for the application.
-
   Description:
     This header file provides function prototypes and data type definitions for
     the application.  Some of these are required by the system (such as the
@@ -21,15 +17,12 @@
 //DOM-IGNORE-BEGIN
 /*******************************************************************************
 Copyright (c) 2013-2014 released Microchip Technology Inc.  All rights reserved.
-
 Microchip licenses to you the right to use, modify, copy and distribute
 Software only when embedded on a Microchip microcontroller or digital signal
 controller that is integrated into your product or third party product
 (pursuant to the sublicense terms in the accompanying license agreement).
-
 You should refer to the license agreement accompanying this Software for
 additional information regarding your rights and obligations.
-
 SOFTWARE AND DOCUMENTATION ARE PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND,
 EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION, ANY WARRANTY OF
 MERCHANTABILITY, TITLE, NON-INFRINGEMENT AND FITNESS FOR A PARTICULAR PURPOSE.
@@ -100,13 +93,10 @@ extern "C" {
 
 // *****************************************************************************
 /* Application Data
-
   Summary:
     Holds application data
-
   Description:
     This structure holds the application's data.
-
   Remarks:
     Application strings and buffers are be defined outside this structure.
  */
@@ -130,14 +120,11 @@ int xLoc [4]; int yLoc [4]; int speed [4];
 
 
 /* Driver objects.
-
   Summary:
     Holds driver objects.
-
   Description:
     This structure contains driver objects returned by the driver init routines
     to the application. These objects are passed to the driver tasks routines.
-
   Remarks:
     None.
 */
@@ -159,81 +146,61 @@ typedef struct
 /*******************************************************************************
   Function:
     QueueHandle_t createQueue(void)
-
   Summary:
     Create a message queue at a fixed size and type.
-
   Description:
     This function will create a message queue capable of containing 10 unsigned 
     integer values.
-
   Parameters:
     None.
-
   Returns:
     A message queue handler of type QueueHandle_t.
-
 */
 
 QueueHandle_t createQueue(void);
 /*******************************************************************************
   Function:
     int messageToQISR(QueueHandle_t queue, Message msg)
-
   Summary:
     Send a message to a previously created message queue
-
   Description:
     This function will send a Message struct to a message queue, and is safe for
     use within an ISR
-
   Parameters:
     QueueHandle_t queue: The handle for the queue you want to write to
     Message msg: The message to write to the queue
-
   Returns:
     An integer 0 for success, -1 for failure.
-
 */
 int messageToQISR(QueueHandle_t queue, char* msg);
 /*******************************************************************************
   Function:
     int messageToQ(QueueHandle_t queue, Message msg)
-
   Summary:
     Send a message to a previously created message queue
-
   Description:
     This function will send a Message struct to a message queue, but is NOT safe
     for use within an ISR.
-
   Parameters:
     QueueHandle_t queue: The handle for the queue you want to write to
     Message msg: The message to write to the queue
-
   Returns:
     An integer 0 for success, -1 for failure.
-
 */
 int messageToQ(QueueHandle_t queue, char* msg);
 /*******************************************************************************
   Function:
     void intLenToChar(Message msg, char *len)
-
   Summary:
     Send a message to a previously created message queue
-
   Description:
     This function will send a Message struct to a message queue, but is NOT safe
     for use within an ISR.
-
   Parameters:
     QueueHandle_t queue: The handle for the queue you want to write to
     Message msg: The message to write to the queue
-
   Returns:
     An integer 0 for success, -1 for failure.
-
 */
 void intLenToChar(char *msg, char *len);
 void checksum(char *msg, char *sum);
@@ -243,17 +210,13 @@ int getMsgFromRecvQ(char *msg);
 /*******************************************************************************
   Function:
     unsigned char receiveFromQueue(QueueHandle_t queue);
-
   Summary:
     Receive from the specified queue.
-
   Description:
     This function receives from the queue.
     Additional functions to carry out specific instructions may be needed.
-
   Parameters:
     Queue handle for the queue this function is to read from.
-
   Returns:
     Returns the char item received from the queue
     If no item is successfully retrieved it will return unsigned char '0'.
@@ -264,30 +227,23 @@ unsigned char receiveFromQueue(QueueHandle_t queue);
 /*******************************************************************************
   Function:
     void APP_Initialize ( void )
-
   Summary:
      MPLAB Harmony application initialization routine.
-
   Description:
     This function initializes the Harmony application.  It places the 
     application in its initial state and prepares it to run so that its 
     APP_Tasks function can be called.
-
   Precondition:
     All other system initialization routines should be called before calling
     this routine (in "SYS_Initialize").
-
   Parameters:
     None.
-
   Returns:
     None.
-
   Example:
     <code>
     APP_Initialize();
     </code>
-
   Remarks:
     This routine must be called from the SYS_Initialize function.
 */
@@ -298,29 +254,22 @@ void APP_Initialize ( void );
 /*******************************************************************************
   Function:
     void APP_Tasks ( void )
-
   Summary:
     MPLAB Harmony Demo application tasks function
-
   Description:
     This routine is the Harmony Demo application's tasks function.  It
     defines the application's state machine and core logic.
-
   Precondition:
     The system and application initialization ("SYS_Initialize") should be
     called before calling this.
-
   Parameters:
     None.
-
   Returns:
     None.
-
   Example:
     <code>
     APP_Tasks();
     </code>
-
   Remarks:
     This routine must be called from SYS_Tasks() routine.
  */

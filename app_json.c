@@ -212,7 +212,7 @@ void APP_JSON_Tasks(void) {
 
                 }
                 /* TODO: Change state if there is a message to receive from WiFly */
-
+                
                 break;
             }
 
@@ -355,7 +355,9 @@ void APP_JSON_Tasks(void) {
                         strcpy(appMsg, "encoder");
                         myMsgPtr = &appMsg;
                         messageToQ(appRecvQueue, myMsgPtr);
-                    } else if (strcmp(data_requested, "motor")) {
+                    }
+                    /*else if (strcmp(data_requested, "motor")){
+
                         MOTOR_MESSAGE motorMsg;
                         if (strcmp(motorCmd, "forward")) {
                             distance = atoi(motorDist);
@@ -368,8 +370,8 @@ void APP_JSON_Tasks(void) {
                                 //send failed
                             }
                         }
-                    }
 
+                    }*/
 
                     startWritingToJsonObject(messageptr, buflen);
 

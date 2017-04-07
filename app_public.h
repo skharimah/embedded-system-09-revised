@@ -27,7 +27,9 @@
 extern "C" {
 #endif
     
-    
+#define BLOCK_DIST 755 //one block
+#define HYPT_DIST 1080
+//#define BLOCK_DIST 2000
     
 #define MSG_BUF_SIZE 200
 #define MAP_BUF_SIZE 500
@@ -53,9 +55,7 @@ QueueHandle_t encoderQueue;
 QueueHandle_t msgQueue;
 QueueHandle_t recvMsgQueue;
 QueueHandle_t appRecvQueue;
-
-typedef enum  {INIT, RUN, RECV, TRANS, PAUSE, STOP, RESET} State;
-
+typedef enum  {INIT, RUN, RECV, TRANS, PAUSE, STOP, RESET, WAIT} State;
 State appState;
 
 
@@ -67,7 +67,14 @@ State appState;
  
  //char message[ MSG_BUF_SIZE ];
  int good_messages, bad_messages;
+ 
+ //sensor values
+ int sensorValue1;
+ int sensorValue2;
 
+ //button debouncing
+ int buttonHistory[10];
+ 
  typedef struct
 {
     //Tracks the type of message
@@ -84,6 +91,9 @@ State appState;
     
     //Distance to move
     int dist;
+    
+    //Direction to turn before moving
+    int dir;
 } MOTOR_MESSAGE;
 
 //motorTask states

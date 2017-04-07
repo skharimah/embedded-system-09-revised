@@ -58,6 +58,8 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 // Section: Included Files
 // *****************************************************************************
 // *****************************************************************************
+#define ADC_NUM_SAMPLE_PER_AVERAGE 8
+
 
 #include <xc.h>
 #include <sys/attribs.h>
@@ -71,6 +73,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include "app_public.h"
 #include "debug.h"
 #include "json_access/jsonaccess.h"
+#include <queue.h>
 
 // *****************************************************************************
 // *****************************************************************************
@@ -79,6 +82,22 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 // *****************************************************************************
 void IntHandlerDrvAdc(void)
 {
+    
+    int i;
+    
+    
+    
+    for(i=0;i<ADC_NUM_SAMPLE_PER_AVERAGE;i++){
+        sensorValue1 += PLIB_ADC_ResultGetByIndex(ADC_ID_1, (2*i));
+        sensorValue2 += PLIB_ADC_ResultGetByIndex(ADC_ID_1, (2*i+1));
+    }
+	
+    sensorValue1 = sensorValue1 / (ADC_NUM_SAMPLE_PER_AVERAGE);
+    sensorValue2 = sensorValue2 / (ADC_NUM_SAMPLE_PER_AVERAGE);
+    
+   
+    
+    PLIB_ADC_SampleAutoStartEnable(ADC_ID_1);
     /* Clear ADC Interrupt Flag */
     PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_ADC_1);
 }
@@ -98,11 +117,14 @@ char mystring[100] = "Team 9: Hard at work!"; //{'R', 'E', 'A', 'D', 'Y', '.', '
 bool received = true;
 int counter = 0;
 
+char sensorBuf[MSG_BUF_SIZE];
+unsigned char outVal;
+
 DBG_POS namepos = T;
 unsigned char out;
 unsigned int ch = 1;
 
-int toggle = 1;
+int toggle = 0;
 
 
 unsigned int millisec = 0;
@@ -112,11 +134,22 @@ int rightTicks;
 unsigned int count = 0;
 int leftTicksPrev = 0;
 int rightTicksPrev = 0;
+int i = 0;
 
 void IntHandlerDrvTmrInstance0(void) {
     millisec++;
-    //dbgOutputLoc(TMR_START);
     
+    if(millisec % 50 == 0) {
+        if(PLIB_PORTS_PinGet( PORTS_ID_0, PORT_CHANNEL_G, 6) == 0) {
+            buttonHistory[i] = 1;
+        }
+        else
+            buttonHistory[i] = 0;
+        i++;
+        if(i == 10)
+            i = 0;
+                                                                                                                 
+    }
 
     //dbgutputLoc(millisec);
     if (millisec % 500 == 0) {//Get timer values
@@ -131,11 +164,10 @@ void IntHandlerDrvTmrInstance0(void) {
 
         unsigned char val;
         count++;
-
-        
         LATAINV = 0x8;
         
         //PLIB_PORTS_PinToggle ( PORTS_ID_0, LED_PORT, LED_PIN);
+
 
         //dbgOutputLoc(TMR_START + 3);
 
@@ -149,6 +181,17 @@ void IntHandlerDrvTmrInstance0(void) {
         int array[] = {1, 2, 3, 4, 5};
     }
     if (millisec % 100 == 0) {
+        
+        
+         //test sensor values
+        snprintf(sensorBuf, MSG_BUF_SIZE, "%d" ,sensorValue1);
+        int j;
+        for(j=0; j!='\0'; j++){
+            outVal = sensorBuf[j];
+            dbgUARTVal(outVal);
+        }
+        
+        
         leftTicksPrev = leftTicks;
         rightTicksPrev = rightTicks;
         leftTicks = PLIB_TMR_Counter16BitGet(TMR_ID_3);
@@ -171,17 +214,30 @@ void IntHandlerDrvTmrInstance0(void) {
 
     /*if(millisec % 5000 == 0) {
         MOTOR_MESSAGE motorMessage;
-        if(toggle == -1) {
+        if(toggle == 0) {
             motorMessage.messageType = 'M';
-            motorMessage.motorState = MOTOR_FORWARD;
-            motorMessage.dist = 1000;
+            motorMessage.motorState = MOTOR_PATH_FIND;
+            motorMessage.dist = 1080;
+            motorMessage.dir = NORTH;
         }
-        else if(toggle == 1)
+        else if(toggle == 2) {
+            motorMessage.messageType = 'M';
+            motorMessage.motorState = MOTOR_PATH_FIND;
+            motorMessage.dist = 1000;
+            motorMessage.dir = SOUTH;
+        }
+        else if(toggle == 1) {
             motorMessage.messageType = 'R';
+        }
+        else if(toggle == 3) {
+            motorMessage.messageType = 'R';
+        }
         if(xQueueSendFromISR(encoderQueue, &motorMessage, NULL) != pdTRUE) {
             //send failed
         }
-        toggle *= -1;
+        toggle += 1;
+        if(toggle == 4)
+            toggle = 0;
       /*MOTOR_MESSAGE msg;
         msg.messageType = 'M';
         switch(itterate) {
@@ -277,6 +333,7 @@ void IntHandlerDrvTmrInstance0(void) {
         
         toggle++;
     }*/
+    
     PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_TIMER_2);
     //dbgOutputLoc(TMR_STOP);
 }
