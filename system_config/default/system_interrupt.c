@@ -77,6 +77,30 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 // Section: System Interrupt Vector Functions
 // *****************************************************************************
 // *****************************************************************************
+<<<<<<< Updated upstream
+=======
+
+void IntHandlerDrvAdc(void) {
+
+    int i;
+
+
+
+    for (i = 0; i < ADC_NUM_SAMPLE_PER_AVERAGE; i++) {
+        sensorValue1 += PLIB_ADC_ResultGetByIndex(ADC_ID_1, (2 * i));
+        sensorValue2 += PLIB_ADC_ResultGetByIndex(ADC_ID_1, (2 * i + 1));
+    }
+
+    sensorValue1 = sensorValue1 / (ADC_NUM_SAMPLE_PER_AVERAGE);
+    sensorValue2 = sensorValue2 / (ADC_NUM_SAMPLE_PER_AVERAGE);
+
+
+
+    PLIB_ADC_SampleAutoStartEnable(ADC_ID_1);
+    /* Clear ADC Interrupt Flag */
+    PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_ADC_1);
+}
+>>>>>>> Stashed changes
 
 /* Timer 2 Interrupt.
  * This interrupt sends a message to the queue (using app1SendTimerValToMsgQ
@@ -108,7 +132,22 @@ int rightTicksPrev = 0;
 
 void IntHandlerDrvTmrInstance0(void) {
     millisec++;
+<<<<<<< Updated upstream
     //dbgOutputLoc(TMR_START);
+=======
+    maptime++;
+
+    if (millisec % 50 == 0) {
+        if (PLIB_PORTS_PinGet(PORTS_ID_0, PORT_CHANNEL_G, 6) == 0) {
+            buttonHistory[i] = 1;
+        } else
+            buttonHistory[i] = 0;
+        i++;
+        if (i == 10)
+            i = 0;
+
+    }
+>>>>>>> Stashed changes
 
 
     //dbgOutputLoc(millisec);
@@ -128,7 +167,7 @@ void IntHandlerDrvTmrInstance0(void) {
         count++;
 
         LATAINV = 0x8;
-        
+
         //PLIB_PORTS_PinToggle ( PORTS_ID_0, LED_PORT, LED_PIN);
 
         //dbgOutputLoc(TMR_START + 3);
@@ -143,6 +182,20 @@ void IntHandlerDrvTmrInstance0(void) {
         int array[] = {1, 2, 3, 4, 5};
     }
     if (millisec % 100 == 0) {
+<<<<<<< Updated upstream
+=======
+
+
+        //test sensor values
+        snprintf(sensorBuf, MSG_BUF_SIZE, "%d", sensorValue1);
+        int j;
+        for (j = 0; j != '\0'; j++) {
+            outVal = sensorBuf[j];
+            //dbgUARTVal(outVal);
+        }
+
+
+>>>>>>> Stashed changes
         leftTicksPrev = leftTicks;
         rightTicksPrev = rightTicks;
         leftTicks = PLIB_TMR_Counter16BitGet(TMR_ID_3);
@@ -153,6 +206,7 @@ void IntHandlerDrvTmrInstance0(void) {
         ENCODER_DATA ticksMessage;
         ticksMessage.leftTicks = leftTicks - leftTicksPrev;
         ticksMessage.rightTicks = rightTicks - rightTicksPrev;
+<<<<<<< Updated upstream
         
         app1SendEncoderValToMsgQ(&ticksMessage);
         //dbgOutputVal(ticksMessage.leftTicks);
@@ -161,6 +215,139 @@ void IntHandlerDrvTmrInstance0(void) {
     if (millisec % 2000 == 0){
         requestEncoderData(103);
     }
+=======
+
+        if (ticksMessage.leftTicks > 0 && ticksMessage.leftTicks < 100 && ticksMessage.rightTicks > 0 && ticksMessage.rightTicks < 100) {
+            if (xQueueSendFromISR(encoderQueue, &ticksMessage, NULL) != pdTRUE) {
+                //send failed
+            }
+        }
+        //dbgOutputVal(ticksMessage.leftTicks);
+    }
+
+    /*if(millisec % 5000 == 0) {
+        MOTOR_MESSAGE motorMessage;
+        if(toggle == 0) {
+            motorMessage.messageType = 'M';
+            motorMessage.motorState = MOTOR_PATH_FIND;
+            motorMessage.dist = 1080;
+            motorMessage.dir = NORTH;
+        }
+        else if(toggle == 2) {
+            motorMessage.messageType = 'M';
+            motorMessage.motorState = MOTOR_PATH_FIND;
+            motorMessage.dist = 1000;
+            motorMessage.dir = SOUTH;
+        }
+        else if(toggle == 1) {
+            motorMessage.messageType = 'R';
+        }
+        else if(toggle == 3) {
+            motorMessage.messageType = 'R';
+        }
+        if(xQueueSendFromISR(encoderQueue, &motorMessage, NULL) != pdTRUE) {
+            //send failed
+        }
+        toggle += 1;
+        if(toggle == 4)
+            toggle = 0;
+      /*MOTOR_MESSAGE msg;
+        msg.messageType = 'M';
+        switch(itterate) {
+            case(0):
+                msg.dist = 500;
+                msg.motorState = MOTOR_FORWARD;
+                break;
+            case(1):
+                msg.dist = NINTY_DEG;
+                msg.motorState = MOTOR_TURN_LEFT;
+                break;
+            case(2):
+                msg.dist = 500;
+                msg.motorState = MOTOR_FORWARD;
+                break;
+            case(3):
+                msg.dist = NINTY_DEG;
+                msg.motorState = MOTOR_TURN_LEFT;
+                break;
+            case(4):
+                msg.dist = 500;
+                msg.motorState = MOTOR_FORWARD;
+                break;
+            case(5):
+                msg.dist = NINTY_DEG;
+                msg.motorState = MOTOR_TURN_LEFT;
+                break;
+            case(6):
+                msg.dist = 500;
+                msg.motorState = MOTOR_FORWARD;
+                break;
+            case(7):
+                msg.dist = NINTY_DEG;
+                msg.motorState = MOTOR_TURN_LEFT;
+                break;
+            case(8):
+                msg.dist = 500;
+                msg.motorState = MOTOR_FORWARD;
+                break;
+            case(9):
+                msg.dist = NINTY_DEG;
+                msg.motorState = MOTOR_TURN_RIGHT;
+                break;
+            case(10):
+                msg.dist = 500;
+                msg.motorState = MOTOR_FORWARD;
+                break;
+            case(11):
+                msg.dist = NINTY_DEG;
+                msg.motorState = MOTOR_TURN_RIGHT;
+                break;
+            case(12):
+                msg.dist = 500;
+                msg.motorState = MOTOR_FORWARD;
+                break;
+            case(13):
+                msg.dist = NINTY_DEG;
+                msg.motorState = MOTOR_TURN_RIGHT;
+                break;
+            case(14):
+                msg.dist = 500;
+                msg.motorState = MOTOR_FORWARD;
+                break;
+            case(15):
+                msg.dist = NINTY_DEG;
+                msg.motorState = MOTOR_TURN_RIGHT;
+                break;
+            default:
+                //while(1){dbgOutputVal(0xFF);}
+                break;
+       
+        }
+        
+        if(xQueueSendFromISR(encoderQueue, &msg, NULL) != pdTRUE) {
+            //send failed
+        }
+        itterate++;
+        if(itterate == 16)
+            itterate = 0;
+    }
+    }*/
+    /*Testing Tick Distance
+    if (millisec % 1000 == 0)   {
+        if(toggle == 5) {
+            //dbgOutputLoc(99);
+            toggle = 0;
+            motorsForward(400, 400);
+        }
+        else {
+            //dbgOutputLoc(100);
+            motorsForward(0, 0);
+        }
+        
+        toggle++;
+    }*/
+
+>>>>>>> Stashed changes
     PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_TIMER_2);
     //dbgOutputLoc(TMR_STOP);
 }
@@ -186,18 +373,44 @@ void IntHandlerDrvTmrInstance2(void) {
 void IntHandlerDrvUsartInstance0(void) {
     char mymsg[MSG_BUF_SIZE] = "";
     char * mymsgptr = "";
-    char * msgptr = &recvMsg;
+    char * msgptr;
+    if (rMsgCount == 0)
+        msgptr = &recvMsg1;
+    else if (rMsgCount == 1)
+        msgptr = &recvMsg2;
+
     char mychar;
     dbgOutputLoc(UART_START);
 
     if (PLIB_INT_SourceFlagGet(INT_ID_0, INT_SOURCE_USART_1_RECEIVE)) {
         PLIB_INT_SourceDisable(INT_ID_0, INT_SOURCE_USART_1_RECEIVE);
         //dbgOutputLoc(99);
+<<<<<<< Updated upstream
         if (ReceiveMsgFromWifly(msgptr)) {
             //dbgOutputVal(mymsg[0]);
             //dbgOutputLoc(100);
             wiflyToMsgQ(msgptr);
         }
+=======
+//        if (rMsgCount == 0) {
+            if (ReceiveMsgFromWifly(jsonMsg1[rMsgCount])) {
+                //dbgOutputVal(mymsg[0]);
+                //dbgOutputLoc(100);
+                wiflyToMsgQ(jsonMsg1[rMsgCount]);
+
+            }
+//        } else if (rMsgCount == 1) {
+//            if (ReceiveMsgFromWifly(jsonMsg2)) {
+//                //dbgOutputVal(mymsg[0]);
+//                //dbgOutputLoc(100);
+//                wiflyToMsgQ(jsonMsg2);
+//
+//
+//            }
+//        }
+
+        rMsgCount = (rMsgCount + 1) % MAX_MSGS;
+>>>>>>> Stashed changes
         received = true;
         counter = 0;
         dbgOutputLoc(42);

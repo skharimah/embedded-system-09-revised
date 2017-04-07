@@ -158,7 +158,18 @@ void APP_JSON_Tasks(void) {
     char buffer1[20] = {};
     char buffer2[20] = {};
     char data_requested[20] = {};
+<<<<<<< Updated upstream
     
+=======
+    //Send encoder data
+    char encoderStr[7] = {};
+
+    //motor command vars
+    char motorCmd[20] = {};
+    char motorDist[20] = {};
+    int distance, rcount = 0;
+
+>>>>>>> Stashed changes
     int i;
 
     while (1) {
@@ -180,12 +191,34 @@ void APP_JSON_Tasks(void) {
                 dbgOutputLoc(109);
                 /* TODO: Check messageQ to see if the PIC needs a new information*/
                 //app_jsonData.state = APP_JSON_STATE_WRITING_REQUEST;
+<<<<<<< Updated upstream
                 if (getMsgFromRecvQ(myMsgPtr) == 0) {
                     //received = true;
                     //dbgOutputVal(recvMsg[0]);
                     
                     
                     app_jsonData.state = APP_JSON_STATE_PARSING_MESSAGE;
+=======
+
+                if (xQueueReceive(recvMsgQueue, &myMsgPtr, 0) == pdTRUE) {
+                    
+                    //dbgUARTVal('e');
+                    //received = true;
+                    //dbgOutputVal(recvMsg[0]);
+                    /*for(i = 0; myMsgPtr[i] != NULL; i++) {
+                            dbgUARTVal(myMsgPtr[i]);
+                            //dbgUARTVal('s');
+                        }*/
+
+                    if (myMsgPtr[0] == 'L' || myMsgPtr[0] == 'm' || myMsgPtr[0] == 'd') {
+                        //dbgUARTVal('n');
+                        app_jsonData.state = APP_JSON_STATE_PARSING_INTERNAL_MESSAGE;
+                    } else if (myMsgPtr[0] == '{') {
+
+                        app_jsonData.state = APP_JSON_STATE_PARSING_EXTERNAL_MESSAGE;
+                        //dbgUARTVal('y');
+                    }
+>>>>>>> Stashed changes
 
                 }
                 /* TODO: Change state if there is a message to receive from WiFly */
@@ -195,6 +228,7 @@ void APP_JSON_Tasks(void) {
 
             case APP_JSON_STATE_PARSING_MESSAGE:
             {
+                
                 //char * msgPtr = &myMsg[0];
                 dbgOutputLoc(110);
 
@@ -249,6 +283,7 @@ void APP_JSON_Tasks(void) {
                     dbgOutputLoc(176);
                     dbgOutputVal('b');
                 }
+<<<<<<< Updated upstream
 
                 
                 
@@ -283,15 +318,176 @@ void APP_JSON_Tasks(void) {
                         messageToQ(appRecvQueue, myMsgPtr);
                     }
                     startWritingToJsonObject(messageptr, buflen);
+=======
+                if (strcmp(buffer1, "map") == 0) {
+                    struct Tuple x = getValueFromJsonString("x", myMsgPtr);
+                    struct Tuple y = getValueFromJsonString("y", myMsgPtr);
+                    struct Tuple obs = getValueFromJsonString("obs", myMsgPtr);
+                    struct Tuple total = getValueFromJsonString("total", myMsgPtr);
+                    struct Tuple friendly = getValueFromJsonString("friendly", myMsgPtr);
+                    char x_string[2], y_string[2], total_string[3], obs_string, friendly_str;
+                    if (x.size > 0) {
+                        dbgOutputLoc(171);
 
-                    /* TODO: Get message type here */
-                    addStringKeyValuePairToJsonObject("message_type", "response");
-                    /* TODO: Get encoder_value here */
+                        if (x.size == 1) {
+                            x_string[0] = '0';
+                            x_string[1] = x.resultString[0];
+                        }
+                        else{
+                            x_string[0] = x.resultString[0];
+                            x_string[1] = x.resultString[1];
+                        }
+                    }
+                    if (y.size > 0) {
+                        dbgOutputLoc(171);
 
-                    addIntegerKeyValuePairToJsonObject("good_messages", good_messages);
+                        if (y.size == 1) {
+                            y_string[0] = '0';
+                            y_string[1] = y.resultString[0];
+                        }
+                        else{
+                            y_string[0] = y.resultString[0];
+                            y_string[1] = y.resultString[1];
+                        }
+                    }
+                
+                if (obs.size > 0) {
+                    dbgOutputLoc(171);
 
-                    addIntegerKeyValuePairToJsonObject("bad_messages", bad_messages);
+                    for (i = 0; i < obs.size; i++) {
+                        obs_string = obs.resultString[i];
+                    }
+                }
+                if (total.size > 0) {
+                    dbgOutputLoc(171);
 
+                    for (i = 0; i < total.size; i++) {
+                        total_string[i] = total.resultString[i];
+                    }
+                }
+                if (friendly.size > 0) {
+                    dbgOutputLoc(171);
+
+                    for (i = 0; i < friendly.size; i++) {
+                        friendly_str = friendly.resultString[i];
+                    }
+                }
+                dbgOutputLoc(222);
+                //if (rcount == 0){
+                    snprintf(rMapMsg1[rcount], MSG_BUF_SIZE, "MX%c%cY%c%cO%cF%c", x_string[0], x_string[1], y_string[0], y_string[1], obs_string, friendly_str);
+                    myMsgPtr = &(rMapMsg1[rcount]);
+                //}
+               // else if (rcount == 1){
+                   // snprintf(rMapMsg1[1], MSG_BUF_SIZE, "MX%c%cY%c%cO%cF%c", x_string[0], x_string[1], y_string[0], y_string[1], obs_string, friendly_str);
+                    //myMsgPtr = &(rMapMsg1[1]);
+                //}
+                messageToQ(appRecvQueue, myMsgPtr);
+                rcount = (rcount+1)%MAX_MSGS;
+                app_jsonData.state = APP_JSON_STATE_WAITING_FOR_MESSAGE;
+            }
+
+
+
+
+                break;
+        }
+
+        case APP_JSON_STATE_PARSING_INTERNAL_MESSAGE:
+        {
+            //myMsgPtr[i] != NULL
+            if (strcmp(myMsgPtr, "map") == 0) {
+                startWritingToJsonObject(messageptr, buflen);
+
+                /* TODO: Get message type here */
+                addStringKeyValuePairToJsonObject("message_type", "map");
+                /* TODO: Get encoder_value here */
+
+
+                addStringKeyValuePairToJsonObject("source", "192.168.1.103");
+
+                /* TODO: Get encoder_value here */
+                addStringKeyValuePairToJsonObject("destination", "192.168.1.105");
+
+                endWritingToJsonObject();
+                app_jsonData.state = APP_JSON_STATE_SENDING_MESSAGE;
+                memset(recvMsg1, 0, MSG_BUF_SIZE);
+                memset(data_requested, 0, 20);
+            } else if (myMsgPtr[0] == 'd') {
+                startWritingToJsonObject(messageptr, buflen);
+
+                /* TODO: Get message type here */
+                addStringKeyValuePairToJsonObject("message_type", "debug");
+                /* TODO: Get encoder_value here */
+                addStringKeyValuePairToJsonObject("requested_data", myMsgPtr);
+
+                addStringKeyValuePairToJsonObject("source", "192.168.1.103");
+
+                /* TODO: Get encoder_value here */
+                addStringKeyValuePairToJsonObject("destination", "192.168.1.105");
+
+                endWritingToJsonObject();
+                app_jsonData.state = APP_JSON_STATE_SENDING_MESSAGE;
+                memset(recvMsg1, 0, MSG_BUF_SIZE);
+                memset(data_requested, 0, 20);
+            } else {
+                for (i = 0; i < 7; i++)
+                    //dbgUARTVal(myMsgPtr[i]);
+                    encoderStr[i] = myMsgPtr[i];
+                app_jsonData.state = APP_JSON_STATE_WAITING_FOR_MESSAGE;
+            }
+
+            break;
+        }
+
+        case APP_JSON_STATE_WRITING_RESPONSE:
+        {
+            char resultBuff[25];
+            dbgOutputLoc(111);
+            int i, sum = 0;
+            if (buffer1[2] == 'q') {
+>>>>>>> Stashed changes
+
+                if (strcmp(data_requested, "stop") == 0) {
+                    dbgOutputLoc(113);
+                    strcpy(appMsg, "stop");
+                    myMsgPtr = &appMsg;
+                    messageToQ(appRecvQueue, myMsgPtr);
+                } else if (strcmp(data_requested, "run") == 0) {
+                    dbgOutputLoc(222);
+                    strcpy(appMsg, "run");
+                    myMsgPtr = &appMsg;
+                    messageToQ(appRecvQueue, myMsgPtr);
+                } else if (strcmp(data_requested, "pause") == 0) {
+                    dbgOutputLoc(222);
+                    strcpy(appMsg, "pause");
+                    myMsgPtr = &appMsg;
+                    messageToQ(appRecvQueue, myMsgPtr);
+                } else if (strcmp(data_requested, "encoder") == 0) {
+                    dbgOutputLoc(222);
+                    strcpy(appMsg, "encoder");
+                    myMsgPtr = &appMsg;
+                    messageToQ(appRecvQueue, myMsgPtr);
+                }
+                /*else if (strcmp(data_requested, "motor")){
+
+                    MOTOR_MESSAGE motorMsg;
+                    if (strcmp(motorCmd, "forward")) {
+                        distance = atoi(motorDist);
+                        dbgOutputLoc(225);
+                        motorMsg.motorState = MOTOR_FORWARD;
+                        motorMsg.messageType = 'M';
+                        motorMsg.dist = distance;
+
+                        if (xQueueSend(encoderQueue, &motorMsg, NULL) != pdTRUE) {
+                            //send failed
+                        }
+                    }
+
+                }*/
+
+                startWritingToJsonObject(messageptr, buflen);
+
+<<<<<<< Updated upstream
                     int tens = 1;
                     if (jsstringValuesTuples[3].size > 1)
                         tens = 10 * (jsstringValuesTuples[3].size - 1);
@@ -307,9 +503,32 @@ void APP_JSON_Tasks(void) {
                     addStringKeyValuePairToJsonObject("source", "192.168.1.102");
                     /* TODO: Get encoder_value here */
                     addStringKeyValuePairToJsonObject("destination", buffer2);
+=======
+                /* TODO: Get message type here */
+                addStringKeyValuePairToJsonObject("message_type", "response");
+                /* TODO: Get encoder_value here */
 
-                    endWritingToJsonObject();
+                addIntegerKeyValuePairToJsonObject("good_messages", good_messages);
 
+                addIntegerKeyValuePairToJsonObject("bad_messages", bad_messages);
+
+>>>>>>> Stashed changes
+
+                addStringKeyValuePairToJsonObject("encoders", encoderStr);
+                int tens = 1;
+                if (jsstringValuesTuples[3].size > 1)
+                    tens = 10 * (jsstringValuesTuples[3].size - 1);
+                for (i = 0; i < jsstringValuesTuples[3].size; i++) {
+                    sum += (tens)*(jsstringValuesTuples[3].resultString[i] - '0');
+                    tens = tens / 10;
+                }
+                sum++;
+                addIntegerKeyValuePairToJsonObject("sequence_id", sum);
+                /* TODO: Get IR_sensor_value here */
+                //addIntegerKeyValuePairToJsonObject("infrared_sensor_value", 150);
+                /* TODO: Get port number here */
+
+<<<<<<< Updated upstream
                     app_jsonData.state = APP_JSON_STATE_SENDING_MESSAGE;
                     memset(recvMsg, 0, MSG_BUF_SIZE);
                     memset(data_requested, 0, 20);
@@ -322,29 +541,50 @@ void APP_JSON_Tasks(void) {
                 } else
                     app_jsonData.state = APP_JSON_STATE_WAITING_FOR_MESSAGE;
             }
+=======
+                addStringKeyValuePairToJsonObject("source", "192.168.1.103");
 
-            case APP_JSON_STATE_WRITING_REQUEST:
-            {
+                /* TODO: Get encoder_value here */
+                addStringKeyValuePairToJsonObject("destination", "192.168.1.105");
+
+                endWritingToJsonObject();
+>>>>>>> Stashed changes
+
                 app_jsonData.state = APP_JSON_STATE_SENDING_MESSAGE;
-                break;
-            }
+                memset(recvMsg1, 0, MSG_BUF_SIZE);
+                memset(data_requested, 0, 20);
 
-            case APP_JSON_STATE_SENDING_MESSAGE:
-            {
-                msgToWiflyMsgQ(&messageptr);
-                //msgToWiflyMsgQ(&stupidError);
+
+                //                    for (i = 0; i < MSG_BUF_SIZE; i++) {
+                //                        dbgOutputVal(recvMsg[i]);
+                //                    }
+                break;
+            } else
                 app_jsonData.state = APP_JSON_STATE_WAITING_FOR_MESSAGE;
-                break;
-                dbgOutputVal(0);
-            }
-
-            default:
-            {
-                break;
-            }
-
         }
+
+        case APP_JSON_STATE_WRITING_REQUEST:
+        {
+            app_jsonData.state = APP_JSON_STATE_SENDING_MESSAGE;
+            break;
+        }
+
+        case APP_JSON_STATE_SENDING_MESSAGE:
+        {
+            msgToWiflyMsgQ(&messageptr);
+            //msgToWiflyMsgQ(&stupidError);
+            app_jsonData.state = APP_JSON_STATE_WAITING_FOR_MESSAGE;
+            break;
+            dbgOutputVal(0);
+        }
+
+        default:
+        {
+            break;
+        }
+
     }
+}
 }
 
 

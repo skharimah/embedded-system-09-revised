@@ -121,11 +121,24 @@ APP_DRV_OBJECTS appDrvObject;
     See prototype in app.h.
  */
 
-QueueHandle_t createQueue(void) {
+//QueueHandle_t createQueue(void) {
+//    QueueHandle_t queue;
+//
+//    int queueSize = sizeof (char *);
+//    queue = xQueueCreate(20, queueSize);
+//    if (queue == NULL) {
+//        /* Queue is not created and should not be used
+//         * The return value will be NULL if queue is not created
+//         */
+//    }
+//    return queue;
+//}
+
+QueueHandle_t createQueue(int size) {
     QueueHandle_t queue;
 
     int queueSize = sizeof (char *);
-    queue = xQueueCreate(20, queueSize);
+    queue = xQueueCreate(MAX_MSGS, queueSize);
     if (queue == NULL) {
         /* Queue is not created and should not be used
          * The return value will be NULL if queue is not created
@@ -293,6 +306,7 @@ int UARTInit(USART_MODULE_ID id, int baudrate) {
     return 1;
 }
 
+<<<<<<< Updated upstream
 int requestEncoderData(int destIP) {
     int i, sum = 0;
     //char buffer[MSG_BUF_SIZE];
@@ -323,6 +337,31 @@ bool checkConnected() {
 }
 
 void MoveSprite(int ID) {
+=======
+void requestMap() {
+    dbgOutputLoc(113);
+    strcpy(recvMsg1, "map");
+    globalCharPtr = &recvMsg1;
+    messageToQ(recvMsgQueue, globalCharPtr);
+}
+
+void dbgServer(char * msg) {
+    dbgOutputLoc(113);
+    strcpy(recvMsg1, msg);
+    globalCharPtr = &recvMsg1;
+    messageToQ(recvMsgQueue, globalCharPtr);
+}
+
+void MoveSprite(int ID) {
+
+    int northSouth;
+    int eastWest;
+    MOTOR_MESSAGE msg;
+    msg.messageType = 'M';
+    msg.motorState = MOTOR_PATH_FIND;
+    msg.dist = 0;
+
+>>>>>>> Stashed changes
     //1.Read path information
     ReadPath(ID, xLoc[ID], yLoc[ID], 1);
 
@@ -330,6 +369,7 @@ void MoveSprite(int ID) {
     //	yPath = coordinates of next step on the path that were/are
     //	read using the readPath function.
     if (yLoc[ID] > yPath[ID]) { //yLoc[ID] - speed[ID];	
+<<<<<<< Updated upstream
         dbgUARTVal('s');
         dbgUARTVal('o');
         dbgUARTVal('u');
@@ -357,10 +397,80 @@ void MoveSprite(int ID) {
     }
     dbgUARTVal('\n');
 
+=======
+        //        dbgUARTVal('s');
+        //        dbgUARTVal('o');
+        //        dbgUARTVal('u');
+        //        dbgUARTVal('t');
+        //        dbgUARTVal('h');
+        northSouth = -1; // SOUTH
+    } else if (yLoc[ID] < yPath[ID]) { //yLoc[ID] + speed[ID];
+        //        dbgUARTVal('n');
+        //        dbgUARTVal('o');
+        //        dbgUARTVal('r');
+        //        dbgUARTVal('t');
+        //        dbgUARTVal('h');
+        northSouth = 1; // NORTH
+    } else
+        northSouth = 0;
+    if (xLoc[ID] > xPath[ID]) { //xLoc[ID] - speed[ID];
+        //        dbgUARTVal('w');
+        //        dbgUARTVal('e');
+        //        dbgUARTVal('s');
+        //        dbgUARTVal('t');
+        eastWest = -1; //WEST
+    } else if (xLoc[ID] < xPath[ID]) { //xLoc[ID] + speed[ID];
+        //        dbgUARTVal('e');
+        //        dbgUARTVal('a');
+        //        dbgUARTVal('s');
+        //        dbgUARTVal('t');
+        eastWest = 1; //EAST
+    } else
+        eastWest = 0;
+    //    dbgUARTVal('\n');
+
+    if (northSouth == 1 && eastWest == 0) {
+        msg.dir = NORTH;
+        msg.dist = BLOCK_DIST;
+    } else if (northSouth == -1 && eastWest == 0) {
+        msg.dir = SOUTH;
+        msg.dist = BLOCK_DIST;
+    } else if (northSouth == 0 && eastWest == 1) {
+        msg.dir = EAST;
+        msg.dist = BLOCK_DIST;
+    } else if (northSouth == 0 && eastWest == -1) {
+        msg.dir = WEST;
+        msg.dist = BLOCK_DIST;
+    } else if (northSouth == 1 && eastWest == 1) {
+        msg.dir = NORTHEAST;
+        msg.dist = HYPT_DIST;
+    } else if (northSouth == 1 && eastWest == -1) {
+        msg.dir = NORTHWEST;
+        msg.dist = HYPT_DIST;
+    } else if (northSouth == -1 && eastWest == 1) {
+        msg.dir = SOUTHEAST;
+        msg.dist = HYPT_DIST;
+    } else if (northSouth == -1 && eastWest == -1) {
+        msg.dir = SOUTHWEST;
+        msg.dist = HYPT_DIST;
+    } else {
+        //Do something
+
+    }
+>>>>>>> Stashed changes
 
     xLoc[ID] = xPath[ID];
     yLoc[ID] = yPath[ID];
 
+<<<<<<< Updated upstream
+=======
+    if (msg.dist != 0) {
+        LATAINV = 0x8;
+        if (xQueueSend(encoderQueue, &msg, NULL) != pdTRUE) {
+            //send failed
+        }
+    }
+>>>>>>> Stashed changes
 
     //	
     ////3.When sprite reaches the end location square	(end of its current
@@ -376,6 +486,22 @@ void MoveSprite(int ID) {
     //	}
 }
 
+<<<<<<< Updated upstream
+=======
+
+//function for parsing msg from app_json
+
+int subStrToInt(char *len, int from, int to) {
+    int i;
+    int powTen = 1;
+    int sum = 0;
+    for (i = from; i < to; i++) {
+        sum = sum + (len[i] - '0') * powTen;
+        powTen = powTen * 10;
+    }
+    return sum;
+}
+>>>>>>> Stashed changes
 // *****************************************************************************
 // *****************************************************************************
 // Section: Application Initialization and State Machine Functions
@@ -396,10 +522,30 @@ void APP_Initialize(void) {
     for (i = 0; i < mapWidth; i++)
         for (j = 0; j < mapHeight; j++)
             walkability [i][j].walkability = walkable;
+<<<<<<< Updated upstream
 
     for (i = 1; i < mapWidth; i++)
         //for (j = 0; j < mapHeight; j++)
         walkability [i][5].walkability = unwalkable;
+=======
+    //wall from (1, 5) to right side
+    //    for (i = 1; i < mapWidth; i++)
+    //        //for (j = 0; j < mapHeight; j++)
+    //        walkability [i][5].walkability = unwalkable;
+    //
+    //    //wall from (3,5) to (3,18)
+    //    for (i = 5; i < 18; i++)
+    //        walkability [3][i].walkability = unwalkable;
+    //
+    //    // wall from (7,10) to top
+    //    for (i = 10; i < mapHeight; i++)
+    //        walkability [7][i].walkability = unwalkable;
+
+    //wall across map
+    /*for (i = 0; i < mapHeight; i++)
+        walkability [7][i].walkability = unwalkable;*/
+
+>>>>>>> Stashed changes
     PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT);
     PLIB_INT_SourceDisable(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT);
     good_messages = 0;
@@ -437,8 +583,8 @@ void APP_Initialize(void) {
     TRISACLR = 0x8;
     ODCACLR = 0x8;
 
-    msgQueue = createQueue();
-    recvMsgQueue = createQueue();
+    msgQueue = createQueue(50);
+    recvMsgQueue = createQueue(50);
     if (msgQueue == NULL) {
         /* Wait indefinitely until the queue is successfully created */
     }
@@ -446,10 +592,12 @@ void APP_Initialize(void) {
         /* Wait indefinitely until the queue is successfully created */
     }
 
-    appRecvQueue = createQueue();
+    appRecvQueue = createQueue(20);
     if (appRecvQueue == NULL) {
         /* Wait indefinitely until the queue is successfully created */
     }
+    maptime = 0;
+    rMsgCount = 0;
 }
 
 /******************************************************************************
@@ -462,9 +610,21 @@ void APP_Initialize(void) {
 
 void APP_Tasks(void) {
     UARTInit(USART_ID_1, 57600);
+<<<<<<< Updated upstream
+=======
+
+    DRV_ADC_Open(); //start ADC
+    bool newMap = false;
+    steps = 0;
+>>>>>>> Stashed changes
     int ID = 1;
-    int goalX = 10;
-    int goalY = 7;
+    int goalX = -1;
+    int goalY = -1;
+    xLoc[ID] = -1;
+    yLoc[ID] = -1;
+    oldX = xLoc[ID];
+    oldY = yLoc[ID];
+
 
     char myMsg[ MSG_BUF_SIZE ];
     //    myMsg.ucData[0] = 't';
@@ -492,7 +652,17 @@ void APP_Tasks(void) {
     int prev_ms = 0, cur_ms = PLIB_TMR_Counter16BitGet(TMR_ID_2);
     bool connected = false;
     bool received = false;
+<<<<<<< Updated upstream
+=======
+
+    //app_JSON parsing vars
+
+
+    int sum = 0;
+    int powTen = 1;
+>>>>>>> Stashed changes
     while (1) {
+
         if (xQueueReceive(appRecvQueue, (void*) &(myMsgPtr), 0) == pdTRUE) {
             //if (tempGetMsgFromQ(appRecvQueue, myMsgPtr) == 0) {
             received = true;
@@ -502,6 +672,11 @@ void APP_Tasks(void) {
             if (strcmp(myMsgPtr, "stop") == 0) {
                 blink_led = false;
                 ledOff();
+<<<<<<< Updated upstream
+=======
+                snprintf(recvMsg1, MSG_BUF_SIZE, "stopped!");
+                dbgServer(recvMsg1);
+>>>>>>> Stashed changes
                 dbgOutputLoc(APPSTOP);
                 PLIB_INT_SourceDisable(INT_ID_0, INT_SOURCE_TIMER_2);
                 PLIB_INT_SourceDisable(INT_ID_0, INT_SOURCE_TIMER_3);
@@ -511,6 +686,11 @@ void APP_Tasks(void) {
             }
             if (strcmp(myMsgPtr, "run") == 0) {
                 blink_led = false;
+<<<<<<< Updated upstream
+=======
+                snprintf(recvMsg1, MSG_BUF_SIZE, "started!");
+                dbgServer(recvMsg1);
+>>>>>>> Stashed changes
                 PLIB_INT_SourceEnable(INT_ID_0, INT_SOURCE_TIMER_2);
                 PLIB_INT_SourceEnable(INT_ID_0, INT_SOURCE_TIMER_3);
                 PLIB_INT_SourceEnable(INT_ID_0, INT_SOURCE_TIMER_4);
@@ -521,6 +701,11 @@ void APP_Tasks(void) {
             }
             if (strcmp(myMsgPtr, "pause") == 0) {
                 blink_led = true;
+<<<<<<< Updated upstream
+=======
+                snprintf(recvMsg1, MSG_BUF_SIZE, "paused!");
+                dbgServer(recvMsg1);
+>>>>>>> Stashed changes
                 dbgOutputLoc(APPPAUSE);
                 PLIB_INT_SourceEnable(INT_ID_0, INT_SOURCE_TIMER_2);
                 PLIB_INT_SourceDisable(INT_ID_0, INT_SOURCE_TIMER_3);
@@ -531,15 +716,75 @@ void APP_Tasks(void) {
             }
             if (strcmp(myMsgPtr, "done") == 0) {
                 xLoc[ID] = xPath[ID]; //xLoc[ID] + speed[ID];
+<<<<<<< Updated upstream
                 yLoc[ID] = yPath[ID]; //yLoc[ID] - speed[ID];	
             }
 
+=======
+                yLoc[ID] = yPath[ID]; //yLoc[ID] - speed[ID];
+                steps++;
+                snprintf(recvMsg1, MSG_BUF_SIZE, "d I think I am at {%d, %d}", xLoc[ID], yLoc[ID]);
+                dbgServer(recvMsg1);
+                memset(myMsgPtr, 0, MSG_BUF_SIZE);
+            }
+            if (myMsgPtr[0] == 'M') {
+
+
+                newMap = true;
+                xCoord = (myMsgPtr[3] - '0') + (myMsgPtr[2] - '0')*10;
+
+                yCoord = (myMsgPtr[6] - '0') + (myMsgPtr[5] - '0')*10;
+
+                rType = (myMsgPtr[8] - '0');
+
+                friendly = (myMsgPtr[10] - '0');
+                snprintf(recvMsg1, MSG_BUF_SIZE, "d Received map object: {%d, %d}, rtype: %d, f:%d -", xCoord, yCoord, rType, friendly);
+                dbgServer(recvMsg1);
+
+                if (rType == OBSTACLE) {
+                    walkability [xCoord][yCoord].walkability = unwalkable;
+                    walkability [xCoord][yCoord].rover = OBSTACLE;
+                } else {
+                    // dbgOutputLoc('!');
+                    walkability [xCoord][yCoord].rover = rType;
+                    if (rType == TAGGER && friendly == 0) {
+                        snprintf(recvMsg1, MSG_BUF_SIZE, "d Received tagger location: {%d, %d}, rtype: %d, f:%d is it new? (%d, %d)", xCoord, yCoord, rType, friendly, oldGoalX, oldGoalY);
+                        dbgServer(recvMsg1);
+                        if (oldGoalX != xCoord || oldGoalY != yCoord) {
+                            walkability [xCoord][yCoord].walkability = walkable;
+                            oldGoalX = xCoord;
+                            oldGoalY = yCoord;
+                            goalX = xCoord;
+                            goalY = yCoord;
+                            appState = INIT;
+                        }
+                    } else if (rType == CM && friendly == 1) {
+                        snprintf(recvMsg1, MSG_BUF_SIZE, "d Received location for self location: {%d, %d}, rtype: %d, f:%d is it new? (%d, %d)", xCoord, yCoord, rType, friendly, oldX, oldY);
+                        dbgServer(recvMsg1);
+                        if (oldX != xCoord || oldY != yCoord) {
+                            oldX = xCoord;
+                            oldY = yCoord;
+                            xLoc[ID] = xCoord;
+                            yLoc[ID] = yCoord;
+                            appState = INIT;
+                        }
+                    } else
+                        walkability [xCoord][yCoord].walkability = unwalkable;
+                }
+                //walkability [xCoord][yCoord].walkability = unwalkable;
+                //walkability [xCoord][yCoord].rover = obs;
+                //
+                //appState = INIT;
+            }
+            memset(myMsgPtr, 0, MSG_BUF_SIZE);
+>>>>>>> Stashed changes
         }
 
 
         //dbgOutputLoc(APPTASKS + 1);
         switch (appState) {
             case INIT:
+<<<<<<< Updated upstream
                 dbgUARTVal('S');
                 dbgUARTVal('T');
                 dbgUARTVal('A');
@@ -547,25 +792,78 @@ void APP_Tasks(void) {
                 dbgUARTVal('T');
                 pathStatus[ID] = FindPath(ID, xLoc[ID], yLoc[ID], goalX, goalY);
                 appState = RUN;
+=======
+                snprintf(recvMsg1, MSG_BUF_SIZE, "d Init!");
+                dbgServer(recvMsg1);
+                /*dbgUARTVal('S');
+                dbgUARTVal('T');
+                dbgUARTVal('A');
+                dbgUARTVal('R');
+                dbgUARTVal('T');*/
+                steps = 0;
+                if (goalX != -1 && goalY != -1) {
+                    if (xLoc[ID] != -1 && yLoc[ID] != -1) {
+                        snprintf(recvMsg1, MSG_BUF_SIZE, "d Pathfinding!");
+                        dbgServer(recvMsg1);
+                        EndPathfinder();
+                        pathStatus[ID] = FindPath(ID, xLoc[ID], yLoc[ID], goalX, goalY);
+                        appState = RUN;
+                        snprintf(recvMsg1, MSG_BUF_SIZE, "d Finished Pathfinding!");
+                        dbgServer(recvMsg1);
+                    } else {
+                        //requestMap();
+                        appState = WAIT;
+                    }
+                } else {
+                    //requestMap();
+                    appState = WAIT;
+                }
+>>>>>>> Stashed changes
                 break;
             case RUN:
                 //int FindPath (int pathfinderID,int startingX, int startingY, int targetX, int targetY)
 
+                if (steps >= 3) {
+                    appState = WAIT;
+                    //requestMap();
+                }
+
+                    //2.Move smiley.
 
 
-
+<<<<<<< Updated upstream
 
                 //2.Move smiley.
                 if (pathStatus[ID] == found) MoveSprite(ID);
                 else {
                     dbgUARTVal('X');
                     appState = INIT;
+=======
+                else if (pathStatus[ID] == found) {
+                    MoveSprite(ID);
+                    appState = DRIVE;
+                } else {
+                    //dbgUARTVal('X');
+                    snprintf(recvMsg1, MSG_BUF_SIZE, "Can't find a path!");
+                dbgServer(recvMsg1);
+                    appState = WAIT;
+>>>>>>> Stashed changes
                 }
 
                 if (xLoc[ID] == goalX && yLoc[ID] == goalY) {
                     appState = RESET;
 
+<<<<<<< Updated upstream
                     dbgUARTVal('G');
+=======
+                    appState = WAIT;
+                    if (newMap) {
+                        newMap = false;
+                        appState = INIT;
+                    }
+
+                    /*dbgUARTVal('G');
+>>>>>>> Stashed changes
                     dbgUARTVal('O');
                     dbgUARTVal('A');
                     dbgUARTVal('L');
@@ -583,6 +881,8 @@ void APP_Tasks(void) {
                 yLoc[ID] = 0;
                 appState = INIT;
                 break;
+            case DRIVE:
+                break;
             case RECV:
                 break;
             case TRANS:
@@ -597,6 +897,15 @@ void APP_Tasks(void) {
                     received = false;
                 }
                 break;
+<<<<<<< Updated upstream
+=======
+            case WAIT:
+                if (maptime > 5000) {
+                    requestMap();
+                    maptime = 0;
+                }
+                break;
+>>>>>>> Stashed changes
             default:
                 break;
         }
