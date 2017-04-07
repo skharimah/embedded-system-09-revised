@@ -38,7 +38,12 @@ extern "C" {
     char messageptr[200];
     char recvMsg[200];
     char appMsg[200];
+
     char mapMsg[MAP_BUF_SIZE];
+
+    char encoderValMsg[20];
+    char jsonMsg[200];
+    
     
     const char* DEVNAME;// = "sensor";
     const char* IPADDRESS;// = "192.168.1.102";
@@ -48,8 +53,11 @@ QueueHandle_t encoderQueue;
 QueueHandle_t msgQueue;
 QueueHandle_t recvMsgQueue;
 QueueHandle_t appRecvQueue;
+
 typedef enum  {INIT, RUN, RECV, TRANS, PAUSE, STOP, RESET} State;
+
 State appState;
+
 
 //typedef struct AMessage
 // {
@@ -62,12 +70,24 @@ State appState;
 
  typedef struct
 {
+    //Tracks the type of message
+    char messageType;
+    
+    //Motor control
+    int motorState;
+    
     //Ticks of the right motor encoder
     int rightTicks;
     
     //Ticks of the left motor encoder
     int leftTicks;
-} ENCODER_DATA;
+    
+    //Distance to move
+    int dist;
+} MOTOR_MESSAGE;
+
+//motorTask states
+
 /*******************************************************************************
   Function:
     int app1SendTimerValToMsgQ(unsigned int)
@@ -94,6 +114,7 @@ int charToMsgQ(char val);
 int requestEncoderData(int destIP);
 int msgToWiflyMsgQISR(char* msg);
 int msgToWiflyMsgQ(char* msg);
+int taskToMsgQ(char* msg);
 int writeStringUART(char* string);
 int getMsgFromQ( QueueHandle_t queue, char *msg);
 bool ReceiveMsgFromWifly(char* msg);
@@ -104,13 +125,14 @@ void TransmitMsgToWifly(char* msg);
 
 char ReceiveCharFromWifly();
 
+int msgToJSONMsgQ(char* msg);
 
 /*******************************************************************************
  Encoder Queue Functions
  */
-int receiveFromEncoderQueue(ENCODER_DATA *buffer);
+int receiveFromEncoderQueue(MOTOR_MESSAGE *buffer);
 QueueHandle_t createEncoderQueue(void);
-int app1SendEncoderValToMsgQ(ENCODER_DATA *encoderTicks);
+int app1SendEncoderValToMsgQ(MOTOR_MESSAGE *encoderTicks);
 
 
 /*******************************************************************************

@@ -31,7 +31,6 @@
 /*******************************************************************************
   Function:
     int msgToWiflyMsgQ(Message msg)
-
   Remarks:
     Write to Wifly (transmit) Queue inside of ISR
     See prototype in app_publich.h.
@@ -54,7 +53,6 @@ int msgToWiflyMsgQISR(char* msg) {
 /*******************************************************************************
   Function:
     int msgToWiflyMsgQ(Message msg)
-
   Remarks:
     Write to Wifly (transmit) Queue outside of ISR
     See prototype in app_public.h.
@@ -76,7 +74,6 @@ int msgToWiflyMsgQ(char* msg) {
 /*******************************************************************************
   Function:
     int wiflyToMsgQ(Message msg) 
-
   Remarks:
     Writes message (from wifly) to the received message queue
     See prototype in app_public.h.
@@ -181,6 +178,7 @@ void checksum(char* msg, char *len) {
     for (i = 0; msg[i] != '\0'; i++) {
         sum = sum + msg[i];
         sum = sum % 10000;
+
     }
     for (j = 0; j < 4; j++) {
         len[3 - j] = (sum % 10) + '0';

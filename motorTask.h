@@ -68,6 +68,10 @@ extern "C" {
 
 #endif
 // DOM-IGNORE-END 
+    
+    //Tick amounts
+#define NINTY_DEG 645
+#define FORTYFIVE_DEG 323
 
 // *****************************************************************************
 // *****************************************************************************
@@ -91,10 +95,13 @@ typedef enum
 	/* Application's state machine's initial state. */
 	MOTORTASK_STATE_INIT=0,
 	MOTORTASK_STATE_SERVICE_TASKS,
-    MOTOR_RECEIVE_MESSAGE,
+    MOTOR_DO_NOTHING,
     MOTOR_FORWARD,
-    MOTOR_TURN,
-    MOTOR_ADJUST_SPEED
+    MOTOR_BACKWARD,
+    MOTOR_TURN_LEFT,
+    MOTOR_TURN_RIGHT,
+    SEND_ENCODER_VALUES,
+    MOTOR_STATE_IDLE
 
 	/* TODO: Define states used by the application state machine. */
 
