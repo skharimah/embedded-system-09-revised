@@ -53,7 +53,6 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 // *****************************************************************************
 // *****************************************************************************
 #include "app.h"
-#include "include.h"
 #include "app_public.h"
 #include <queue.h>
 #include "debug.h"

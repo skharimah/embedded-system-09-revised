@@ -111,6 +111,9 @@ typedef struct
 
     /* Data received from UART */
     char data;
+    
+    /* ADC value */
+    unsigned int potValue;
 
 } APP_DATA;
 

@@ -68,10 +68,6 @@ State appState;
  //char message[ MSG_BUF_SIZE ];
  int good_messages, bad_messages;
  
- //sensor values
- int sensorValue1;
- int sensorValue2;
-
  //button debouncing
  int buttonHistory[10];
  
