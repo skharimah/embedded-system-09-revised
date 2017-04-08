@@ -78,34 +78,9 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 
 // *****************************************************************************
 // *****************************************************************************
-// Section: System Interrupt Vector Functions
+// Section: Global Variables
 // *****************************************************************************
 // *****************************************************************************
-void IntHandlerDrvAdc(void)
-{
-    int i;
-    
-    for(i=0;i<ADC_NUM_SAMPLE_PER_AVERAGE;i++){
-        appData.potValue += PLIB_ADC_ResultGetByIndex(ADC_ID_1, i);
-    }
-	
-    appData.potValue = appData.potValue / ADC_NUM_SAMPLE_PER_AVERAGE;
-    
-    PLIB_ADC_SampleAutoStartEnable(ADC_ID_1);
-    /* Clear ADC Interrupt Flag */
-    PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_ADC_1);
-}
-
-/* Timer 2 Interrupt.
- * This interrupt sends a message to the queue (using app1SendTimerValToMsgQ
- * (unsigned int millisecondsElapsed)). Afterwards, this interrupt will call the
- *  debug UART and debug Output value functions using our team name (Team 9).
- * 
- * Additionally, this interrupt has been used to help debug the logic analyzer.
- * 
- * Parameters: none
- * Returns: none
- */
 char name[7] = {'T', 'E', 'A', 'M', ' ', '9', ' '};
 char mystring[100] = "Team 9: Hard at work!"; //{'R', 'E', 'A', 'D', 'Y', '.', ' ', '\0'};
 bool received = true;
@@ -130,8 +105,50 @@ int leftTicksPrev = 0;
 int rightTicksPrev = 0;
 int i = 0;
 
+// *****************************************************************************
+// *****************************************************************************
+// Section: System Interrupt Vector Functions
+// *****************************************************************************
+// *****************************************************************************
+void IntHandlerDrvAdc(void)
+{
+    int i;
+    
+    for(i=0;i<ADC_NUM_SAMPLE_PER_AVERAGE;i++){
+        appData.potValue += PLIB_ADC_ResultGetByIndex(ADC_ID_1, i);
+    }
+	
+    appData.potValue = appData.potValue / ADC_NUM_SAMPLE_PER_AVERAGE;
+    
+    PLIB_ADC_SampleAutoStartEnable(ADC_ID_1);
+    /* Clear ADC Interrupt Flag */
+    PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_ADC_1);
+}
+
+// *****************************************************************************
+// *****************************************************************************
+// Section: Timer2 Interrupt
+/* Timer 2 Interrupt.
+ * This interrupt sends a message to the queue (using app1SendTimerValToMsgQ
+ * (unsigned int millisecondsElapsed)). Afterwards, this interrupt will call the
+ *  debug UART and debug Output value functions using our team name (Team 9).
+ * 
+ * Additionally, this interrupt has been used to help debug the logic analyzer.
+ */
+// *****************************************************************************
+// *****************************************************************************
 void IntHandlerDrvTmrInstance0(void) {
     millisec++;
+    
+    if(millisec % 100 == 0) {
+        /* Obtain ultrasonic value every 100ms */
+        ultrasonicValue = getUltrasonicValue();
+        ultrasonicValueInCm = getUltrasonicValueInCm(ultrasonicValue);
+        /* Blink LD4 if ultrasonic sensor doesn't detect an obstacle within 60cm */
+        if(ultrasonicValueInCm > 60) {
+            LATAINV = 0x8;
+        }
+    }
     
     if (millisec % 500 == 0) {    
         
@@ -143,21 +160,9 @@ void IntHandlerDrvTmrInstance0(void) {
         rightTicks = PLIB_TMR_Counter16BitGet(TMR_ID_4);
         dbgOutputLoc(TMR_START + 2);
         
-        unsigned char val;
         count++;
-        
-        ultrasonicValue = getUltrasonicValue();
-        ultrasonicValueInCm = getUltrasonicValueInCm(ultrasonicValue);
-        
-        if(ultrasonicValueInCm > 60) {
-            LATAINV = 0x8;
-        }
-        
-        char mymsg[MSG_BUF_SIZE];
-        char buffer[MSG_BUF_SIZE];
-        unsigned int buflen = MSG_BUF_SIZE;
-        int array[] = {1, 2, 3, 4, 5};
     }
+    
     if (millisec % 100 == 0) {
         
         leftTicksPrev = leftTicks;
@@ -177,9 +182,15 @@ void IntHandlerDrvTmrInstance0(void) {
             }
         }
     }
+    
     PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_TIMER_2);
 }
 
+// *****************************************************************************
+// *****************************************************************************
+// Section: Timer3 and Timer4 Interrupts (serve as encoder interrupts)
+// *****************************************************************************
+// *****************************************************************************
 //Left Encoder Interrupt
 void IntHandlerDrvTmrInstance1(void) {
     dbgOutputLoc(212);
@@ -195,6 +206,11 @@ void IntHandlerDrvTmrInstance2(void) {
     DRV_TMR2_Tasks();
 }
 
+// *****************************************************************************
+// *****************************************************************************
+// Section: UART0 Interrupt (WiFly)
+// *****************************************************************************
+// *****************************************************************************
 void IntHandlerDrvUsartInstance0(void) {
     char mymsg[MSG_BUF_SIZE] = "";
     char * mymsgptr = "";
