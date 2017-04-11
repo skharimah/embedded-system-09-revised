@@ -163,7 +163,7 @@ void MOTORTASK_Tasks ( void )
     int leftTicksPrev = 0;
     int rightTicksPrev = 0;
     
-    //PID Variables
+    //PID Variables original
     float kpl = .3;
     float kil = .2;
     float kdl = .01;
@@ -171,6 +171,8 @@ void MOTORTASK_Tasks ( void )
     float kpr = .25;
     float kir = .2;
     float kdr = .01;
+    
+    
     
     int targetSpeed = 600; 
     int leftMotorSpeed = 400;
@@ -201,6 +203,8 @@ void MOTORTASK_Tasks ( void )
     //button history variables
     int buttonPressed;
     
+    char done = 'D';
+    
     motorsInitialize();
     
     while(1) {
@@ -223,18 +227,7 @@ void MOTORTASK_Tasks ( void )
                     rightTicks = msgReceived.rightTicks;
                     dbgOutputLoc(19);
 
-                    dbgOutputVal(rightTicks);
-
-                    //Output ticks to UART
-                    /*sprintf(tickChar, "L%d", leftTicks);
-                    for(i = 0; tickChar[i] != NULL; i++)
-                        dbgOutputVal(tickChar[i]);
-                    dbgOutputVal(' ');
-                    sprintf(tickChar, "R%d", rightTicks);
-                    for(i = 0; tickChar[i] != NULL; i++)
-                        dbgOutputVal(tickChar[i]);
-                    dbgOutputVal('\n');*/      
-                
+                    dbgOutputVal(rightTicks);     
                     //adjust speed
                     leftMotorSpeed = pidControl(leftMotorSpeed, rightTicks, targetSpeed, kpl, kil, kdl);
                     rightMotorSpeed = pidControl(rightMotorSpeed, leftTicks, targetSpeed, kpr, kir, kdr);
@@ -279,8 +272,9 @@ void MOTORTASK_Tasks ( void )
             //LATAINV = 0x8;
             if(leftCounter > dest && rightCounter > dest) {
                 moving = 0;
-                motortaskData.state = MOTOR_DO_NOTHING;
-                }
+                motorsStop();
+                motortaskData.state = MOTOR_SENDTO_MAP;
+            }
         }
         
         if(turningPath == 1) {
@@ -340,6 +334,19 @@ void MOTORTASK_Tasks ( void )
                 break;
             }
             
+            case MOTOR_SENDTO_MAP:
+            {
+            
+                //send to the motor queue-- which controls motors
+                if(xQueueSend(mapQueue, &done, NULL) != pdTRUE) {
+                    //send failed
+                }
+
+                motortaskData.state = MOTOR_STATE_IDLE;
+                
+                break;
+            }
+            
             case MOTOR_FORWARD:
             {
                 PLIB_TMR_Counter16BitSet(TMR_ID_3, 0);
@@ -354,7 +361,11 @@ void MOTORTASK_Tasks ( void )
             case MOTOR_BACKWARD:
             {
                 dbgOutputLoc(131);
+                PLIB_TMR_Counter16BitSet(TMR_ID_3, 0);
+                PLIB_TMR_Counter16BitSet(TMR_ID_4, 0);
+                moving = 1;
                 motorsBackward(leftMotorSpeed, rightMotorSpeed);
+                motortaskData.state = MOTOR_STATE_IDLE;
       
                 break;
             }

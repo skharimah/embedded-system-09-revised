@@ -260,19 +260,19 @@ void MoveSprite(int ID) {
     //	yPath = coordinates of next step on the path that were/are
     //	read using the readPath function.
     if (yLoc[ID] > yPath[ID]) { //yLoc[ID] - speed[ID];	
-        dbgUARTVal('s');
+        /*dbgUARTVal('s');
         dbgUARTVal('o');
         dbgUARTVal('u');
         dbgUARTVal('t');
-        dbgUARTVal('h');
+        dbgUARTVal('h');*/
         northSouth = -1; // SOUTH
     }
     else if (yLoc[ID] < yPath[ID]) { //yLoc[ID] + speed[ID];
-        dbgUARTVal('n');
+        /*dbgUARTVal('n');
         dbgUARTVal('o');
         dbgUARTVal('r');
         dbgUARTVal('t');
-        dbgUARTVal('h');
+        dbgUARTVal('h');*/
         northSouth = 1; // NORTH
     }
     else
@@ -333,12 +333,11 @@ void MoveSprite(int ID) {
     }
 
 
-    if(msg.dist != 0) {
-        LATAINV = 0x8;
+    /*if(msg.dist != 0) {
         if(xQueueSend(encoderQueue, &msg, NULL) != pdTRUE) {
                 //send failed
         }
-    }
+    }*/
 
     //	
     ////3.When sprite reaches the end location square	(end of its current
@@ -465,7 +464,7 @@ void APP_Tasks(void) {
     
     DRV_ADC_Open();    //start ADC
    
-   
+    
     
     int ID = 1;
     int goalX = 10;

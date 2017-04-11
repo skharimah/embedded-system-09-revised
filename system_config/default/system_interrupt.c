@@ -58,7 +58,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 // Section: Included Files
 // *****************************************************************************
 // *****************************************************************************
-#define ADC_NUM_SAMPLE_PER_AVERAGE 8
+#define ADC_NUM_SAMPLE_PER_AVERAGE 4
 
 
 #include <xc.h>
@@ -82,24 +82,45 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 // *****************************************************************************
 void IntHandlerDrvAdc(void)
 {
+    int i,j;
+    sensorData.sensorValue = 0;
+    sensorData.upSensorValue= 0;
+    sensorData.lineArray1 =0;
+    sensorData.lineArray2 =0;
     
-    int i;
+    sensorData.centimeterDistanceLower = 0;
+    sensorData.centimeterDistanceUpper= 0;
     
+    sensorData.lowerVal = 0;
+    sensorData.upperVal = 0;
     
-    
+    //changed this stuff so that two can be read at the same time
+    //Read data from the ADC
     for(i=0;i<ADC_NUM_SAMPLE_PER_AVERAGE;i++){
-        sensorValue1 += PLIB_ADC_ResultGetByIndex(ADC_ID_1, (2*i));
-        sensorValue2 += PLIB_ADC_ResultGetByIndex(ADC_ID_1, (2*i+1));
+        sensorData.sensorValue += PLIB_ADC_ResultGetByIndex(ADC_ID_1, (4*i));
+        sensorData.upSensorValue += PLIB_ADC_ResultGetByIndex(ADC_ID_1, (4*i+1));
+        sensorData.lineArray1 += PLIB_ADC_ResultGetByIndex(ADC_ID_1, (4*i+2));
+        sensorData.lineArray2 += PLIB_ADC_ResultGetByIndex(ADC_ID_1, (4*i+3));
     }
-	
-    sensorValue1 = sensorValue1 / (ADC_NUM_SAMPLE_PER_AVERAGE);
-    sensorValue2 = sensorValue2 / (ADC_NUM_SAMPLE_PER_AVERAGE);
+    sensorData.sensorValue = sensorData.sensorValue / (ADC_NUM_SAMPLE_PER_AVERAGE);
+    sensorData.upSensorValue = sensorData.upSensorValue / (ADC_NUM_SAMPLE_PER_AVERAGE);
+    sensorData.lineArray1 = sensorData.lineArray1 / (ADC_NUM_SAMPLE_PER_AVERAGE);
+    sensorData.lineArray2 = sensorData.lineArray2 / (ADC_NUM_SAMPLE_PER_AVERAGE);
     
-   
+    sensorData.lowerVal = (9462/(sensorData.sensorValue - 17));
+    sensorData.upperVal = (9462/(sensorData.upSensorValue - 17));
+        
+    sensorData.centimeterDistanceLower = ((sensorData.lowerVal)*2); 
+    sensorData.centimeterDistanceUpper = ((sensorData.upperVal)*2)+10; 
     
+    //start ADC
     PLIB_ADC_SampleAutoStartEnable(ADC_ID_1);
+    
+    
     /* Clear ADC Interrupt Flag */
     PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_ADC_1);
+    //sensorData.InterruptFlag = false;
+    
 }
 
 /* Timer 2 Interrupt.
@@ -116,9 +137,6 @@ char name[7] = {'T', 'E', 'A', 'M', ' ', '9', ' '};
 char mystring[100] = "Team 9: Hard at work!"; //{'R', 'E', 'A', 'D', 'Y', '.', ' ', '\0'};
 bool received = true;
 int counter = 0;
-
-char sensorBuf[MSG_BUF_SIZE];
-unsigned char outVal;
 
 DBG_POS namepos = T;
 unsigned char out;
@@ -139,6 +157,9 @@ int i = 0;
 void IntHandlerDrvTmrInstance0(void) {
     millisec++;
     
+    
+    
+    
     if(millisec % 50 == 0) {
         if(PLIB_PORTS_PinGet( PORTS_ID_0, PORT_CHANNEL_G, 6) == 0) {
             buttonHistory[i] = 1;
@@ -153,6 +174,10 @@ void IntHandlerDrvTmrInstance0(void) {
 
     //dbgutputLoc(millisec);
     if (millisec % 500 == 0) {//Get timer values
+        
+        /*if(sensorData.centimeterDistanceLower < 150)
+            LATAINV = 0x8;*/
+        
         leftTicksPrev = leftTicks;
         leftTicks = PLIB_TMR_Counter16BitGet(TMR_ID_3);
         rightTicks = PLIB_TMR_Counter16BitGet(TMR_ID_4);
@@ -164,7 +189,7 @@ void IntHandlerDrvTmrInstance0(void) {
         count++;
         
         
-        //LATAINV = 0x8;
+        LATAINV = 0x8;
 
         //dbgOutputLoc(TMR_START + 3);
 
@@ -178,17 +203,7 @@ void IntHandlerDrvTmrInstance0(void) {
         int array[] = {1, 2, 3, 4, 5};
     }
     if (millisec % 100 == 0) {
-        
-        
-         //test sensor values
-        snprintf(sensorBuf, MSG_BUF_SIZE, "%d" ,sensorValue1);
-        int j;
-        for(j=0; j!='\0'; j++){
-            outVal = sensorBuf[j];
-            dbgUARTVal(outVal);
-        }
-        
-        
+       
         leftTicksPrev = leftTicks;
         rightTicksPrev = rightTicks;
         leftTicks = PLIB_TMR_Counter16BitGet(TMR_ID_3);

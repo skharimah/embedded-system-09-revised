@@ -72,7 +72,10 @@ extern "C" {
 // Section: Type Definitions
 // *****************************************************************************
 // *****************************************************************************
-
+#define BUFF_SIZE 200
+    
+    unsigned char output;
+    int x;
 // *****************************************************************************
 /* Application states
 
@@ -88,10 +91,12 @@ typedef enum
 {
 	/* Application's state machine's initial state. */
 	MAPGENERATORTASK_STATE_INIT=0,
-	MAPGENERATORTASK_STATE_SERVICE_TASKS,
-
-	/* TODO: Define states used by the application state machine. */
-
+	MAPGENERATORTASK_STATE_SENSOR_UPPER,
+            SOME_STATE,
+            SEND_MESSAGE_STATE,
+            MOVE_STATE,
+            READ_STATE,
+            PROCESS_DATA_STATE,
 } MAPGENERATORTASK_STATES;
 
 

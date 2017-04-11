@@ -104,6 +104,7 @@ typedef enum
     MOTOR_STATE_IDLE,
     MOTOR_PATH_MOVE,
     MOTOR_PATH_FIND,
+    MOTOR_SENDTO_MAP,
     MOTOR_SEND_TASK_COMPLETE
 
 	/* TODO: Define states used by the application state machine. */

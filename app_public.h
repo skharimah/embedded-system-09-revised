@@ -33,11 +33,18 @@ extern "C" {
     
 #define MSG_BUF_SIZE 200
     
+    int totalObstacles;
+ 
+    int yCoordinate;
+    
     char messageptr[200];
     char recvMsg[200];
     char appMsg[200];
     char encoderValMsg[20];
     char jsonMsg[200];
+    
+    char sensorBuf[MSG_BUF_SIZE];
+    unsigned char outVal;
     
     
     const char* DEVNAME;// = "sensor";
@@ -45,6 +52,7 @@ extern "C" {
     
 DRV_HANDLE usbHandle;// = DRV_USART_Open(DRV_USART_INDEX_0, DRV_IO_INTENT_READWRITE);
 QueueHandle_t encoderQueue;
+QueueHandle_t mapQueue;
 QueueHandle_t msgQueue;
 QueueHandle_t recvMsgQueue;
 QueueHandle_t appRecvQueue;
@@ -68,6 +76,11 @@ State appState;
  //button debouncing
  int buttonHistory[10];
  
+ char mapValMsg[200];
+ char mapRecvMsg[200];
+ 
+ 
+ 
  typedef struct
 {
     //Tracks the type of message
@@ -88,6 +101,58 @@ State appState;
     //Direction to turn before moving
     int dir;
 } MOTOR_MESSAGE;
+
+typedef struct
+{   
+    //X coordinate 
+    int xCoordinate;
+    
+    //Y coordinate
+    int yCoordinate;
+    
+    //1 is obstacle, 0 is flag rover, 2 is cm, 3 is tag, 
+    int isObstacle;
+    
+    //1 is our team, 0 is other team
+    bool isOurs;
+    
+    //if more than one obstacle
+    int sequenceID;
+    
+} MAP_MESSAGE;
+
+typedef struct
+{
+    /* Flag to indicate an interrupt has occured */
+	bool InterruptFlag;
+
+    /* Pointer to hold the present character of string to be transmitted */
+    const char *stringPointer;
+
+    /* Data received from UART */
+    char data;
+    
+    int sensorValue;
+    
+    int upSensorValue;
+    
+    int centimeterDistanceLower;
+    
+    int centimeterDistanceUpper;
+    
+    int lowerVal;
+    
+    int upperVal;
+    
+    int lineArray1;
+    
+    int lineArray2;
+    
+
+} SENSOR_DATA;
+
+//sensor data struct
+ SENSOR_DATA sensorData;
 
 //motorTask states
 

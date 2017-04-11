@@ -191,17 +191,13 @@ void APP_JSON_Tasks(void) {
             {
                 //dbgUARTVal('t');
                 dbgOutputLoc(109);
+                
                 /* TODO: Check messageQ to see if the PIC needs a new information*/
                 //app_jsonData.state = APP_JSON_STATE_WRITING_REQUEST;
                 if (xQueueReceive(recvMsgQueue, &myMsgPtr, 0) == pdTRUE) {
-                    //dbgUARTVal('e');
-                    //received = true;
-                    //dbgOutputVal(recvMsg[0]);
-                    /*for(i = 0; myMsgPtr[i] != NULL; i++) {
-                            dbgUARTVal(myMsgPtr[i]);
-                            //dbgUARTVal('s');
-                        }*/  
-                    
+                    if (myMsgPtr[1] == 'X') {
+                        app_jsonData.state = APP_JSON_STATE_PARSING_INTERNAL_MESSAGE;
+                    }
                     if(myMsgPtr[0] == 'L') {
                         //dbgUARTVal('n');
                         app_jsonData.state = APP_JSON_STATE_PARSING_INTERNAL_MESSAGE;
@@ -230,12 +226,6 @@ void APP_JSON_Tasks(void) {
                 struct Tuple motor_command = getValueFromJsonString("motor_command", myMsgPtr);
                 struct Tuple motor_distance = getValueFromJsonString("motor_dist", myMsgPtr);
                 
-                //jsstringValuesTuples[0] = getValueFromJsonString("message_type", myMsg);
-                //jsstringValuesTuples[1] = getValueFromJsonString("sequence_id", myMsg);
-//                jsstringValuesTuples[2] = getValueFromJsonString("requested_data", myMsg);
-//                jsstringValuesTuples[3] = getValueFromJsonString("source", myMsg);
-//                jsstringValuesTuples[4] = getValueFromJsonString("destination", myMsg);
-                //jsstringValuesTuples[5] = getValueFromJsonString("port", myMsg);
                 
                 if (msgType.size > 0) {
                     dbgOutputLoc(171);
@@ -302,19 +292,53 @@ void APP_JSON_Tasks(void) {
                     dbgOutputVal('b');
                 }
                 
-                
-                
+                //requesting a map
+                if (strcmp(data_requested, "map")) {
 
+                    //sending to the queue
+                    strcpy(mapValMsg, "map");
+                    myMsgPtr = &mapValMsg;
+                    messageToQ(appRecvQueue, myMsgPtr);
+                }
+                
                 break;
             }
             
             case APP_JSON_STATE_PARSING_INTERNAL_MESSAGE:
-            {                
-                //myMsgPtr[i] != NULL
-                for(i = 0; i < 7; i++) 
-                    //dbgUARTVal(myMsgPtr[i]);
-                    encoderStr[i] = myMsgPtr[i];
-                app_jsonData.state = APP_JSON_STATE_WAITING_FOR_MESSAGE;
+            {
+                //this is the map message
+                if (myMsgPtr[1] == 'X') {
+                    
+                    startWritingToJsonObject(messageptr, buflen);
+
+                    /* TODO: Get message type here */
+                    addStringKeyValuePairToJsonObject("message_type", "response");
+                    /* TODO: Get encoder_value here */
+
+                    //myMsgPtr[2,3] -- to get the 2 values-- add string
+                    addStringKeyValuePairToJsonObject("X", myMsgPtr[2]);
+
+                    //7,8--what is the correct format of this
+                    addStringKeyValuePairToJsonObject("Y", myMsgPtr[7]);
+
+                    //addIntegerKeyValuePairToJsonObject("isObstacle", encoderStr);
+                    
+                    //addIntegerKeyValuePairToJsonObject("isObstacle", encoderStr);
+                    
+                    endWritingToJsonObject();
+                    
+                    app_jsonData.state = APP_JSON_STATE_SENDING_MESSAGE;;
+                }
+                else{
+                   
+                        //myMsgPtr[i] != NULL
+                    for(i = 0; i < 7; i++) 
+                        //dbgUARTVal(myMsgPtr[i]);
+                        encoderStr[i] = myMsgPtr[i];
+                    app_jsonData.state = APP_JSON_STATE_WAITING_FOR_MESSAGE;
+                
+                }
+                
  
                 break;
             }
@@ -385,10 +409,8 @@ void APP_JSON_Tasks(void) {
                     }
                     sum++;
                     addIntegerKeyValuePairToJsonObject("sequence_id", sum);
-                    /* TODO: Get IR_sensor_value here */
-                    //addIntegerKeyValuePairToJsonObject("infrared_sensor_value", 150);
                     /* TODO: Get port number here */
-                    addStringKeyValuePairToJsonObject("source", "192.168.1.103");
+                    addStringKeyValuePairToJsonObject("source", "192.168.1.102");
                     /* TODO: Get encoder_value here */
                     addStringKeyValuePairToJsonObject("destination", buffer2);
 
@@ -398,10 +420,6 @@ void APP_JSON_Tasks(void) {
                     memset(recvMsg, 0, MSG_BUF_SIZE);
                     memset(data_requested, 0, 20);
                     
-
-//                    for (i = 0; i < MSG_BUF_SIZE; i++) {
-//                        dbgOutputVal(recvMsg[i]);
-//                    }
                     break;
                 } else
                     app_jsonData.state = APP_JSON_STATE_WAITING_FOR_MESSAGE;
