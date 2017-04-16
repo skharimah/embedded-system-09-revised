@@ -27,35 +27,42 @@
 extern "C" {
 #endif
     
+        
 #define BLOCK_DIST 755 //one block
 #define HYPT_DIST 1080
 //#define BLOCK_DIST 2000
     
+    
+    
 #define MSG_BUF_SIZE 200
+#define ADC_NUM_SAMPLE_PER_AVERAGE 8
 #define MAP_BUF_SIZE 500
 #define LED_PIN 0 // D6 - silkscreen 47 - LED
 #define LED_PORT PORT_CHANNEL_F
-
     
+#define MAX_MSGS 15
     char messageptr[200];
-    char recvMsg[200];
+    char recvMsg1[200];
+    char recvMsg2[200];
+    int rMsgCount;
     char appMsg[200];
+    char rMapMsg1[MAX_MSGS][200];
 
     char mapMsg[MAP_BUF_SIZE];
 
     char encoderValMsg[20];
-    char jsonMsg[200];
+    char jsonMsg1[MAX_MSGS][200];
     
-    
+    char * globalCharPtr;
     const char* DEVNAME;// = "sensor";
     const char* IPADDRESS;// = "192.168.1.102";
-    
+    unsigned int maptime;
 DRV_HANDLE usbHandle;// = DRV_USART_Open(DRV_USART_INDEX_0, DRV_IO_INTENT_READWRITE);
 QueueHandle_t encoderQueue;
 QueueHandle_t msgQueue;
 QueueHandle_t recvMsgQueue;
 QueueHandle_t appRecvQueue;
-typedef enum  {INIT, RUN, RECV, TRANS, PAUSE, STOP, RESET, WAIT} State;
+typedef enum  {INIT, RUN, RECV, TRANS, PAUSE, STOP, RESET, WAIT, DRIVE} State;
 State appState;
 
 
@@ -68,8 +75,17 @@ State appState;
  //char message[ MSG_BUF_SIZE ];
  int good_messages, bad_messages;
  
+ //sensor values
+ int sensorValue1;
+ int sensorValue2;
+
  //button debouncing
  int buttonHistory[10];
+ 
+ char mapValMsg[200];
+ char mapRecvMsg[200];
+ 
+ 
  
  typedef struct
 {
@@ -91,6 +107,58 @@ State appState;
     //Direction to turn before moving
     int dir;
 } MOTOR_MESSAGE;
+
+typedef struct
+{   
+    //X coordinate 
+    int xCoordinate;
+    
+    //Y coordinate
+    int yCoordinate;
+    
+    //1 is obstacle, 0 is flag rover, 2 is cm, 3 is tag, 
+    int isObstacle;
+    
+    //1 is our team, 0 is other team
+    bool isOurs;
+    
+    //if more than one obstacle
+    int sequenceID;
+    
+} MAP_MESSAGE;
+
+typedef struct
+{
+    /* Flag to indicate an interrupt has occured */
+	bool InterruptFlag;
+
+    /* Pointer to hold the present character of string to be transmitted */
+    const char *stringPointer;
+
+    /* Data received from UART */
+    char data;
+    
+    int sensorValue;
+    
+    int upSensorValue;
+    
+    int centimeterDistanceLower;
+    
+    int centimeterDistanceUpper;
+    
+    int lowerVal;
+    
+    int upperVal;
+    
+    int lineArray1;
+    
+    int lineArray2;
+    
+
+} SENSOR_DATA;
+
+//sensor data struct
+ SENSOR_DATA sensorData;
 
 //motorTask states
 
@@ -117,12 +185,12 @@ int app1SendTimerValToMsgQ(unsigned int millisecondsElapsed);
 int charToMsgQFromISR(QueueHandle_t queue, unsigned char value);
 int app1SendCharToMsgQ(unsigned char value);
 int charToMsgQ(char val);
-int requestEncoderData(int destIP);
+
 int msgToWiflyMsgQISR(char* msg);
 int msgToWiflyMsgQ(char* msg);
 int taskToMsgQ(char* msg);
 int writeStringUART(char* string);
-int getMsgFromQ( QueueHandle_t queue, char *msg);
+
 bool ReceiveMsgFromWifly(char* msg);
 
 void TransmitCharToWifly(unsigned char value);

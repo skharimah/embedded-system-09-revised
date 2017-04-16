@@ -7,12 +7,13 @@
 #ifndef ASTARLIBRARY_H
 #define ASTARLIBRARY_H
 typedef enum rovers{
-    NA = 0,
-            SENSOR,
+    OBSTACLE = 0,
+            
             FLAG,
             TAGGER,
             CM,
-            OBSTACLE
+            SENSOR,
+            NA
 }ROVER;
 typedef enum team{
     NOTEAM,
@@ -84,13 +85,15 @@ int abs(int a);
 // Name: EndPathfinder
 // Desc: Frees memory used by the pathfinder.
 //-----------------------------------------------------------------------------
-//void EndPathfinder (void)
-//{
-//	for (int x = 0; x < numberPeople+1; x++)
-//	{
-//		free (pathBank [x]);
-//	}
-//}
+void EndPathfinder (void)
+{
+    int x, w;
+	for (x = 0; x < numberPeople+1; x++)
+	{
+        for (w = 0; w < 100; w++)
+            pathBank[x][w] = 0;
+	}
+}
 
 
 //-----------------------------------------------------------------------------

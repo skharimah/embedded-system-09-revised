@@ -243,6 +243,16 @@ void MOTORTASK_Tasks ( void )
                     motortaskData.state = SEND_ENCODER_VALUES;
                 }
             }
+            if(msgReceived.messageType == 'S') {
+                motorsStop();
+                moving = 0;
+                while(msgReceived.messageType != 'R') {
+                    if(xQueueReceive(encoderQueue, &msgReceived, 0) == pdTRUE) {
+
+                    }
+                }
+                //anything else saying i hit tape
+            }
         }
         //Button Pressed
         buttonPressed = 1;
@@ -326,6 +336,7 @@ void MOTORTASK_Tasks ( void )
             case MOTORTASK_STATE_SERVICE_TASKS:
             {
                 dbgOutputLoc(17);
+                
                 break;
             }
             case MOTOR_DO_NOTHING:
