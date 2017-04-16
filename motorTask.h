@@ -68,6 +68,10 @@ extern "C" {
 
 #endif
 // DOM-IGNORE-END 
+    
+    //Tick amounts
+#define NINTY_DEG 645
+#define FORTYFIVE_DEG 323
 
 // *****************************************************************************
 // *****************************************************************************
@@ -91,16 +95,37 @@ typedef enum
 	/* Application's state machine's initial state. */
 	MOTORTASK_STATE_INIT=0,
 	MOTORTASK_STATE_SERVICE_TASKS,
-    MOTOR_RECEIVE_MESSAGE,
+    MOTOR_DO_NOTHING,
     MOTOR_FORWARD,
-    MOTOR_TURN,
-    MOTOR_ADJUST_SPEED
+    MOTOR_BACKWARD,
+    MOTOR_TURN_LEFT,
+    MOTOR_TURN_RIGHT,
+    SEND_ENCODER_VALUES,
+    MOTOR_STATE_IDLE,
+    MOTOR_PATH_MOVE,
+    MOTOR_PATH_FIND,
+    MOTOR_SEND_TASK_COMPLETE
 
 	/* TODO: Define states used by the application state machine. */
 
 } MOTORTASK_STATES;
 
+//Define directions
+typedef enum
+{
+	/* Application's state machine's initial state. */
+	NORTH=0,
+	NORTHEAST,
+    EAST,
+    SOUTHEAST,
+    SOUTH,
+    SOUTHWEST,
+    WEST,
+    NORTHWEST
 
+	/* TODO: Define states used by the application state machine. */
+
+} DIRECTIONS;
 // *****************************************************************************
 /* Application Data
 
@@ -137,6 +162,8 @@ typedef struct
 // Section: Application Initialization and State Machine Functions
 // *****************************************************************************
 // *****************************************************************************
+
+int turnDirection(int current, int target);
 
 /*******************************************************************************
   Function:

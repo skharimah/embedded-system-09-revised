@@ -196,21 +196,6 @@ QueueHandle_t createEncoderQueue(void) {
     See prototype in app.h.
  */
 
-int receiveFromEncoderQueue(ENCODER_DATA *buffer) {
-    dbgOutputLoc(99);
-    if (encoderQueue != NULL) {
-        if (xQueueReceive(encoderQueue, buffer, 0) == pdTRUE) {
-            //dbgOutputVal(buffer->leftTicks);
-            return 1;
-
-            /*Unsigned char value from the queue is successfully stored in buffer*/
-        }
-
-    }
-
-    return 0;
-}
-
 int getMsgFromQ(QueueHandle_t queue, char *msg) {
     dbgOutputLoc(87);
     if (xQueueReceive(queue,
@@ -283,19 +268,19 @@ int messageToQ(QueueHandle_t queue, char* msg) {
     } else
         return MSG_QUEUE_DOES_NOT_EXIST;
 }
-
-int app1SendEncoderValToMsgQ(ENCODER_DATA *encoderTicks) {
-    if (encoderQueue != NULL) {
-        if (xQueueSendFromISR(encoderQueue,
-                (void *) encoderTicks,
-                NULL) != pdTRUE) {
-            return MSG_QUEUE_IS_FULL;
-        } else
-            return 0;
-    } else
-        return MSG_QUEUE_DOES_NOT_EXIST;
-
-}
+//
+//int app1SendEncoderValToMsgQ(ENCODER_DATA *encoderTicks) {
+//    if (encoderQueue != NULL) {
+//        if (xQueueSendFromISR(encoderQueue,
+//                (void *) encoderTicks,
+//                NULL) != pdTRUE) {
+//            return MSG_QUEUE_IS_FULL;
+//        } else
+//            return 0;
+//    } else
+//        return MSG_QUEUE_DOES_NOT_EXIST;
+//
+//}
 
 int UARTInit(USART_MODULE_ID id, int baudrate) {
 
@@ -306,38 +291,6 @@ int UARTInit(USART_MODULE_ID id, int baudrate) {
     return 1;
 }
 
-<<<<<<< Updated upstream
-int requestEncoderData(int destIP) {
-    int i, sum = 0;
-    //char buffer[MSG_BUF_SIZE];
-    int buflen = MSG_BUF_SIZE;
-
-    startWritingToJsonObject(messageptr, buflen);
-
-    /* TODO: Get message type here */
-    addStringKeyValuePairToJsonObject("message_type", "request");
-
-    addIntegerKeyValuePairToJsonObject("sequence_id", 1);
-    /* TODO: Get IR_sensor_value here */
-    addStringKeyValuePairToJsonObject("requested_data", "encoder");
-    /* TODO: Get port number here */
-    addStringKeyValuePairToJsonObject("source", "192.168.1.102");
-    /* TODO: Get encoder_value here */
-    addStringKeyValuePairToJsonObject("destination", "192.168.1.103");
-
-    endWritingToJsonObject();
-
-    //if (msgToWiflyMsgQISR(&messageptr) == 0)
-    return 0;
-    //return 1;
-}
-
-bool checkConnected() {
-
-}
-
-void MoveSprite(int ID) {
-=======
 void requestMap() {
     dbgOutputLoc(113);
     strcpy(recvMsg1, "map");
@@ -361,7 +314,6 @@ void MoveSprite(int ID) {
     msg.motorState = MOTOR_PATH_FIND;
     msg.dist = 0;
 
->>>>>>> Stashed changes
     //1.Read path information
     ReadPath(ID, xLoc[ID], yLoc[ID], 1);
 
@@ -369,35 +321,7 @@ void MoveSprite(int ID) {
     //	yPath = coordinates of next step on the path that were/are
     //	read using the readPath function.
     if (yLoc[ID] > yPath[ID]) { //yLoc[ID] - speed[ID];	
-<<<<<<< Updated upstream
-        dbgUARTVal('s');
-        dbgUARTVal('o');
-        dbgUARTVal('u');
-        dbgUARTVal('t');
-        dbgUARTVal('h');
-    }
-    if (yLoc[ID] < yPath[ID]) { //yLoc[ID] + speed[ID];
-        dbgUARTVal('n');
-        dbgUARTVal('o');
-        dbgUARTVal('r');
-        dbgUARTVal('t');
-        dbgUARTVal('h');
-    }
-    if (xLoc[ID] > xPath[ID]) { //xLoc[ID] - speed[ID];
-        dbgUARTVal('w');
-        dbgUARTVal('e');
-        dbgUARTVal('s');
-        dbgUARTVal('t');
-    }
-    if (xLoc[ID] < xPath[ID]) { //xLoc[ID] + speed[ID];
-        dbgUARTVal('e');
-        dbgUARTVal('a');
-        dbgUARTVal('s');
-        dbgUARTVal('t');
-    }
-    dbgUARTVal('\n');
 
-=======
         //        dbgUARTVal('s');
         //        dbgUARTVal('o');
         //        dbgUARTVal('u');
@@ -457,20 +381,15 @@ void MoveSprite(int ID) {
         //Do something
 
     }
->>>>>>> Stashed changes
 
     xLoc[ID] = xPath[ID];
     yLoc[ID] = yPath[ID];
-
-<<<<<<< Updated upstream
-=======
     if (msg.dist != 0) {
         LATAINV = 0x8;
         if (xQueueSend(encoderQueue, &msg, NULL) != pdTRUE) {
             //send failed
         }
     }
->>>>>>> Stashed changes
 
     //	
     ////3.When sprite reaches the end location square	(end of its current
@@ -485,10 +404,6 @@ void MoveSprite(int ID) {
     //		if (abs(yLoc[ID] - yPath[ID]) < speed[ID]) yLoc[ID] = yPath[ID];
     //	}
 }
-
-<<<<<<< Updated upstream
-=======
-
 //function for parsing msg from app_json
 
 int subStrToInt(char *len, int from, int to) {
@@ -501,7 +416,6 @@ int subStrToInt(char *len, int from, int to) {
     }
     return sum;
 }
->>>>>>> Stashed changes
 // *****************************************************************************
 // *****************************************************************************
 // Section: Application Initialization and State Machine Functions
@@ -518,20 +432,20 @@ int subStrToInt(char *len, int from, int to) {
 
 void APP_Initialize(void) {
     int i, j;
+    int ID = 1;
 
     for (i = 0; i < mapWidth; i++)
         for (j = 0; j < mapHeight; j++)
             walkability [i][j].walkability = walkable;
-<<<<<<< Updated upstream
 
-    for (i = 1; i < mapWidth; i++)
-        //for (j = 0; j < mapHeight; j++)
-        walkability [i][5].walkability = unwalkable;
-=======
     //wall from (1, 5) to right side
     //    for (i = 1; i < mapWidth; i++)
     //        //for (j = 0; j < mapHeight; j++)
     //        walkability [i][5].walkability = unwalkable;
+
+    xLoc[ID] = -1;
+    yLoc[ID] = -1;
+
     //
     //    //wall from (3,5) to (3,18)
     //    for (i = 5; i < 18; i++)
@@ -544,8 +458,6 @@ void APP_Initialize(void) {
     //wall across map
     /*for (i = 0; i < mapHeight; i++)
         walkability [7][i].walkability = unwalkable;*/
-
->>>>>>> Stashed changes
     PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT);
     PLIB_INT_SourceDisable(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT);
     good_messages = 0;
@@ -610,18 +522,14 @@ void APP_Initialize(void) {
 
 void APP_Tasks(void) {
     UARTInit(USART_ID_1, 57600);
-<<<<<<< Updated upstream
-=======
-
     DRV_ADC_Open(); //start ADC
     bool newMap = false;
     steps = 0;
->>>>>>> Stashed changes
     int ID = 1;
     int goalX = -1;
     int goalY = -1;
-    xLoc[ID] = -1;
-    yLoc[ID] = -1;
+    //xLoc[ID] = -1;
+    //yLoc[ID] = -1;
     oldX = xLoc[ID];
     oldY = yLoc[ID];
 
@@ -636,10 +544,6 @@ void APP_Tasks(void) {
     //    PLIB_INT_SourceDisable(INT_ID_0, INT_SOURCE_TIMER_2);
     //    PLIB_INT_SourceDisable(INT_ID_0, INT_SOURCE_TIMER_3);
     //    PLIB_INT_SourceDisable(INT_ID_0, INT_SOURCE_TIMER_4);
-    //Initialize encoder receive message
-    ENCODER_DATA encoderReceived;
-    encoderReceived.leftTicks = 0;
-    encoderReceived.rightTicks = 0;
 
     //    int leftTicks = 0;
     //    int rightTicks = 0;
@@ -652,15 +556,11 @@ void APP_Tasks(void) {
     int prev_ms = 0, cur_ms = PLIB_TMR_Counter16BitGet(TMR_ID_2);
     bool connected = false;
     bool received = false;
-<<<<<<< Updated upstream
-=======
-
     //app_JSON parsing vars
 
 
     int sum = 0;
     int powTen = 1;
->>>>>>> Stashed changes
     while (1) {
 
         if (xQueueReceive(appRecvQueue, (void*) &(myMsgPtr), 0) == pdTRUE) {
@@ -672,11 +572,8 @@ void APP_Tasks(void) {
             if (strcmp(myMsgPtr, "stop") == 0) {
                 blink_led = false;
                 ledOff();
-<<<<<<< Updated upstream
-=======
                 snprintf(recvMsg1, MSG_BUF_SIZE, "stopped!");
-                dbgServer(recvMsg1);
->>>>>>> Stashed changes
+                //dbgServer(recvMsg1);
                 dbgOutputLoc(APPSTOP);
                 PLIB_INT_SourceDisable(INT_ID_0, INT_SOURCE_TIMER_2);
                 PLIB_INT_SourceDisable(INT_ID_0, INT_SOURCE_TIMER_3);
@@ -686,11 +583,8 @@ void APP_Tasks(void) {
             }
             if (strcmp(myMsgPtr, "run") == 0) {
                 blink_led = false;
-<<<<<<< Updated upstream
-=======
                 snprintf(recvMsg1, MSG_BUF_SIZE, "started!");
-                dbgServer(recvMsg1);
->>>>>>> Stashed changes
+                //dbgServer(recvMsg1);
                 PLIB_INT_SourceEnable(INT_ID_0, INT_SOURCE_TIMER_2);
                 PLIB_INT_SourceEnable(INT_ID_0, INT_SOURCE_TIMER_3);
                 PLIB_INT_SourceEnable(INT_ID_0, INT_SOURCE_TIMER_4);
@@ -701,11 +595,8 @@ void APP_Tasks(void) {
             }
             if (strcmp(myMsgPtr, "pause") == 0) {
                 blink_led = true;
-<<<<<<< Updated upstream
-=======
                 snprintf(recvMsg1, MSG_BUF_SIZE, "paused!");
-                dbgServer(recvMsg1);
->>>>>>> Stashed changes
+                //dbgServer(recvMsg1);
                 dbgOutputLoc(APPPAUSE);
                 PLIB_INT_SourceEnable(INT_ID_0, INT_SOURCE_TIMER_2);
                 PLIB_INT_SourceDisable(INT_ID_0, INT_SOURCE_TIMER_3);
@@ -716,21 +607,27 @@ void APP_Tasks(void) {
             }
             if (strcmp(myMsgPtr, "done") == 0) {
                 xLoc[ID] = xPath[ID]; //xLoc[ID] + speed[ID];
-<<<<<<< Updated upstream
-                yLoc[ID] = yPath[ID]; //yLoc[ID] - speed[ID];	
-            }
-
-=======
                 yLoc[ID] = yPath[ID]; //yLoc[ID] - speed[ID];
                 steps++;
-                snprintf(recvMsg1, MSG_BUF_SIZE, "d I think I am at {%d, %d}", xLoc[ID], yLoc[ID]);
-                dbgServer(recvMsg1);
+                //                dbgUARTVal('S');
+                //                dbgUARTVal('T');
+                //                dbgUARTVal('E');
+                //                dbgUARTVal('P');
+                //                dbgUARTVal(steps + '0');
+                appState = RUN;
+                //snprintf(recvMsg1, MSG_BUF_SIZE, "d I think I am at {%d, %d}", xLoc[ID], yLoc[ID]);
+                //dbgServer(recvMsg1);
                 memset(myMsgPtr, 0, MSG_BUF_SIZE);
             }
             if (myMsgPtr[0] == 'M') {
 
 
                 newMap = true;
+                //                dbgUARTVal(myMsgPtr[2]);
+                //                dbgUARTVal(myMsgPtr[3]);
+                //                dbgUARTVal(' ');
+                //                dbgUARTVal(myMsgPtr[5]);
+                //                dbgUARTVal(myMsgPtr[6]);
                 xCoord = (myMsgPtr[3] - '0') + (myMsgPtr[2] - '0')*10;
 
                 yCoord = (myMsgPtr[6] - '0') + (myMsgPtr[5] - '0')*10;
@@ -738,8 +635,8 @@ void APP_Tasks(void) {
                 rType = (myMsgPtr[8] - '0');
 
                 friendly = (myMsgPtr[10] - '0');
-                snprintf(recvMsg1, MSG_BUF_SIZE, "d Received map object: {%d, %d}, rtype: %d, f:%d -", xCoord, yCoord, rType, friendly);
-                dbgServer(recvMsg1);
+                //snprintf(recvMsg1, MSG_BUF_SIZE, "d Received map object: {%d, %d}, rtype: %d, f:%d -", xCoord, yCoord, rType, friendly);
+                //dbgServer(recvMsg1);
 
                 if (rType == OBSTACLE) {
                     walkability [xCoord][yCoord].walkability = unwalkable;
@@ -748,9 +645,14 @@ void APP_Tasks(void) {
                     // dbgOutputLoc('!');
                     walkability [xCoord][yCoord].rover = rType;
                     if (rType == TAGGER && friendly == 0) {
-                        snprintf(recvMsg1, MSG_BUF_SIZE, "d Received tagger location: {%d, %d}, rtype: %d, f:%d is it new? (%d, %d)", xCoord, yCoord, rType, friendly, oldGoalX, oldGoalY);
-                        dbgServer(recvMsg1);
+                        //snprintf(recvMsg1, MSG_BUF_SIZE, "d Received tagger location: {%d, %d}, rtype: %d, f:%d is it new? (%d, %d)", xCoord, yCoord, rType, friendly, oldGoalX, oldGoalY);
+                        //dbgServer(recvMsg1);
                         if (oldGoalX != xCoord || oldGoalY != yCoord) {
+                            //                            dbgUARTVal('U');
+                            //                            dbgUARTVal('P');
+                            //                            dbgUARTVal('G');
+                            //                            dbgUARTVal('O');
+                            //                            dbgUARTVal('L');
                             walkability [xCoord][yCoord].walkability = walkable;
                             oldGoalX = xCoord;
                             oldGoalY = yCoord;
@@ -759,9 +661,14 @@ void APP_Tasks(void) {
                             appState = INIT;
                         }
                     } else if (rType == CM && friendly == 1) {
-                        snprintf(recvMsg1, MSG_BUF_SIZE, "d Received location for self location: {%d, %d}, rtype: %d, f:%d is it new? (%d, %d)", xCoord, yCoord, rType, friendly, oldX, oldY);
-                        dbgServer(recvMsg1);
+                        //snprintf(recvMsg1, MSG_BUF_SIZE, "d Received location for self location: {%d, %d}, rtype: %d, f:%d is it new? (%d, %d)", xCoord, yCoord, rType, friendly, oldX, oldY);
+                        //dbgServer(recvMsg1);
                         if (oldX != xCoord || oldY != yCoord) {
+                            //dbgUARTVal('U');
+                            //dbgUARTVal('P');
+                            //dbgUARTVal('S');
+                            //dbgUARTVal('L');
+                            //dbgUARTVal('F');
                             oldX = xCoord;
                             oldY = yCoord;
                             xLoc[ID] = xCoord;
@@ -777,40 +684,40 @@ void APP_Tasks(void) {
                 //appState = INIT;
             }
             memset(myMsgPtr, 0, MSG_BUF_SIZE);
->>>>>>> Stashed changes
         }
 
 
         //dbgOutputLoc(APPTASKS + 1);
         switch (appState) {
             case INIT:
-<<<<<<< Updated upstream
-                dbgUARTVal('S');
-                dbgUARTVal('T');
-                dbgUARTVal('A');
-                dbgUARTVal('R');
-                dbgUARTVal('T');
-                pathStatus[ID] = FindPath(ID, xLoc[ID], yLoc[ID], goalX, goalY);
-                appState = RUN;
-=======
-                snprintf(recvMsg1, MSG_BUF_SIZE, "d Init!");
-                dbgServer(recvMsg1);
+
+                //pathStatus[ID] = FindPath(ID, xLoc[ID], yLoc[ID], goalX, goalY);
+                //appState = RUN;
+                //snprintf(recvMsg1, MSG_BUF_SIZE, "d Init!");
+                //dbgServer(recvMsg1);
                 /*dbgUARTVal('S');
                 dbgUARTVal('T');
                 dbgUARTVal('A');
                 dbgUARTVal('R');
                 dbgUARTVal('T');*/
-                steps = 0;
+
                 if (goalX != -1 && goalY != -1) {
                     if (xLoc[ID] != -1 && yLoc[ID] != -1) {
-                        snprintf(recvMsg1, MSG_BUF_SIZE, "d Pathfinding!");
-                        dbgServer(recvMsg1);
-                        EndPathfinder();
+                        dbgUARTVal('S');
+                        dbgUARTVal('T');
+                        dbgUARTVal('A');
+                        dbgUARTVal('R');
+                        dbgUARTVal('T');
+                        //snprintf(recvMsg1, MSG_BUF_SIZE, "d Pathfinding!");
+                        //dbgServer(recvMsg1);
+                        //EndPathfinder();
                         pathStatus[ID] = FindPath(ID, xLoc[ID], yLoc[ID], goalX, goalY);
+                        steps = 0;
                         appState = RUN;
-                        snprintf(recvMsg1, MSG_BUF_SIZE, "d Finished Pathfinding!");
-                        dbgServer(recvMsg1);
+                        //snprintf(recvMsg1, MSG_BUF_SIZE, "d Finished Pathfinding!");
+                        //dbgServer(recvMsg1);
                     } else {
+
                         //requestMap();
                         appState = WAIT;
                     }
@@ -818,57 +725,40 @@ void APP_Tasks(void) {
                     //requestMap();
                     appState = WAIT;
                 }
->>>>>>> Stashed changes
+
                 break;
             case RUN:
                 //int FindPath (int pathfinderID,int startingX, int startingY, int targetX, int targetY)
+                //                for (i = steps; i == 0; i--){
+                //                    int temp = steps % 10 * (steps - i);
+                //                    if (temp < 10)
+                dbgUARTVal('-');
+                dbgUARTVal(steps);
 
-                if (steps >= 3) {
+                //}
+
+                if (steps < 0) {
                     appState = WAIT;
                     //requestMap();
-                }
-
-                    //2.Move smiley.
-
-
-<<<<<<< Updated upstream
-
-                //2.Move smiley.
-                if (pathStatus[ID] == found) MoveSprite(ID);
-                else {
-                    dbgUARTVal('X');
-                    appState = INIT;
-=======
+                }//2.Move smiley.
                 else if (pathStatus[ID] == found) {
                     MoveSprite(ID);
                     appState = DRIVE;
                 } else {
                     //dbgUARTVal('X');
-                    snprintf(recvMsg1, MSG_BUF_SIZE, "Can't find a path!");
-                dbgServer(recvMsg1);
+                    //snprintf(recvMsg1, MSG_BUF_SIZE, "Can't find a path!");
+                    //dbgServer(recvMsg1);
                     appState = WAIT;
->>>>>>> Stashed changes
                 }
 
                 if (xLoc[ID] == goalX && yLoc[ID] == goalY) {
-                    appState = RESET;
-
-<<<<<<< Updated upstream
-                    dbgUARTVal('G');
-=======
                     appState = WAIT;
-                    if (newMap) {
-                        newMap = false;
-                        appState = INIT;
-                    }
-
-                    /*dbgUARTVal('G');
->>>>>>> Stashed changes
-                    dbgUARTVal('O');
-                    dbgUARTVal('A');
-                    dbgUARTVal('L');
-                    dbgUARTVal('\n');
                 }
+                if (newMap) {
+                    newMap = false;
+                    appState = INIT;
+                }
+
 
 
 
@@ -882,10 +772,7 @@ void APP_Tasks(void) {
                 appState = INIT;
                 break;
             case DRIVE:
-                break;
-            case RECV:
-                break;
-            case TRANS:
+                // Don't do anything until it's done moving
                 break;
             case PAUSE:
                 if (received) {
@@ -897,43 +784,48 @@ void APP_Tasks(void) {
                     received = false;
                 }
                 break;
-<<<<<<< Updated upstream
-=======
             case WAIT:
                 if (maptime > 5000) {
+                    //                    dbgUARTVal('N');
+                    //                    dbgUARTVal('E');
+                    //                    dbgUARTVal('W');
+                    //                    dbgUARTVal(' ');
+                    //                    dbgUARTVal('M');
+                    //                    dbgUARTVal('A');
+                    //                    dbgUARTVal('P');
                     requestMap();
                     maptime = 0;
                 }
                 break;
->>>>>>> Stashed changes
+
             default:
                 break;
         }
-
-        //
-        //        bool sentOnce = false;
-        //
-        //        if (!connected) {
-        //            checkConnected();
-        //        }
-        //
-        //        if (connected && getMsgFromRecvQ(&myMsg) == 0) {
-        //            //if (!sentOnce) {
-        //            dbgOutputLoc(171);
-        //            dbgOutputVal(myMsg.ucMessageID);
-        //            for (i = 0; myMsg.ucData[i] != '\0'; i++)
-        //                dbgOutputVal(myMsg.ucData[i]);
-        //        }
-        //        myMsg.ucMessageID = 'M';
-        //        char string[100] = "{\"test data\":\"1000\"}";
-        //        int i;
-        //        for (i = 0; string[i] != '\0'; i++)
-        //            myMsg.ucData[i] = string[i];
-        //        myMsg.ucData[i] = '\0';
-
-
     }
 }
+
+//
+//        bool sentOnce = false;
+//
+//        if (!connected) {
+//            checkConnected();
+//        }
+//
+//        if (connected && getMsgFromRecvQ(&myMsg) == 0) {
+//            //if (!sentOnce) {
+//            dbgOutputLoc(171);
+//            dbgOutputVal(myMsg.ucMessageID);
+//            for (i = 0; myMsg.ucData[i] != '\0'; i++)
+//                dbgOutputVal(myMsg.ucData[i]);
+//        }
+//        myMsg.ucMessageID = 'M';
+//        char string[100] = "{\"test data\":\"1000\"}";
+//        int i;
+//        for (i = 0; string[i] != '\0'; i++)
+//            myMsg.ucData[i] = string[i];
+//        myMsg.ucData[i] = '\0';
+
+
 
 /*******************************************************************************
  End of File
