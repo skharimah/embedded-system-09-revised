@@ -322,32 +322,32 @@ void MoveSprite(int ID) {
     //	read using the readPath function.
     if (yLoc[ID] > yPath[ID]) { //yLoc[ID] - speed[ID];	
 
-        //        dbgUARTVal('s');
-        //        dbgUARTVal('o');
-        //        dbgUARTVal('u');
-        //        dbgUARTVal('t');
-        //        dbgUARTVal('h');
+//                dbgUARTVal('s');
+//                dbgUARTVal('o');
+//                dbgUARTVal('u');
+//                dbgUARTVal('t');
+//                dbgUARTVal('h');
         northSouth = -1; // SOUTH
     } else if (yLoc[ID] < yPath[ID]) { //yLoc[ID] + speed[ID];
-        //        dbgUARTVal('n');
-        //        dbgUARTVal('o');
-        //        dbgUARTVal('r');
-        //        dbgUARTVal('t');
-        //        dbgUARTVal('h');
+//                dbgUARTVal('n');
+//                dbgUARTVal('o');
+//                dbgUARTVal('r');
+//                dbgUARTVal('t');
+//                dbgUARTVal('h');
         northSouth = 1; // NORTH
     } else
         northSouth = 0;
     if (xLoc[ID] > xPath[ID]) { //xLoc[ID] - speed[ID];
-        //        dbgUARTVal('w');
-        //        dbgUARTVal('e');
-        //        dbgUARTVal('s');
-        //        dbgUARTVal('t');
+//                dbgUARTVal('w');
+//                dbgUARTVal('e');
+//                dbgUARTVal('s');
+//                dbgUARTVal('t');
         eastWest = -1; //WEST
     } else if (xLoc[ID] < xPath[ID]) { //xLoc[ID] + speed[ID];
-        //        dbgUARTVal('e');
-        //        dbgUARTVal('a');
-        //        dbgUARTVal('s');
-        //        dbgUARTVal('t');
+//                dbgUARTVal('e');
+//                dbgUARTVal('a');
+//                dbgUARTVal('s');
+//                dbgUARTVal('t');
         eastWest = 1; //EAST
     } else
         eastWest = 0;
@@ -443,8 +443,7 @@ void APP_Initialize(void) {
     //        //for (j = 0; j < mapHeight; j++)
     //        walkability [i][5].walkability = unwalkable;
 
-    xLoc[ID] = -1;
-    yLoc[ID] = -1;
+
 
     //
     //    //wall from (3,5) to (3,18)
@@ -521,6 +520,8 @@ void APP_Initialize(void) {
  */
 
 void APP_Tasks(void) {
+    revision = -1;
+    fullMap = true;
     UARTInit(USART_ID_1, 57600);
     DRV_ADC_Open(); //start ADC
     bool newMap = false;
@@ -528,8 +529,8 @@ void APP_Tasks(void) {
     int ID = 1;
     int goalX = -1;
     int goalY = -1;
-    //xLoc[ID] = -1;
-    //yLoc[ID] = -1;
+    xLoc[ID] = -1;
+    yLoc[ID] = -1;
     oldX = xLoc[ID];
     oldY = yLoc[ID];
 
@@ -700,31 +701,36 @@ void APP_Tasks(void) {
                 dbgUARTVal('A');
                 dbgUARTVal('R');
                 dbgUARTVal('T');*/
+                if (fullMap) {
 
-                if (goalX != -1 && goalY != -1) {
-                    if (xLoc[ID] != -1 && yLoc[ID] != -1) {
-                        dbgUARTVal('S');
-                        dbgUARTVal('T');
-                        dbgUARTVal('A');
-                        dbgUARTVal('R');
-                        dbgUARTVal('T');
-                        //snprintf(recvMsg1, MSG_BUF_SIZE, "d Pathfinding!");
-                        //dbgServer(recvMsg1);
-                        //EndPathfinder();
-                        pathStatus[ID] = FindPath(ID, xLoc[ID], yLoc[ID], goalX, goalY);
-                        steps = 0;
-                        appState = RUN;
-                        //snprintf(recvMsg1, MSG_BUF_SIZE, "d Finished Pathfinding!");
-                        //dbgServer(recvMsg1);
+                    if (goalX != -1 && goalY != -1) {
+                        if (xLoc[ID] != -1 && yLoc[ID] != -1) {
+                            EndPathfinder();
+                            dbgUARTVal('S');
+                            dbgUARTVal('T');
+                            dbgUARTVal('A');
+                            dbgUARTVal('R');
+                            dbgUARTVal('T');
+                            //snprintf(recvMsg1, MSG_BUF_SIZE, "d Pathfinding!");
+                            //dbgServer(recvMsg1);
+                            //EndPathfinder();
+                            pathStatus[ID] = FindPath(ID, xLoc[ID], yLoc[ID], goalX, goalY);
+                            steps = 0;
+                            appState = RUN;
+                            //snprintf(recvMsg1, MSG_BUF_SIZE, "d Finished Pathfinding!");
+                            //dbgServer(recvMsg1);
+                        } else {
+
+                            //requestMap();
+                            appState = WAIT;
+                        }
                     } else {
-
                         //requestMap();
                         appState = WAIT;
                     }
-                } else {
-                    //requestMap();
-                    appState = WAIT;
                 }
+                else
+                    appState = WAIT;
 
                 break;
             case RUN:

@@ -40,7 +40,9 @@ extern "C" {
 #define LED_PIN 0 // D6 - silkscreen 47 - LED
 #define LED_PORT PORT_CHANNEL_F
     
-#define MAX_MSGS 15
+#define MAX_MSGS 13
+    bool fullMap;
+    int revision;
     char messageptr[200];
     char recvMsg1[200];
     char recvMsg2[200];

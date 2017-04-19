@@ -314,12 +314,13 @@ void APP_JSON_Tasks(void) {
                     /* TODO: Get message type here */
                     addStringKeyValuePairToJsonObject("message_type", "map");
                     /* TODO: Get encoder_value here */
+                    addIntegerKeyValuePairToJsonObject("rev", revision);
 
-
-                    addStringKeyValuePairToJsonObject("source", "192.168.1.103");
+                    addStringKeyValuePairToJsonObject("source", "192.168.1.104");
 
                     /* TODO: Get encoder_value here */
                     addStringKeyValuePairToJsonObject("destination", "192.168.1.105");
+                    
 
                     endWritingToJsonObject();
                     app_jsonData.state = APP_JSON_STATE_SENDING_MESSAGE;
@@ -333,7 +334,7 @@ void APP_JSON_Tasks(void) {
                     /* TODO: Get encoder_value here */
                     addStringKeyValuePairToJsonObject("requested_data", myMsgPtr);
 
-                    addStringKeyValuePairToJsonObject("source", "192.168.1.103");
+                    addStringKeyValuePairToJsonObject("source", "192.168.1.104");
 
                     /* TODO: Get encoder_value here */
                     addStringKeyValuePairToJsonObject("destination", "192.168.1.105");
@@ -358,6 +359,7 @@ void APP_JSON_Tasks(void) {
                 char resultBuff[25];
                 dbgOutputLoc(111);
                 int i, sum = 0;
+                int sequence_id = 0;
                 if (buffer1[2] == 'q') {
 
                     if (strcmp(data_requested, "stop") == 0) {
@@ -383,12 +385,16 @@ void APP_JSON_Tasks(void) {
                     }
                 }
                 else if (strcmp(buffer1, "map") == 0) {
+                    short numObs = 0;
                     struct Tuple x = getValueFromJsonString("x", myMsgPtr);
                     struct Tuple y = getValueFromJsonString("y", myMsgPtr);
+                    struct Tuple rev = getValueFromJsonString("rev", myMsgPtr);
                     struct Tuple obs = getValueFromJsonString("obs", myMsgPtr);
+                    struct Tuple seq_id = getValueFromJsonString("sequence_id", myMsgPtr);
                     struct Tuple total = getValueFromJsonString("total", myMsgPtr);
                     struct Tuple friendly = getValueFromJsonString("friendly", myMsgPtr);
-                    char x_string[2], y_string[2], total_string[3], obs_string, friendly_str;
+                    char x_string[2], rev_string[3], y_string[2], total_string[3], obs_string, friendly_str;
+                    
                     if (x.size > 0) {
                         dbgOutputLoc(171);
 
@@ -409,6 +415,54 @@ void APP_JSON_Tasks(void) {
                         } else {
                             y_string[0] = y.resultString[0];
                             y_string[1] = y.resultString[1];
+                        }
+                    }
+                    if (rev.size > 0) {
+                        dbgOutputLoc(171);
+
+                        if (rev.size == 1) {
+                            
+                            revision = rev.resultString[0] - '0';
+                        } else if (rev.size == 2){
+                            revision = (rev.resultString[1] -'0')+ (rev.resultString[0] - '0')*10;
+                        }
+                        else
+                            {
+                            revision = (rev.resultString[2] -'0')+ (rev.resultString[1] - '0')*10 + (rev.resultString[0] - '0')*100;
+                        }
+                    }
+                    if (total.size > 0) {
+                        dbgOutputLoc(171);
+
+                        if (total.size == 1) {
+                            
+                            numObs = total.resultString[0] - '0';
+                        } else if (total.size == 2){
+                            numObs = (total.resultString[1] -'0')+ (total.resultString[0] - '0')*10;
+                        }
+                        else
+                            {
+                            numObs = (total.resultString[2] -'0')+ (total.resultString[1] - '0')*10 + (total.resultString[0] - '0')*100;
+                        }
+                    }
+                    if (seq_id.size > 0) {
+                        dbgOutputLoc(171);
+
+                        if (seq_id.size == 1) {
+                            
+                            sequence_id = seq_id.resultString[0] - '0';
+                        } else if (seq_id.size == 2){
+                            sequence_id = (seq_id.resultString[1] -'0')+ (seq_id.resultString[0] - '0')*10;
+                        }
+                        else
+                            {
+                            sequence_id = (seq_id.resultString[2] -'0')+ (seq_id.resultString[1] - '0')*10 + (seq_id.resultString[0] - '0')*100;
+                        }
+                        if (sequence_id == numObs){
+                            fullMap = true;
+                        }
+                        else{
+                            fullMap = false;
                         }
                     }
 
@@ -485,7 +539,7 @@ void APP_JSON_Tasks(void) {
                 /* TODO: Get IR_sensor_value here */
                 //addIntegerKeyValuePairToJsonObject("infrared_sensor_value", 150);
                 /* TODO: Get port number here */
-                addStringKeyValuePairToJsonObject("source", "192.168.1.103");
+                addStringKeyValuePairToJsonObject("source", "192.168.1.104");
                 /* TODO: Get encoder_value here */
                 addStringKeyValuePairToJsonObject("destination", buffer2);
 
