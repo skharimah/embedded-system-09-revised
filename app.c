@@ -713,7 +713,6 @@ void APP_Tasks(void) {
                             dbgUARTVal('T');
                             //snprintf(recvMsg1, MSG_BUF_SIZE, "d Pathfinding!");
                             //dbgServer(recvMsg1);
-                            //EndPathfinder();
                             pathStatus[ID] = FindPath(ID, xLoc[ID], yLoc[ID], goalX, goalY);
                             steps = 0;
                             appState = RUN;
@@ -738,8 +737,8 @@ void APP_Tasks(void) {
                 //                for (i = steps; i == 0; i--){
                 //                    int temp = steps % 10 * (steps - i);
                 //                    if (temp < 10)
-                dbgUARTVal('-');
-                dbgUARTVal(steps);
+                //dbgUARTVal('-');
+                //dbgUARTVal(steps);
 
                 //}
 
@@ -759,10 +758,6 @@ void APP_Tasks(void) {
 
                 if (xLoc[ID] == goalX && yLoc[ID] == goalY) {
                     appState = WAIT;
-                }
-                if (newMap) {
-                    newMap = false;
-                    appState = INIT;
                 }
 
 
