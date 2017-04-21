@@ -144,7 +144,7 @@ void IntHandlerDrvTmrInstance0(void) {
     }
 
     //dbgOutputLoc(millisec);
-    if (millisec % 500 == 0) {//Get timer values
+    if (millisec % 500 == 0) {//Get timer values87777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777776yu
         if (blink_led)
             ledBlink();
         leftTicksPrev = leftTicks;

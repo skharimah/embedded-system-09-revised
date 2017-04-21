@@ -54,7 +54,6 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 // *****************************************************************************
 
 #include "app.h"
-#include "include.h"
 #include "app_public.h"
 #include <queue.h>
 #include "debug.h"
@@ -322,32 +321,32 @@ void MoveSprite(int ID) {
     //	read using the readPath function.
     if (yLoc[ID] > yPath[ID]) { //yLoc[ID] - speed[ID];	
 
-//                dbgUARTVal('s');
-//                dbgUARTVal('o');
-//                dbgUARTVal('u');
-//                dbgUARTVal('t');
-//                dbgUARTVal('h');
+        //                dbgUARTVal('s');
+        //                dbgUARTVal('o');
+        //                dbgUARTVal('u');
+        //                dbgUARTVal('t');
+        //                dbgUARTVal('h');
         northSouth = -1; // SOUTH
     } else if (yLoc[ID] < yPath[ID]) { //yLoc[ID] + speed[ID];
-//                dbgUARTVal('n');
-//                dbgUARTVal('o');
-//                dbgUARTVal('r');
-//                dbgUARTVal('t');
-//                dbgUARTVal('h');
+        //                dbgUARTVal('n');
+        //                dbgUARTVal('o');
+        //                dbgUARTVal('r');
+        //                dbgUARTVal('t');
+        //                dbgUARTVal('h');
         northSouth = 1; // NORTH
     } else
         northSouth = 0;
     if (xLoc[ID] > xPath[ID]) { //xLoc[ID] - speed[ID];
-//                dbgUARTVal('w');
-//                dbgUARTVal('e');
-//                dbgUARTVal('s');
-//                dbgUARTVal('t');
+        //                dbgUARTVal('w');
+        //                dbgUARTVal('e');
+        //                dbgUARTVal('s');
+        //                dbgUARTVal('t');
         eastWest = -1; //WEST
     } else if (xLoc[ID] < xPath[ID]) { //xLoc[ID] + speed[ID];
-//                dbgUARTVal('e');
-//                dbgUARTVal('a');
-//                dbgUARTVal('s');
-//                dbgUARTVal('t');
+        //                dbgUARTVal('e');
+        //                dbgUARTVal('a');
+        //                dbgUARTVal('s');
+        //                dbgUARTVal('t');
         eastWest = 1; //EAST
     } else
         eastWest = 0;
@@ -382,28 +381,61 @@ void MoveSprite(int ID) {
 
     }
 
-    xLoc[ID] = xPath[ID];
-    yLoc[ID] = yPath[ID];
+    //xLoc[ID] = xPath[ID];
+    //yLoc[ID] = yPath[ID];
     if (msg.dist != 0) {
         LATAINV = 0x8;
         if (xQueueSend(encoderQueue, &msg, NULL) != pdTRUE) {
             //send failed
         }
     }
-
-    //	
-    ////3.When sprite reaches the end location square	(end of its current
-    ////	path) ...		
-    //	if (pathLocation[ID] == pathLength[ID]) 
-    //	{
-    ////		Center the chaser in the square (not really necessary, but 
-    ////		it looks a little better for the chaser, which moves in 3 pixel
-    ////		increments and thus isn't always centered when it reaches its
-    ////		target).
-    //		if (abs(xLoc[ID] - xPath[ID]) < speed[ID]) xLoc[ID] = xPath[ID];
-    //		if (abs(yLoc[ID] - yPath[ID]) < speed[ID]) yLoc[ID] = yPath[ID];
-    //	}
 }
+
+DIRECTIONS getOrientation(int ID) {
+
+    int northSouth;
+    int eastWest;
+    DIRECTIONS dir;
+
+    //1.Read path information
+    ReadPath(ID, xLoc[ID], yLoc[ID], 1);
+
+    //2.Move sprite. xLoc/yLoc = current location of sprite. xPath and
+    //	yPath = coordinates of next step on the path that were/are
+    //	read using the readPath function.
+    if (yLoc[ID] > yPath[ID]) { //yLoc[ID] - speed[ID];	
+        northSouth = -1; // SOUTH
+    } else if (yLoc[ID] < yPath[ID]) { //yLoc[ID] + speed[ID];
+        northSouth = 1; // NORTH
+    } else
+        northSouth = 0;
+    if (xLoc[ID] > xPath[ID]) { //xLoc[ID] - speed[ID];
+        eastWest = -1; //WEST
+    } else if (xLoc[ID] < xPath[ID]) { //xLoc[ID] + speed[ID];
+        eastWest = 1; //EAST
+    } else
+        eastWest = 0;
+
+    if (northSouth == 1 && eastWest == 0) {
+        dir = NORTH;
+    } else if (northSouth == -1 && eastWest == 0) {
+        dir = SOUTH;
+    } else if (northSouth == 0 && eastWest == 1) {
+        dir = EAST;
+    } else if (northSouth == 0 && eastWest == -1) {
+        dir = WEST;
+    } else if (northSouth == 1 && eastWest == 1) {
+        dir = NORTHEAST;
+    } else if (northSouth == 1 && eastWest == -1) {
+        dir = NORTHWEST;
+    } else if (northSouth == -1 && eastWest == 1) {
+        dir = SOUTHEAST;
+    } else if (northSouth == -1 && eastWest == -1) {
+        dir = SOUTHWEST;
+    }
+    return dir;
+}
+
 //function for parsing msg from app_json
 
 int subStrToInt(char *len, int from, int to) {
@@ -621,24 +653,11 @@ void APP_Tasks(void) {
                 memset(myMsgPtr, 0, MSG_BUF_SIZE);
             }
             if (myMsgPtr[0] == 'M') {
-
-
                 newMap = true;
-                //                dbgUARTVal(myMsgPtr[2]);
-                //                dbgUARTVal(myMsgPtr[3]);
-                //                dbgUARTVal(' ');
-                //                dbgUARTVal(myMsgPtr[5]);
-                //                dbgUARTVal(myMsgPtr[6]);
                 xCoord = (myMsgPtr[3] - '0') + (myMsgPtr[2] - '0')*10;
-
                 yCoord = (myMsgPtr[6] - '0') + (myMsgPtr[5] - '0')*10;
-
                 rType = (myMsgPtr[8] - '0');
-
                 friendly = (myMsgPtr[10] - '0');
-                //snprintf(recvMsg1, MSG_BUF_SIZE, "d Received map object: {%d, %d}, rtype: %d, f:%d -", xCoord, yCoord, rType, friendly);
-                //dbgServer(recvMsg1);
-
                 if (rType == OBSTACLE) {
                     walkability [xCoord][yCoord].walkability = unwalkable;
                     walkability [xCoord][yCoord].rover = OBSTACLE;
@@ -646,14 +665,7 @@ void APP_Tasks(void) {
                     // dbgOutputLoc('!');
                     walkability [xCoord][yCoord].rover = rType;
                     if (rType == TAGGER && friendly == 0) {
-                        //snprintf(recvMsg1, MSG_BUF_SIZE, "d Received tagger location: {%d, %d}, rtype: %d, f:%d is it new? (%d, %d)", xCoord, yCoord, rType, friendly, oldGoalX, oldGoalY);
-                        //dbgServer(recvMsg1);
                         if (oldGoalX != xCoord || oldGoalY != yCoord) {
-                            //                            dbgUARTVal('U');
-                            //                            dbgUARTVal('P');
-                            //                            dbgUARTVal('G');
-                            //                            dbgUARTVal('O');
-                            //                            dbgUARTVal('L');
                             walkability [xCoord][yCoord].walkability = walkable;
                             oldGoalX = xCoord;
                             oldGoalY = yCoord;
@@ -662,14 +674,7 @@ void APP_Tasks(void) {
                             appState = INIT;
                         }
                     } else if (rType == CM && friendly == 1) {
-                        //snprintf(recvMsg1, MSG_BUF_SIZE, "d Received location for self location: {%d, %d}, rtype: %d, f:%d is it new? (%d, %d)", xCoord, yCoord, rType, friendly, oldX, oldY);
-                        //dbgServer(recvMsg1);
                         if (oldX != xCoord || oldY != yCoord) {
-                            //dbgUARTVal('U');
-                            //dbgUARTVal('P');
-                            //dbgUARTVal('S');
-                            //dbgUARTVal('L');
-                            //dbgUARTVal('F');
                             oldX = xCoord;
                             oldY = yCoord;
                             xLoc[ID] = xCoord;
@@ -679,10 +684,29 @@ void APP_Tasks(void) {
                     } else
                         walkability [xCoord][yCoord].walkability = unwalkable;
                 }
-                //walkability [xCoord][yCoord].walkability = unwalkable;
-                //walkability [xCoord][yCoord].rover = obs;
-                //
-                //appState = INIT;
+//                if (strcmp(myMsgPtr, "tapeb") == 0) {
+//                    DIRECTIONS dir = getOrientation(ID);
+//                    int i, j;
+//                    if (dir == SOUTH) {
+//                        
+//                        for (i = 0; i < mapWidth; i++)
+//                            for (j = yPath[ID]; j >= 0; j--)
+//                                walkability [i][j].walkability = unwalkable;
+//                        appState = INIT;
+//                    }
+//                    else if (dir == WEST && xLoc[ID] <= (mapWidth/2)){
+//                        for (i = 0; i <= xPath[ID]; i++)
+//                            for (j = mapHeight-1; j >= 0; j--)
+//                                walkability [i][j].walkability = unwalkable;
+//                        appState = INIT;
+//                    }
+//                    else if (dir == EAST && xLoc[ID] >= (mapWidth/2)){
+//                        for (i = xPath[ID]; i < mapLength ; i++)
+//                            for (j = mapHeight-1; j >= 0; j--)
+//                                walkability [i][j].walkability = unwalkable;
+//                        appState = INIT;
+//                    }
+//                }
             }
             memset(myMsgPtr, 0, MSG_BUF_SIZE);
         }
@@ -727,8 +751,7 @@ void APP_Tasks(void) {
                         //requestMap();
                         appState = WAIT;
                     }
-                }
-                else
+                } else
                     appState = WAIT;
 
                 break;
@@ -742,7 +765,7 @@ void APP_Tasks(void) {
 
                 //}
 
-                if (steps < 0) {
+                if (steps >= 3) {
                     appState = WAIT;
                     //requestMap();
                 }//2.Move smiley.

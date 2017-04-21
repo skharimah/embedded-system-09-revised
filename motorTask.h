@@ -110,22 +110,7 @@ typedef enum
 
 } MOTORTASK_STATES;
 
-//Define directions
-typedef enum
-{
-	/* Application's state machine's initial state. */
-	NORTH=0,
-	NORTHEAST,
-    EAST,
-    SOUTHEAST,
-    SOUTH,
-    SOUTHWEST,
-    WEST,
-    NORTHWEST
 
-	/* TODO: Define states used by the application state machine. */
-
-} DIRECTIONS;
 // *****************************************************************************
 /* Application Data
 
