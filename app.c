@@ -684,29 +684,87 @@ void APP_Tasks(void) {
                     } else
                         walkability [xCoord][yCoord].walkability = unwalkable;
                 }
-//                if (strcmp(myMsgPtr, "tapeb") == 0) {
-//                    DIRECTIONS dir = getOrientation(ID);
-//                    int i, j;
-//                    if (dir == SOUTH) {
-//                        
-//                        for (i = 0; i < mapWidth; i++)
-//                            for (j = yPath[ID]; j >= 0; j--)
-//                                walkability [i][j].walkability = unwalkable;
-//                        appState = INIT;
-//                    }
-//                    else if (dir == WEST && xLoc[ID] <= (mapWidth/2)){
-//                        for (i = 0; i <= xPath[ID]; i++)
-//                            for (j = mapHeight-1; j >= 0; j--)
-//                                walkability [i][j].walkability = unwalkable;
-//                        appState = INIT;
-//                    }
-//                    else if (dir == EAST && xLoc[ID] >= (mapWidth/2)){
-//                        for (i = xPath[ID]; i < mapLength ; i++)
-//                            for (j = mapHeight-1; j >= 0; j--)
-//                                walkability [i][j].walkability = unwalkable;
-//                        appState = INIT;
-//                    }
-//                }
+                if (strcmp(myMsgPtr, "tapeb") == 0) {
+                    DIRECTIONS dir = getOrientation(ID);
+                    int i, j;
+                    if (dir == SOUTH) {
+                        
+                        for (i = 0; i < mapWidth; i++)
+                            for (j = yPath[ID]; j >= 0; j--)
+                                walkability [i][j].walkability = unwalkable;
+                        
+                    }
+                    else if (dir == WEST && xLoc[ID] <= 2){
+                        for (i = 0; i <= xPath[ID]; i++)
+                            for (j = mapHeight-1; j >= 0; j--)
+                                walkability [i][j].walkability = unwalkable;
+                        
+                    }
+                    else if (dir == EAST){
+                        for (j = 0; j < yPath[ID]; j++){
+                            walkability [xPath[ID]][j].walkability = unwalkable;
+                        }
+                    }
+                        
+                    else{
+                        walkability[xPath[ID]][yPath[ID]].walkability = unwalkable;
+                    }
+                    
+                    appState = INIT;
+                }
+                if (strcmp(myMsgPtr, "tapel") == 0) {
+                    DIRECTIONS dir = getOrientation(ID);
+                    int i, j;
+                    if (dir == SOUTHWEST) {
+                        
+                        for (i = 0; i < mapWidth; i++)
+                            for (j = yPath[ID]; j >= 0; j--)
+                                walkability [i][j].walkability = unwalkable;
+                        
+                    }
+                    else if (dir == NORTHWEST && xLoc[ID] <= 2){
+                        for (i = 0; i <= xPath[ID]; i++)
+                            for (j = mapHeight-1; j >= 0; j--)
+                                walkability [i][j].walkability = unwalkable;
+                        
+                    }
+                    else if (dir == SOUTHEAST || dir == EAST){
+                        for (j = 0; j < yPath[ID]; j++){
+                            walkability [xPath[ID]][j].walkability = unwalkable;
+                        }
+                    }
+                    else{
+                        walkability[xPath[ID]][yPath[ID]].walkability = unwalkable;
+                    }
+                    appState = INIT;
+                }
+                if (strcmp(myMsgPtr, "taper") == 0) {
+                    DIRECTIONS dir = getOrientation(ID);
+                    int i, j;
+                    if (dir == SOUTHEAST) {
+                        
+                        for (i = 0; i < mapWidth; i++)
+                            for (j = yPath[ID]; j >= 0; j--)
+                                walkability [i][j].walkability = unwalkable;
+                        
+                    }
+                    else if (dir == SOUTHWEST && xLoc[ID] <= 2){
+                        for (i = 0; i <= xPath[ID]; i++)
+                            for (j = mapHeight-1; j >= 0; j--)
+                                walkability [i][j].walkability = unwalkable;
+                        
+                    }
+                    else if (dir == NORTHEAST || dir == EAST){
+                        for (j = 0; j < yPath[ID]; j++){
+                            walkability [xPath[ID]][j].walkability = unwalkable;
+                        }
+                    }
+                    else{
+                        walkability[xPath[ID]][yPath[ID]].walkability = unwalkable;
+                    }
+                    appState = INIT;
+                }
+                
             }
             memset(myMsgPtr, 0, MSG_BUF_SIZE);
         }
