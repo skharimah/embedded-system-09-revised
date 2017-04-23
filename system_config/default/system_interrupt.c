@@ -144,7 +144,7 @@ void IntHandlerDrvTmrInstance0(void) {
     }
 
     //dbgOutputLoc(millisec);
-    if (millisec % 500 == 0) {//Get timer values
+    if (millisec % 500 == 0) {//Get timer values87777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777776yu
         if (blink_led)
             ledBlink();
         leftTicksPrev = leftTicks;
@@ -178,6 +178,17 @@ void IntHandlerDrvTmrInstance0(void) {
         //dbgOutputLoc(TMR_START + 2);
         //dbgOutputVal(leftTicks - leftTicksPrev);
         //dbgOutputVal(ticksMessage.leftTicks);
+        
+        MOTOR_MESSAGE ticksMessage;
+        ticksMessage.messageType = 'E';
+        ticksMessage.leftTicks = leftTicks - leftTicksPrev;
+        ticksMessage.rightTicks = rightTicks - rightTicksPrev;
+        
+        if(ticksMessage.leftTicks > 0 && ticksMessage.leftTicks < 100 && ticksMessage.rightTicks > 0 && ticksMessage.rightTicks < 100) {
+            if(xQueueSendFromISR(encoderQueue, &ticksMessage, NULL) != pdTRUE) {
+                //send failed
+            }
+}
     }
     //dbgOutputVal(ticksMessage.leftTicks);
 

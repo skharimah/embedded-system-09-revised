@@ -92,6 +92,8 @@ void EndPathfinder (void)
 	{
         for (w = 0; w < 100; w++)
             pathBank[x][w] = 0;
+        pathLength[x] = 0;
+        pathLocation[x] = 0;
 	}
 }
 
