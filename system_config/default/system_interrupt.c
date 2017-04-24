@@ -85,7 +85,7 @@ void IntHandlerDrvAdc(void)
     
     int i;
     
-    
+    //dbgUARTVal('t');
     
     for(i=0;i<ADC_NUM_SAMPLE_PER_AVERAGE;i++){
         sensorValue1 += PLIB_ADC_ResultGetByIndex(ADC_ID_1, (2*i));
@@ -95,7 +95,13 @@ void IntHandlerDrvAdc(void)
     sensorValue1 = sensorValue1 / (ADC_NUM_SAMPLE_PER_AVERAGE);
     sensorValue2 = sensorValue2 / (ADC_NUM_SAMPLE_PER_AVERAGE);
     
-   
+    /*MOTOR_MESSAGE msg;
+    msg.messageType = 'S';
+    if(sensorValue2 > 150) {
+        if(xQueueSendFromISR(encoderQueue, &msg, NULL) != pdTRUE) {
+                //send failed
+            }
+    }*/
     
     PLIB_ADC_SampleAutoStartEnable(ADC_ID_1);
     /* Clear ADC Interrupt Flag */
@@ -112,13 +118,10 @@ void IntHandlerDrvAdc(void)
  * Parameters: none
  * Returns: none
  */
-char name[7] = {'T', 'E', 'A', 'M', ' ', '9', ' '};
-char mystring[100] = "Team 9: Hard at work!"; //{'R', 'E', 'A', 'D', 'Y', '.', ' ', '\0'};
 bool received = true;
 int counter = 0;
 
-char sensorBuf[MSG_BUF_SIZE];
-unsigned char outVal;
+
 
 DBG_POS namepos = T;
 unsigned char out;
@@ -135,11 +138,19 @@ unsigned int count = 0;
 int leftTicksPrev = 0;
 int rightTicksPrev = 0;
 int i = 0;
+char sensorBuf[20];
+int j = 0;
+int sensorAvg1 = 0;
+int sensorAvg2 = 0;
 
 void IntHandlerDrvTmrInstance0(void) {
     millisec++;
+    maptime++;
+    dbgCount++;
     
-    if(millisec % 50 == 0) {
+    
+    
+    if(millisec % 100 == 0) {
         if(PLIB_PORTS_PinGet( PORTS_ID_0, PORT_CHANNEL_G, 6) == 0) {
             buttonHistory[i] = 1;
         }
@@ -163,7 +174,11 @@ void IntHandlerDrvTmrInstance0(void) {
         unsigned char val;
         count++;
         
-        
+        /*sprintf(sensorBuf, "%d" ,sensorValue1); 
+        for(i=0; sensorBuf[i] != NULL; i++){
+            dbgUARTVal(sensorBuf[i]);
+        }*/
+        //dbgUARTVal('\n');
         //LATAINV = 0x8;
 
         //dbgOutputLoc(TMR_START + 3);
@@ -172,21 +187,63 @@ void IntHandlerDrvTmrInstance0(void) {
 
         //Clear Interrupt Flag 
 
-        char mymsg[MSG_BUF_SIZE];
-        char buffer[MSG_BUF_SIZE];
+        //char mymsg[MSG_BUF_SIZE];
         unsigned int buflen = MSG_BUF_SIZE;
         int array[] = {1, 2, 3, 4, 5};
     }
     if (millisec % 100 == 0) {
         
-        
-         //test sensor values
-        snprintf(sensorBuf, MSG_BUF_SIZE, "%d" ,sensorValue1);
-        int j;
-        for(j=0; j!='\0'; j++){
-            outVal = sensorBuf[j];
-            dbgUARTVal(outVal);
+        if(j < 10) {
+            sensorAvg1 += sensorValue1;
+            sensorAvg2 += sensorValue2;
+            j++;
+            sprintf(sensorBuf, "%d" ,sensorValue1); 
+            for(i=0; sensorBuf[i] != NULL; i++){
+                dbgUARTVal(sensorBuf[i]);
+            }
+            dbgUARTVal(' ');
+            sprintf(sensorBuf, "%d" ,sensorValue2); 
+            for(i=0; sensorBuf[i] != NULL; i++){
+                dbgUARTVal(sensorBuf[i]);
+            }
+            dbgUARTVal(' ');
         }
+        else if(j == 10) {
+            sensorAvg1 = sensorAvg1/10;
+            sprintf(sensorBuf, "%d" ,sensorAvg1); 
+            for(i=0; sensorBuf[i] != NULL; i++){
+                dbgUARTVal(sensorBuf[i]);
+            }
+            dbgUARTVal(' ');    
+            sensorAvg2 = sensorAvg2/10;
+            sprintf(sensorBuf, "%d" ,sensorAvg2); 
+            for(i=0; sensorBuf[i] != NULL; i++){
+                dbgUARTVal(sensorBuf[i]);
+            } 
+            dbgUARTVal('|');
+            j++;
+        }
+        else{
+            if( sensorValue1 < sensorAvg1 - (sensorAvg1/2)  || sensorValue2 < sensorAvg2 - (sensorAvg2/2)) {
+                MOTOR_MESSAGE tapeMsg;
+                tapeMsg.messageType = 'T';
+                if( sensorValue1 < sensorAvg1 - (sensorAvg1/4)) {
+                    tapeMsg.rightTicks = 1;
+                }
+                else
+                    tapeMsg.rightTicks = 0;
+                if( sensorValue2 < sensorAvg2 - (sensorAvg2/4)) {
+                    tapeMsg.leftTicks = 1;
+                }
+                else
+                    tapeMsg.rightTicks = 0;
+                if(xQueueSendFromISR(encoderQueue, &tapeMsg, NULL) != pdTRUE) {
+                //send failed
+                }
+            }
+        }
+        
+            
         
         
         leftTicksPrev = leftTicks;
@@ -353,7 +410,6 @@ void IntHandlerDrvTmrInstance2(void) {
 }
 
 void IntHandlerDrvUsartInstance0(void) {
-    char mymsg[MSG_BUF_SIZE] = "";
     char * mymsgptr = "";
     char mychar;
     dbgOutputLoc(UART_START);

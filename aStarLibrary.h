@@ -7,12 +7,13 @@
 #ifndef ASTARLIBRARY_H
 #define ASTARLIBRARY_H
 typedef enum rovers{
-    NA = 0,
-            SENSOR,
+    OBSTACLE = 0,
+            
             FLAG,
             TAGGER,
             CM,
-            OBSTACLE
+            SENSOR,
+            NA
 }ROVER;
 typedef enum team{
     NOTEAM,
@@ -84,13 +85,19 @@ int abs(int a);
 // Name: EndPathfinder
 // Desc: Frees memory used by the pathfinder.
 //-----------------------------------------------------------------------------
-//void EndPathfinder (void)
-//{
-//	for (int x = 0; x < numberPeople+1; x++)
-//	{
-//		free (pathBank [x]);
-//	}
-//}
+void EndPathfinder (void)
+{
+    int x, w;
+	for (x = 0; x < numberPeople+1; x++)
+	{
+        for (w = 0; w < 100; w++)
+            pathBank[x][w] = 0;
+        pathLength[x] = 0;
+        pathLocation[x] = 0;
+        pathStatus[x] = notStarted;
+        
+	}
+}
 
 
 //-----------------------------------------------------------------------------
@@ -470,7 +477,6 @@ void ReadPath(int pathfinderID,int currentX,int currentY,
 ;	our pathfinder has to know how close is close enough to the center.
 ;	It calculates this by seeing if the pathfinder is less than 
 ;	pixelsPerFrame # of pixels from the center of the square. 
-
 ;	This could conceivably cause problems if you have a *really* fast
 ;	sprite and/or really small tiles, in which case you may need to
 ;	adjust the formula a bit. But this should almost never be a problem

@@ -15,6 +15,8 @@
 #ifndef _DEBUG_H    /* Guard against multiple inclusion */
 #define _DEBUG_H
 
+#include <stdbool.h>
+
 /* Provide C++ Compatibility */
 #ifdef __cplusplus
 extern "C" {
@@ -72,6 +74,8 @@ extern "C" {
 #define LEDBLINK 211
 #define LEDON 210
 #define LEDOFF 209  
+    
+bool blink_led;
 typedef enum {
     /* Describe structure member. */
     MSG_QUEUE_DOES_NOT_EXIST = 1,

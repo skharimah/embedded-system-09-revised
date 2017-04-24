@@ -116,6 +116,13 @@ typedef struct
 
 // Pathfinding data
 int xLoc [4]; int yLoc [4]; int speed [4];
+int oldX, oldY, oldGoalX, oldGoalY;
+int steps;
+int xCoord;
+    int yCoord;
+    int obs;
+    int rType;
+    int friendly;
 
 
 
@@ -157,7 +164,7 @@ typedef struct
     A message queue handler of type QueueHandle_t.
 */
 
-QueueHandle_t createQueue(void);
+QueueHandle_t createQueue(int size);
 /*******************************************************************************
   Function:
     int messageToQISR(QueueHandle_t queue, Message msg)
@@ -286,6 +293,8 @@ extern APP_DRV_OBJECTS appDrvObject;
 
 extern APP_DATA appData;
 
+//typedef enum rType { OBSTACLE = 0, FLAG, TAG, CM}ROVERTYPE;
+#define MAXSTEPSWOMAP 3
 
 #endif /* _APP_H */
 

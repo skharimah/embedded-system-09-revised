@@ -201,6 +201,10 @@ void MOTORTASK_Tasks ( void )
     //button history variables
     int buttonPressed;
     
+    //tape sensing
+    int foundTape = 0;
+    int leftTape;
+    int rightTape;
     motorsInitialize();
     
     while(1) {
@@ -243,6 +247,23 @@ void MOTORTASK_Tasks ( void )
                     motortaskData.state = SEND_ENCODER_VALUES;
                 }
             }
+            if(msgReceived.messageType == 'S') {
+                motorsStop();
+                moving = 0;
+                while(msgReceived.messageType != 'R') {
+                    if(xQueueReceive(encoderQueue, &msgReceived, 0) == pdTRUE) {
+
+                    }
+                }
+                //anything else saying i hit tape
+            }
+            if(msgReceived.messageType == 'T' && foundTape == 0) {
+                dest = PLIB_TMR_Counter16BitGet(TMR_ID_3);
+                leftTape = msgReceived.leftTicks;
+                rightTape = msgReceived.rightTicks;
+                motortaskData.state = MOTOR_TAPE;
+                //dbgUARTVal('t');
+            }
         }
         //Button Pressed
         buttonPressed = 1;
@@ -279,7 +300,12 @@ void MOTORTASK_Tasks ( void )
             //LATAINV = 0x8;
             if(leftCounter > dest && rightCounter > dest) {
                 moving = 0;
-                motortaskData.state = MOTOR_DO_NOTHING;
+                if(foundTape == 1) {
+                    foundTape = 0;
+                    motortaskData.state = MOTOR_SEND_TAPE;
+                }
+                else
+                    motortaskData.state = MOTOR_DO_NOTHING;
                 }
         }
         
@@ -353,9 +379,26 @@ void MOTORTASK_Tasks ( void )
             
             case MOTOR_BACKWARD:
             {
+                PLIB_TMR_Counter16BitSet(TMR_ID_3, 0);
+                PLIB_TMR_Counter16BitSet(TMR_ID_4, 0);
+                moving = 1;
                 dbgOutputLoc(131);
                 motorsBackward(leftMotorSpeed, rightMotorSpeed);
-      
+                motortaskData.state = MOTOR_STATE_IDLE;
+                break;
+            }
+            
+            case MOTOR_TAPE:
+            {
+                foundTape = 1;
+                PLIB_TMR_Counter16BitSet(TMR_ID_3, 0);
+                PLIB_TMR_Counter16BitSet(TMR_ID_4, 0);
+                moving = 1;
+                forwardPath = 0;
+                
+                dbgOutputLoc(131);
+                motorsBackward(leftMotorSpeed, rightMotorSpeed);
+                motortaskData.state = MOTOR_STATE_IDLE;
                 break;
             }
             
@@ -441,8 +484,34 @@ void MOTORTASK_Tasks ( void )
             case MOTOR_SEND_TASK_COMPLETE:
             {
                 //LATAINV = 0x8;
+                //if tape, send tape msg, otherwise send done
                 strcpy(appMsg, "done");
                 pathMsgPtr = &appMsg;
+                messageToQ(appRecvQueue, pathMsgPtr);
+                
+                /*for (i = 0; encoderValMsg[i] != NULL; i++)
+                    dbgUARTVal(encoderValMsg[i]);*/
+                motorsStop();
+                motortaskData.state = MOTOR_STATE_IDLE;
+                break;
+            }
+            
+            case MOTOR_SEND_TAPE:
+            {
+                //LATAINV = 0x8;
+                //if tape, send tape msg, otherwise send done
+                if(rightTape == 1 && leftTape == 1) {
+                    strcpy(appMsg, "tapeb");
+                    pathMsgPtr = &appMsg;
+                }
+                else if(rightTape == 1) {
+                    strcpy(appMsg, "taper");
+                    pathMsgPtr = &appMsg;
+                }
+                else if(leftTape == 1) {
+                    strcpy(appMsg, "tapel");
+                    pathMsgPtr = &appMsg;
+                }
                 messageToQ(appRecvQueue, pathMsgPtr);
                 
                 /*for (i = 0; encoderValMsg[i] != NULL; i++)

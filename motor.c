@@ -69,7 +69,7 @@ void motorsSetSpeed(int leftSpeed, int rightSpeed) {
 }
 
 //Configure the motors to move forwards
-void motorsForward(int leftSpeed, int rightSpeed) {
+void motorsBackward(int leftSpeed, int rightSpeed) {
     SYS_PORTS_PinWrite(PORTS_ID_0, PORT_CHANNEL_G, PORTS_BIT_POS_8, 1); //51
     
     SYS_PORTS_PinWrite(PORTS_ID_0, PORT_CHANNEL_D, PORTS_BIT_POS_11, 1); //49
@@ -81,7 +81,7 @@ void motorsForward(int leftSpeed, int rightSpeed) {
 }
 
 //Configure the motors to move backwards 
-void motorsBackward(int leftSpeed, int rightSpeed) {
+void motorsForward(int leftSpeed, int rightSpeed) {
     
     
     SYS_PORTS_PinWrite(PORTS_ID_0, PORT_CHANNEL_G, PORTS_BIT_POS_8, 0); //51
@@ -93,7 +93,7 @@ void motorsBackward(int leftSpeed, int rightSpeed) {
 }
 
 //Configure the motors to turn left
-void motorsTurnLeft(int leftSpeed, int rightSpeed) {
+void motorsTurnRight(int leftSpeed, int rightSpeed) {
     SYS_PORTS_PinWrite(PORTS_ID_0, PORT_CHANNEL_G, PORTS_BIT_POS_8, 0); //51
     
     SYS_PORTS_PinWrite(PORTS_ID_0, PORT_CHANNEL_D, PORTS_BIT_POS_11, 1);
@@ -103,7 +103,7 @@ void motorsTurnLeft(int leftSpeed, int rightSpeed) {
 }
 
 //Configure the motors to turn right
-void motorsTurnRight(int leftSpeed, int rightSpeed) {
+void motorsTurnLeft(int leftSpeed, int rightSpeed) {
     SYS_PORTS_PinWrite(PORTS_ID_0, PORT_CHANNEL_G, PORTS_BIT_POS_8, 1); //51
     
     SYS_PORTS_PinWrite(PORTS_ID_0, PORT_CHANNEL_D, PORTS_BIT_POS_11, 0);

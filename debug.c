@@ -21,6 +21,22 @@
 #include "debug.h"
 
 
+void ledOn(){
+    dbgOutputLoc(LEDON);
+    PLIB_PORTS_PinWrite( PORTS_ID_0, LED_PORT, LED_PIN, true);
+    //dbgOutputVal(PLIB_PORTS_PinGet( PORTS_ID_0, LED_PORT, LED_PIN));
+}
+void ledBlink(){
+    
+    dbgOutputLoc(LEDBLINK);
+    PLIB_PORTS_PinToggle( PORTS_ID_0, LED_PORT, LED_PIN);
+    //dbgOutputVal(PLIB_PORTS_PinGet( PORTS_ID_0, LED_PORT, LED_PIN));
+}
+void ledOff(){
+    dbgOutputLoc(LEDOFF);
+    PLIB_PORTS_PinWrite( PORTS_ID_0, LED_PORT, LED_PIN, false);
+    //dbgOutputVal(PLIB_PORTS_PinGet( PORTS_ID_0, LED_PORT, LED_PIN));
+}
 
 /*******************************************************************************
   Function:

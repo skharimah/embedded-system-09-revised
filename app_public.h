@@ -32,14 +32,31 @@ extern "C" {
 //#define BLOCK_DIST 2000
     
 #define MSG_BUF_SIZE 200
+#define MAP_BUF_SIZE 500
     
+#define LED_PIN 0 // D6 - silkscreen 47 - LED
+#define LED_PORT PORT_CHANNEL_F
+    
+#define MAX_MSGS 15
+    bool fullMap;
+    int revision;
     char messageptr[200];
-    char recvMsg[200];
+    char recvMsg1[200];
+    char recvMsg2[200];
+    int rMsgCount;
     char appMsg[200];
     char encoderValMsg[20];
     char jsonMsg[200];
     
+    //map
+    char mapMsg[MAP_BUF_SIZE];
+    char rMapMsg1[MAX_MSGS][200];
+
+    unsigned int maptime;
+    unsigned int dbgCount;
+    int rMsgCount;
     
+    char * globalCharPtr;
     const char* DEVNAME;// = "sensor";
     const char* IPADDRESS;// = "192.168.1.102";
     
@@ -48,7 +65,7 @@ QueueHandle_t encoderQueue;
 QueueHandle_t msgQueue;
 QueueHandle_t recvMsgQueue;
 QueueHandle_t appRecvQueue;
-typedef enum  {INIT, RUN, RECV, TRANS, PAUSE, STOP, RESET, WAIT} State;
+typedef enum  {INIT, RUN, RECV, TRANS, PAUSE, STOP, RESET, WAIT, DRIVE} State;
 State appState;
 
 
@@ -67,6 +84,9 @@ State appState;
 
  //button debouncing
  int buttonHistory[10];
+ 
+ char mapValMsg[200];
+ char mapRecvMsg[200];
  
  typedef struct
 {
@@ -89,6 +109,41 @@ State appState;
     int dir;
 } MOTOR_MESSAGE;
 
+typedef struct
+{   
+    //X coordinate 
+    int xCoordinate;
+    
+    //Y coordinate
+    int yCoordinate;
+    
+    //1 is obstacle, 0 is flag rover, 2 is cm, 3 is tag, 
+    int isObstacle;
+    
+    //1 is our team, 0 is other team
+    bool isOurs;
+    
+    //if more than one obstacle
+    int sequenceID;
+    
+} MAP_MESSAGE;
+
+//Define directions
+typedef enum
+{
+	/* Application's state machine's initial state. */
+	NORTH=0,
+	NORTHEAST,
+    EAST,
+    SOUTHEAST,
+    SOUTH,
+    SOUTHWEST,
+    WEST,
+    NORTHWEST
+
+	/* TODO: Define states used by the application state machine. */
+
+} DIRECTIONS;
 //motorTask states
 
 /*******************************************************************************
