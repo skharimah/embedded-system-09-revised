@@ -384,7 +384,7 @@ void MoveSprite(int ID) {
     //xLoc[ID] = xPath[ID];
     //yLoc[ID] = yPath[ID];
     if (msg.dist != 0) {
-        LATAINV = 0x8;
+        //LATAINV = 0x8;
         if (xQueueSend(encoderQueue, &msg, NULL) != pdTRUE) {
             //send failed
         }
@@ -541,6 +541,8 @@ void APP_Initialize(void) {
     }
     maptime = 0;
     rMsgCount = 0;
+    
+    pixyHandle = DRV_USART_Open(DRV_USART_INDEX_1, DRV_IO_INTENT_READWRITE);
 }
 
 /******************************************************************************
@@ -555,6 +557,7 @@ void APP_Tasks(void) {
     revision = -1;
     fullMap = true;
     UARTInit(USART_ID_1, 57600);
+    UARTInit(USART_ID_2, 19200);
     DRV_ADC_Open(); //start ADC
     bool newMap = false;
     steps = 0;
@@ -788,11 +791,11 @@ void APP_Tasks(void) {
                     if (goalX != -1 && goalY != -1) {
                         if (xLoc[ID] != -1 && yLoc[ID] != -1) {
                             EndPathfinder();
-                            dbgUARTVal('S');
-                            dbgUARTVal('T');
-                            dbgUARTVal('A');
-                            dbgUARTVal('R');
-                            dbgUARTVal('T');
+                            //dbgUARTVal('S');
+                            //dbgUARTVal('T');
+                            //dbgUARTVal('A');
+                            //dbgUARTVal('R');
+                            //dbgUARTVal('T');
                             //snprintf(recvMsg1, MSG_BUF_SIZE, "d Pathfinding!");
                             //dbgServer(recvMsg1);
                             pathStatus[ID] = FindPath(ID, xLoc[ID], yLoc[ID], goalX, goalY);

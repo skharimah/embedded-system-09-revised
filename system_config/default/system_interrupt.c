@@ -70,6 +70,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include "system_definitions.h"
 #include "app_public.h"
 #include "debug.h"
+#include "pixycam.h"
 #include "json_access/jsonaccess.h"
 
 // *****************************************************************************
@@ -89,8 +90,8 @@ void IntHandlerDrvAdc(void) {
         sensorValue2 += PLIB_ADC_ResultGetByIndex(ADC_ID_1, (2 * i + 1));
     }
 
-    sensorValue1 = sensorValue1 / (ADC_NUM_SAMPLE_PER_AVERAGE);
-    sensorValue2 = sensorValue2 / (ADC_NUM_SAMPLE_PER_AVERAGE);
+    sensorValue1 = sensorValue1 / (ADC_NUM_SAMPLE_PER_AVERAGE); // Line following
+    sensorValue2 = sensorValue2 / (ADC_NUM_SAMPLE_PER_AVERAGE); // Ultrasonic sensor
 
 
 
@@ -128,19 +129,34 @@ int leftTicksPrev = 0;
 int rightTicksPrev = 0;
 int i = 0;
 
+uint8_t pixy;
+char pixybuffer[8];
+
 void IntHandlerDrvTmrInstance0(void) {
     millisec++;
     maptime++;
 
-    if (millisec % 50 == 0) {
-        if (PLIB_PORTS_PinGet(PORTS_ID_0, PORT_CHANNEL_G, 6) == 0) {
-            buttonHistory[i] = 1;
-        } else
-            buttonHistory[i] = 0;
-        i++;
-        if (i == 10)
-            i = 0;
-
+    if (millisec % 200 == 0) {
+        int j = 0;
+        //pixy = getByte();
+        
+        /*
+        sprintf(pixybuffer, "%02X", pixy);
+        for(j=0; pixybuffer[j] != '\0'; j++) {
+            dbgUARTVal(pixybuffer[j]);
+        } dbgUARTVal(' ');
+        */
+        
+        while(PLIB_USART_ReceiverDataIsAvailable(USART_ID_2)) {
+            pixy = PLIB_USART_ReceiverByteReceive(USART_ID_2);
+            if(pixy >= 0) {
+                break;
+            }
+        }
+        
+        if(pixy > 0) {
+            LATAINV = 0x8;
+        }   
     }
 
     if (millisec % 500 == 0) {
@@ -154,7 +170,7 @@ void IntHandlerDrvTmrInstance0(void) {
         unsigned char val;
         count++;
 
-        LATAINV = 0x8;
+        //LATAINV = 0x8;
 
         //Clear Interrupt Flag 
 
@@ -258,6 +274,13 @@ void IntHandlerDrvUsartInstance0(void) {
         dbgOutputLoc(WIFLY_ERROR);
         PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_USART_1_ERROR);
     }
+}
+
+void IntHandlerDrvUsartInstance1(void)
+{
+    DRV_USART_TasksTransmit(sysObj.drvUsart1);
+    DRV_USART_TasksReceive(sysObj.drvUsart1);
+    DRV_USART_TasksError(sysObj.drvUsart1);
 }
 
 /*******************************************************************************

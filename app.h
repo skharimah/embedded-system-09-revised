@@ -139,6 +139,8 @@ int xCoord;
     None.
 */
 
+DRV_HANDLE pixyHandle;    
+    
 typedef struct
 {
 	//SYS_MODULE_OBJ   drvObject;
