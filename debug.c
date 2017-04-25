@@ -122,12 +122,17 @@ int dbgOutputVal(unsigned char outputVal){
  */
 int dbgUARTVal(unsigned char val){
     
-    if (!(DRV_USART_TRANSFER_STATUS_TRANSMIT_FULL & DRV_USART_TransferStatus(usbHandle)) ){
-        
-        DRV_USART_WriteByte(usbHandle, val);
-        return 0;
+//    if (!(DRV_USART_TRANSFER_STATUS_TRANSMIT_FULL & DRV_USART_TransferStatus(usbHandle)) ){
+//        
+//        DRV_USART_WriteByte(usbHandle, val);
+//        return 0;
+//    }
+    while (PLIB_USART_TransmitterBufferIsFull(USART_ID_1)) {
+        //dbgOutputLoc(7);
     }
-    return 1;
+    //dbgOutputLoc(40);
+    PLIB_USART_TransmitterByteSend(USART_ID_1, val);
+    return 0;
 }
 
 

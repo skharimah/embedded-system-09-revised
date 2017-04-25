@@ -164,6 +164,7 @@ QueueHandle_t createAppQueue(void) {
 
 QueueHandle_t createEncoderQueue(void) {
     QueueHandle_t queue;
+
     int queueSize = sizeof (struct ENCODER_DATA *);
     queue = xQueueCreate(10, queueSize);
     if (queue == NULL) {
@@ -300,6 +301,10 @@ void MoveSprite(int ID) {
     //1.Read path information
     ReadPath(ID, xLoc[ID], yLoc[ID], 1);
 
+    dbgUARTVal(' ');
+    dbgUARTVal(':');
+    dbgUARTVal(' ');
+    dbgUARTVal(walkability [5][5].walkability + '0');
     //2.Move sprite. xLoc/yLoc = current location of sprite. xPath and
     //	yPath = coordinates of next step on the path that were/are
     //	read using the readPath function.
@@ -693,7 +698,7 @@ void APP_Tasks(void) {
                 dbgUARTVal(' ');
                 dbgUARTVal(yLoc[ID] + '0');
                 dbgUARTVal(' ');
-                walkability[xPath[ID]][yPath[ID]].walkability = unwalkable;
+                walkability [xPath[ID]][yPath[ID]].walkability = unwalkable;
                 //                if (dir == SOUTH) {
                 //                    
                 //                    for (i = 0; i < mapWidth; i++)
@@ -732,7 +737,7 @@ void APP_Tasks(void) {
                 dbgUARTVal(' ');
                 dbgUARTVal(yLoc[ID] + '0');
                 dbgUARTVal(' ');
-                walkability[xPath[ID]][yPath[ID]].walkability = unwalkable;
+                walkability [xPath[ID]][yPath[ID]].walkability = unwalkable;
                 //                if (dir == SOUTHWEST) {
                 //                      
                 //                    for (i = 0; i < mapWidth; i++)
@@ -769,7 +774,7 @@ void APP_Tasks(void) {
                 dbgUARTVal(' ');
                 dbgUARTVal(yLoc[ID] + '0');
                 dbgUARTVal(' ');
-                walkability[xPath[ID]][yPath[ID]].walkability = unwalkable;
+                walkability [xPath[ID]][yPath[ID]].walkability = unwalkable;
                 //                if (dir == SOUTHEAST) {
                 //                    
                 //                    for (i = 0; i < mapWidth; i++)
@@ -820,7 +825,7 @@ void APP_Tasks(void) {
                     if (goalX != -1 && goalY != -1) {
                         if (xLoc[ID] != -1 && yLoc[ID] != -1) {
                             EndPathfinder();
-                            dbgUARTVal('S');
+                            //dbgUARTVal('S');
                             dbgUARTVal('T');
                             dbgUARTVal('A');
                             dbgUARTVal('R');
@@ -861,6 +866,12 @@ void APP_Tasks(void) {
                     //requestMap();
                 }//2.Move smiley.
                 else if (pathStatus[ID] == found) {
+                    dbgUARTVal('|');
+                    dbgUARTVal(' ');
+                    dbgUARTVal(xLoc[ID] + '0');
+                    dbgUARTVal(' ');
+                    dbgUARTVal(yLoc[ID] + '0');
+                    dbgUARTVal(' ');
                     MoveSprite(ID);
                     appState = DRIVE;
                 } else {

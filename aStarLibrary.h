@@ -87,7 +87,7 @@ int abs(int a);
 //-----------------------------------------------------------------------------
 void EndPathfinder (void)
 {
-    int x, w;
+    int y, x, w;
 	for (x = 0; x < numberPeople+1; x++)
 	{
         for (w = 0; w < 100; w++)
@@ -97,6 +97,10 @@ void EndPathfinder (void)
         pathStatus[x] = notStarted;
         
 	}
+    for (x = 0; x < mapWidth;x++) {
+			for (y = 0; y < mapHeight;y++)
+				whichList [x][y] = 0;
+		}
 }
 
 
