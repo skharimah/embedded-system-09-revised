@@ -81,6 +81,7 @@ State appState;
  //sensor values
  int sensorValue1;
  int sensorValue2;
+ int sensorValue3;
 
  //button debouncing
  int buttonHistory[10];
