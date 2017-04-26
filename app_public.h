@@ -68,6 +68,10 @@ QueueHandle_t appRecvQueue;
 typedef enum  {INIT, RUN, RECV, TRANS, PAUSE, STOP, RESET, WAIT, DRIVE} State;
 State appState;
 
+DRV_HANDLE pixyHandle;
+
+uint8_t pixyByte;
+
 
 //typedef struct AMessage
 // {

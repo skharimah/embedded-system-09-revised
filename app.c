@@ -543,6 +543,8 @@ void APP_Initialize(void) {
     maptime = 0;
     dbgCount = 0;
     rMsgCount = 0;
+    
+    pixyHandle = DRV_USART_Open(DRV_USART_INDEX_1, DRV_IO_INTENT_READWRITE);
 }
 
 /******************************************************************************
@@ -556,6 +558,7 @@ void APP_Tasks(void) {
     revision = -1;
     fullMap = true;
     UARTInit(USART_ID_1, 57600);
+    UARTInit(USART_ID_1, 19200);
     DRV_ADC_Open(); //start ADC
     bool newMap = false;
     steps = 0;

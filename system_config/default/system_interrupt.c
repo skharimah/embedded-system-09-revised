@@ -72,6 +72,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include "system_definitions.h"
 #include "app_public.h"
 #include "debug.h"
+#include "pixycam.h"
 #include "json_access/jsonaccess.h"
 #include <queue.h>
 
@@ -150,16 +151,11 @@ void IntHandlerDrvTmrInstance0(void) {
     
     
     
-    if(millisec % 100 == 0) {
-        if(PLIB_PORTS_PinGet( PORTS_ID_0, PORT_CHANNEL_G, 6) == 0) {
-            buttonHistory[i] = 1;
+    if(millisec % 150 == 0) {
+        pixyByte = getByte();
+        if(pixyByte > 0) {
+            LATAINV = 0x8;
         }
-        else
-            buttonHistory[i] = 0;
-        i++;
-        if(i == 10)
-            i = 0;
-                                                                                                                 
     }
 
     //dbgutputLoc(millisec);
@@ -463,6 +459,12 @@ void IntHandlerDrvUsartInstance0(void) {
     //dbgOutputLoc(43);
 
     //dbgOutputLoc(UART_STOP);
+}
+
+void IntHandlerDrvUsartInstance1(void) {
+    DRV_USART_TasksTransmit(sysObj.drvUsart1);
+    DRV_USART_TasksReceive(sysObj.drvUsart1);
+    DRV_USART_TasksError(sysObj.drvUsart1);
 }
 
 /*******************************************************************************
