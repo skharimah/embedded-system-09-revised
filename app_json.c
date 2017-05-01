@@ -136,7 +136,7 @@ void APP_JSON_Initialize(void) {
  */
 
 void APP_JSON_Tasks(void) {
-    char stupidError[200] = "{\"message_type\":\"request\",\"requested_data\":\"run\",\"sequence_id\":\"1\",\"destination\":\"192.168.1.105\",\"source\":\"192.168.1.102\"}";
+    char stupidError[200] = "{\"message_type\":\"request\",\"requested_data\":\"run\",\"sequence_id\":\"1\",\"destination\":\"192.168.1.111\",\"source\":\"192.168.1.102\"}";
     //    char *jsstring = "{\"message_type\":\"response\","
     //    "\"source\":\"SOURCE_ROVER_IP_ADDRESS\","
     //    "\"destination\":\"TARGET_ROVER_IP_ADDRESS\","
@@ -316,10 +316,10 @@ void APP_JSON_Tasks(void) {
                     /* TODO: Get encoder_value here */
                     addIntegerKeyValuePairToJsonObject("rev", revision);
 
-                    addStringKeyValuePairToJsonObject("source", "192.168.1.103");
+                    addStringKeyValuePairToJsonObject("source", "192.168.1.101");
 
                     /* TODO: Get encoder_value here */
-                    addStringKeyValuePairToJsonObject("destination", "192.168.1.105");
+                    addStringKeyValuePairToJsonObject("destination", "192.168.1.111");
                     
 
                     endWritingToJsonObject();
@@ -334,10 +334,10 @@ void APP_JSON_Tasks(void) {
                     /* TODO: Get encoder_value here */
                     addStringKeyValuePairToJsonObject("requested_data", myMsgPtr);
 
-                    addStringKeyValuePairToJsonObject("source", "192.168.1.103");
+                    addStringKeyValuePairToJsonObject("source", "192.168.1.101");
 
                     /* TODO: Get encoder_value here */
-                    addStringKeyValuePairToJsonObject("destination", "192.168.1.105");
+                    addStringKeyValuePairToJsonObject("destination", "192.168.1.111");
 
                     endWritingToJsonObject();
                     app_jsonData.state = APP_JSON_STATE_SENDING_MESSAGE;
@@ -540,7 +540,7 @@ void APP_JSON_Tasks(void) {
                 /* TODO: Get IR_sensor_value here */
                 //addIntegerKeyValuePairToJsonObject("infrared_sensor_value", 150);
                 /* TODO: Get port number here */
-                addStringKeyValuePairToJsonObject("source", "192.168.1.103");
+                addStringKeyValuePairToJsonObject("source", "192.168.1.101");
                 /* TODO: Get encoder_value here */
                 addStringKeyValuePairToJsonObject("destination", buffer2);
 

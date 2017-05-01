@@ -1,3 +1,5 @@
+/* Source: http://cmucam.org/projects/cmucam5/wiki/Porting_Guide */
+
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>

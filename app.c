@@ -63,8 +63,8 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 // *****************************************************************************
 // *****************************************************************************
 QueueHandle_t encoderQueue;
-
-
+uint8_t oldPixyByte;
+bool checkTape;
 
 
 
@@ -544,7 +544,9 @@ void APP_Initialize(void) {
     dbgCount = 0;
     rMsgCount = 0;
     
+    tapeCounter = 0;
     pixyHandle = DRV_USART_Open(DRV_USART_INDEX_1, DRV_IO_INTENT_READWRITE);
+    checkTape = false;
 }
 
 /******************************************************************************
@@ -555,10 +557,13 @@ void APP_Initialize(void) {
  */
 
 void APP_Tasks(void) {
+    int index = 0;
+    unsigned int averagePixyByte = 0;
     revision = -1;
     fullMap = true;
     UARTInit(USART_ID_1, 57600);
-    UARTInit(USART_ID_1, 19200);
+    UARTInit(USART_ID_2, 19200);
+    bool flagDetected = false;
     DRV_ADC_Open(); //start ADC
     bool newMap = false;
     steps = 0;
@@ -668,7 +673,7 @@ void APP_Tasks(void) {
                 } else {
                     // dbgOutputLoc('!');
                     walkability [xCoord][yCoord].rover = rType;
-                    if (rType == TAGGER && friendly == 0) {
+                    if (rType == FLAG && friendly == 0) {
                         if (oldGoalX != xCoord || oldGoalY != yCoord) {
                             walkability [xCoord][yCoord].walkability = walkable;
                             oldGoalX = xCoord;
@@ -677,7 +682,7 @@ void APP_Tasks(void) {
                             goalY = yCoord;
                             appState = INIT;
                         }
-                    } else if (rType == CM && friendly == 1) {
+                    } else if (rType == FLAG && friendly == 1) {
                         if (oldX != xCoord || oldY != yCoord) {
                             oldX = xCoord;
                             oldY = yCoord;
@@ -864,7 +869,7 @@ void APP_Tasks(void) {
 
                 //}
 
-                if (steps >= 10) {
+                if (steps >= 30) {
                     appState = WAIT;
                     //requestMap();
                 }//2.Move smiley.
@@ -885,7 +890,7 @@ void APP_Tasks(void) {
                 }
 
                 if (xLoc[ID] == goalX && yLoc[ID] == goalY) {
-                    appState = WAIT;
+                    appState = FLAGGER;
                 }
 
 
@@ -932,7 +937,43 @@ void APP_Tasks(void) {
                     maptime = 0;
                 }
                 break;
-
+                
+            case FLAGGER:
+                checkTape = true;
+                /* The rover has completed its path */
+                while(!flagDetected) {
+                    averagePixyByte = 0;
+                    /* The rover does not detect the flag 
+                     * The rover rotates until it finds the flag */
+                    motorsTurnRight(600, 600);
+                    /* Calculate the average from 10 Pixy values */
+                    for(index=0; index<10; index++) {
+                        averagePixyByte += pixyByte;
+                    } averagePixyByte = averagePixyByte / 10;
+                    
+                    if(averagePixyByte > 0) {
+                        averagePixyByte = 0;
+                        /* The rover finds the flag in its field of vision */
+                        flagDetected = true;
+                    }
+                }
+                
+                while(flagDetected) {
+                    /* The rover drives toward the flag */
+                    motorsForward(600, 600);
+                    
+                    if(millisecCounter % 70 == 0) {
+                        for(index=0; index<10; index++) {
+                            averagePixyByte += pixyByte;
+                        } averagePixyByte = averagePixyByte / 10;
+                        if(averagePixyByte <= 0) {
+                            flagDetected = false;
+                        }    
+                    }
+                }
+                
+                break;
+                
             default:
                 break;
         }

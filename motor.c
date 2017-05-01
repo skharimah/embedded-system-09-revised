@@ -70,9 +70,9 @@ void motorsSetSpeed(int leftSpeed, int rightSpeed) {
 
 //Configure the motors to move forwards
 void motorsBackward(int leftSpeed, int rightSpeed) {
-    SYS_PORTS_PinWrite(PORTS_ID_0, PORT_CHANNEL_G, PORTS_BIT_POS_8, 0); //51
+    SYS_PORTS_PinWrite(PORTS_ID_0, PORT_CHANNEL_G, PORTS_BIT_POS_8, 1); //51
     
-    SYS_PORTS_PinWrite(PORTS_ID_0, PORT_CHANNEL_D, PORTS_BIT_POS_11, 0); //49
+    SYS_PORTS_PinWrite(PORTS_ID_0, PORT_CHANNEL_D, PORTS_BIT_POS_11, 1); //49
     
     //Set Motors to speed
     motorsSetSpeed(leftSpeed, rightSpeed);
@@ -84,9 +84,9 @@ void motorsBackward(int leftSpeed, int rightSpeed) {
 void motorsForward(int leftSpeed, int rightSpeed) {
     
     
-    SYS_PORTS_PinWrite(PORTS_ID_0, PORT_CHANNEL_G, PORTS_BIT_POS_8, 1); //51
+    SYS_PORTS_PinWrite(PORTS_ID_0, PORT_CHANNEL_G, PORTS_BIT_POS_8, 0); //51
     
-    SYS_PORTS_PinWrite(PORTS_ID_0, PORT_CHANNEL_D, PORTS_BIT_POS_11, 1);
+    SYS_PORTS_PinWrite(PORTS_ID_0, PORT_CHANNEL_D, PORTS_BIT_POS_11, 0);
     
     //Set Motors to speed
     motorsSetSpeed(leftSpeed, rightSpeed);

@@ -58,7 +58,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 // Section: Included Files
 // *****************************************************************************
 // *****************************************************************************
-#define ADC_NUM_SAMPLE_PER_AVERAGE 8
+#define ADC_NUM_SAMPLE_PER_AVERAGE 5
 
 
 #include <xc.h>
@@ -89,12 +89,14 @@ void IntHandlerDrvAdc(void)
     //dbgUARTVal('t');
     
     for(i=0;i<ADC_NUM_SAMPLE_PER_AVERAGE;i++){
-        sensorValue1 += PLIB_ADC_ResultGetByIndex(ADC_ID_1, (2*i));
-        sensorValue2 += PLIB_ADC_ResultGetByIndex(ADC_ID_1, (2*i+1));
+        sensorValue1 += PLIB_ADC_ResultGetByIndex(ADC_ID_1, (3*i));
+        sensorValue2 += PLIB_ADC_ResultGetByIndex(ADC_ID_1, (3*i+1));
+        sensorValue2 += PLIB_ADC_ResultGetByIndex(ADC_ID_1, (3*i+2));
     }
 	
     sensorValue1 = sensorValue1 / (ADC_NUM_SAMPLE_PER_AVERAGE);
     sensorValue2 = sensorValue2 / (ADC_NUM_SAMPLE_PER_AVERAGE);
+    sensorValue3 = sensorValue3 / (ADC_NUM_SAMPLE_PER_AVERAGE);
     
     /*MOTOR_MESSAGE msg;
     msg.messageType = 'S';
@@ -148,13 +150,13 @@ void IntHandlerDrvTmrInstance0(void) {
     millisec++;
     maptime++;
     dbgCount++;
+    millisecCounter++;
     
     
-    
-    if(millisec % 150 == 0) {
+    if(millisec % 50 == 0) {
         pixyByte = getByte();
         if(pixyByte > 0) {
-            LATAINV = 0x8;
+            
         }
     }
 

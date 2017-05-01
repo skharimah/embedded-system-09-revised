@@ -60,17 +60,23 @@ extern "C" {
     const char* DEVNAME;// = "sensor";
     const char* IPADDRESS;// = "192.168.1.102";
     
+    
+    
 DRV_HANDLE usbHandle;// = DRV_USART_Open(DRV_USART_INDEX_0, DRV_IO_INTENT_READWRITE);
 QueueHandle_t encoderQueue;
 QueueHandle_t msgQueue;
 QueueHandle_t recvMsgQueue;
 QueueHandle_t appRecvQueue;
-typedef enum  {INIT, RUN, RECV, TRANS, PAUSE, STOP, RESET, WAIT, DRIVE} State;
+typedef enum  {INIT, RUN, RECV, TRANS, PAUSE, STOP, RESET, WAIT, DRIVE, FLAGGER} State;
 State appState;
 
 DRV_HANDLE pixyHandle;
 
+
 uint8_t pixyByte;
+
+int tapeCounter;
+int millisecCounter;
 
 
 //typedef struct AMessage
@@ -85,6 +91,8 @@ uint8_t pixyByte;
  //sensor values
  int sensorValue1;
  int sensorValue2;
+ int sensorValue3;
+ int potValue;
 
  //button debouncing
  int buttonHistory[10];
