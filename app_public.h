@@ -66,7 +66,7 @@ QueueHandle_t msgQueue;
 QueueHandle_t recvMsgQueue;
 QueueHandle_t appRecvQueue;
 typedef enum  {INIT, RUN, RECV, TRANS, PAUSE, STOP, RESET, WAIT, DRIVE} State;
-State appState;
+State appState, prevState;
 
 
 //typedef struct AMessage

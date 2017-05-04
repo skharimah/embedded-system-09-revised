@@ -179,7 +179,7 @@ void IntHandlerDrvTmrInstance0(void) {
             dbgUARTVal(sensorBuf[i]);
         }*/
         //dbgUARTVal('\n');
-        //LATAINV = 0x8;
+        LATAINV = 0x8;
 
         //dbgOutputLoc(TMR_START + 3);
 
@@ -224,7 +224,8 @@ void IntHandlerDrvTmrInstance0(void) {
             j++;
         }
         else{
-            if( sensorValue1 < sensorAvg1 - (sensorAvg1/2)  || sensorValue2 < sensorAvg2 - (sensorAvg2/2)) {
+            
+            if( sensorValue1 < sensorAvg1 - (sensorAvg1/4)  || sensorValue2 < sensorAvg2 - (sensorAvg2/4)) {
                 MOTOR_MESSAGE tapeMsg;
                 tapeMsg.messageType = 'T';
                 if( sensorValue1 < sensorAvg1 - (sensorAvg1/4)) {
@@ -236,7 +237,7 @@ void IntHandlerDrvTmrInstance0(void) {
                     tapeMsg.leftTicks = 1;
                 }
                 else
-                    tapeMsg.rightTicks = 0;
+                    tapeMsg.leftTicks = 0;
                 if(xQueueSendFromISR(encoderQueue, &tapeMsg, NULL) != pdTRUE) {
                 //send failed
                 }

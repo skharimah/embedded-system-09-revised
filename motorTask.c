@@ -206,7 +206,11 @@ void MOTORTASK_Tasks ( void )
     int leftTape;
     int rightTape;
     motorsInitialize();
-    
+    /*while(msgReceived.messageType != 'R') {
+        if(xQueueReceive(encoderQueue, &msgReceived, 0) == pdTRUE) {
+
+        }
+    }*/
     while(1) {
         //dbgOutputLoc(16);
         
@@ -248,13 +252,25 @@ void MOTORTASK_Tasks ( void )
                 }
             }
             if(msgReceived.messageType == 'S') {
+                forwardPath = 0;
+                foundTape = 0;
+                turningPath = 0;
+                targetSpeed = 600;
+                leftMotorSpeed = 600;
+                rightMotorSpeed = 600;
                 motorsStop();
                 moving = 0;
+                orientation = NORTH;
+//                dbgUARTVal('S');
+//                dbgUARTVal('T');
+//                dbgUARTVal('O');
+//                dbgUARTVal('P');
                 while(msgReceived.messageType != 'R') {
                     if(xQueueReceive(encoderQueue, &msgReceived, 0) == pdTRUE) {
 
                     }
                 }
+                motortaskData.state = MOTOR_STATE_IDLE;
                 //anything else saying i hit tape
             }
             if(msgReceived.messageType == 'T' && foundTape == 0) {
@@ -263,6 +279,16 @@ void MOTORTASK_Tasks ( void )
                 rightTape = msgReceived.rightTicks;
                 motortaskData.state = MOTOR_TAPE;
                 //dbgUARTVal('t');
+            }
+            if(msgReceived.messageType == 'P') {
+                motorsStop();
+                while(msgReceived.messageType != 'R') {
+                    if(xQueueReceive(encoderQueue, &msgReceived, 0) == pdTRUE) {
+
+                    }
+                }
+                //dbgUARTVal('G');
+                motorsSetSpeed(leftMotorSpeed, rightMotorSpeed);
             }
         }
         //Button Pressed
@@ -273,7 +299,7 @@ void MOTORTASK_Tasks ( void )
         }
         if(buttonPressed == 1) {
             //LED ON (to do)
-            PLIB_PORTS_PinWrite ( PORTS_ID_0, PORT_CHANNEL_F, 0, 1);
+            PLIB_PORTS_PinWrite ( PORTS_ID_0, PORT_CHANNEL_D, 6, 1);
             
             //stop motors
             motorsStop();
@@ -282,12 +308,12 @@ void MOTORTASK_Tasks ( void )
             moving = 0;
             
             //Wait for reset
-            while(msgReceived.messageType != 'R') {
+            while(msgReceived.messageType != 'B') {
                 if(xQueueReceive(encoderQueue, &msgReceived, 0) == pdTRUE) {
                     
                 }
             }
-            PLIB_PORTS_PinWrite ( PORTS_ID_0, PORT_CHANNEL_F, 0, 0);
+            PLIB_PORTS_PinWrite ( PORTS_ID_0, PORT_CHANNEL_D, 6, 0);
         }
         
         
@@ -409,7 +435,11 @@ void MOTORTASK_Tasks ( void )
                     diff = abs(orientation - msgReceived.dir);
                     if(diff > 3)
                         diff = 8 - diff;
-                    targetDir = diff * FORTYFIVE_DEG;
+                    int fortyfives = diff % 2;
+                    int nineties = (diff - fortyfives) / 2;
+                    targetDir = fortyfives * FORTYFIVE_DEG + nineties*NINETY_DEG;
+                    //targetDir = diff * FORTYFIVE_DEG;
+                    
                     //update forward distance
                     targetDist = msgReceived.dist;
                     //reset counters
@@ -503,16 +533,19 @@ void MOTORTASK_Tasks ( void )
                 if(rightTape == 1 && leftTape == 1) {
                     strcpy(appMsg, "tapeb");
                     pathMsgPtr = &appMsg;
+                    messageToQ(appRecvQueue, pathMsgPtr);
                 }
                 else if(rightTape == 1) {
                     strcpy(appMsg, "taper");
                     pathMsgPtr = &appMsg;
+                    messageToQ(appRecvQueue, pathMsgPtr);
                 }
                 else if(leftTape == 1) {
                     strcpy(appMsg, "tapel");
                     pathMsgPtr = &appMsg;
+                    messageToQ(appRecvQueue, pathMsgPtr);
                 }
-                messageToQ(appRecvQueue, pathMsgPtr);
+                
                 
                 /*for (i = 0; encoderValMsg[i] != NULL; i++)
                     dbgUARTVal(encoderValMsg[i]);*/

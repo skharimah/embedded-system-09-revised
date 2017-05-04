@@ -30,7 +30,7 @@ typedef struct mapdata{
 #define mapWidth 12
 #define mapHeight 21
 #define tileSize 1
-#define numberPeople 1
+#define numberPeople 2
 #define notfinished 0
 #define notStarted 0
 #define found 1

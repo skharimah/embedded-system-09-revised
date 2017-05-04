@@ -70,8 +70,8 @@ extern "C" {
 // DOM-IGNORE-END 
     
     //Tick amounts
-#define NINTY_DEG 645
-#define FORTYFIVE_DEG 323
+#define NINETY_DEG 600
+#define FORTYFIVE_DEG 300
 
 // *****************************************************************************
 // *****************************************************************************

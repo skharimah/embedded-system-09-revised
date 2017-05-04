@@ -560,12 +560,20 @@ void APP_Tasks(void) {
     bool newMap = false;
     steps = 0;
     int ID = 1;
+    int flagID = 2;
     int goalX = -1;
     int goalY = -1;
     xLoc[ID] = -1;
     yLoc[ID] = -1;
+    xLoc[flagID] = -1;
+    yLoc[flagID] = -1;
     oldX = xLoc[ID];
     oldY = yLoc[ID];
+    int xFlagLoc;
+    int yFlagLoc;
+    
+    int pathType = 0;
+    
 
 
     char myMsg[ MSG_BUF_SIZE ];
@@ -585,7 +593,7 @@ void APP_Tasks(void) {
     //    int rightTicksPrev = 0;
     //int blinkms = 0;
     char * myMsgPtr = "";
-    int i = 101;
+    int i = 101, f = 0;
     int millisec = 0;
     int prev_ms = 0, cur_ms = PLIB_TMR_Counter16BitGet(TMR_ID_2);
     bool connected = false;
@@ -596,9 +604,15 @@ void APP_Tasks(void) {
     int sum = 0;
     int powTen = 1;
     while (1) {
-
+        f = 0;
         if (xQueueReceive(appRecvQueue, (void*) &(myMsgPtr), 0) == pdTRUE) {
             //if (tempGetMsgFromQ(appRecvQueue, myMsgPtr) == 0) {
+//            dbgUARTVal('M');
+//            dbgUARTVal(':');
+//            while (myMsgPtr[f] != '\0'){
+//                dbgUARTVal(myMsgPtr[f]);
+//                f++;
+//            }
             received = true;
             if (myMsgPtr > 0)
                 dbgOutputVal(myMsgPtr[0]);
@@ -624,7 +638,7 @@ void APP_Tasks(void) {
                 PLIB_INT_SourceEnable(INT_ID_0, INT_SOURCE_TIMER_4);
                 dbgOutputLoc(APPRUN);
                 ledOn();
-                appState = RUN;
+                appState = WAIT;
                 memset(myMsgPtr, 0, MSG_BUF_SIZE);
             }
             if (strcmp(myMsgPtr, "pause") == 0) {
@@ -662,24 +676,30 @@ void APP_Tasks(void) {
                 if (rType == OBSTACLE) {
                     walkability [xCoord][yCoord].walkability = unwalkable;
                     walkability [xCoord][yCoord].rover = OBSTACLE;
+                    prevState = appState;
+                            appState = INIT;
                 } else {
                     // dbgOutputLoc('!');
                     walkability [xCoord][yCoord].rover = rType;
-                    if (rType == TAGGER && friendly == 0) {
+                    if (rType == FLAG && friendly == 0) {
                         if (oldGoalX != xCoord || oldGoalY != yCoord) {
                             walkability [xCoord][yCoord].walkability = walkable;
                             oldGoalX = xCoord;
                             oldGoalY = yCoord;
-                            goalX = xCoord;
-                            goalY = yCoord;
+                            xLoc[flagID] = xCoord;
+                            yLoc[flagID] = yCoord;
+                            xFlagLoc = xLoc[flagID];
+                            yFlagLoc = yLoc[flagID];
+                            prevState = appState;
                             appState = INIT;
                         }
-                    } else if (rType == CM && friendly == 1) {
+                    } else if (rType == TAGGER && friendly == 1) {
                         if (oldX != xCoord || oldY != yCoord) {
                             oldX = xCoord;
                             oldY = yCoord;
                             xLoc[ID] = xCoord;
                             yLoc[ID] = yCoord;
+                            prevState = appState;
                             appState = INIT;
                         }
                     } else
@@ -687,7 +707,7 @@ void APP_Tasks(void) {
                 }
             }
             if (strcmp(myMsgPtr, "tapeb") == 0) {
-                LATAINV = 0x8;
+                //LATAINV = 0x8;
                 DIRECTIONS dir = getOrientation(ID);
                 int i, j;
                 dbgUARTVal(xPath[ID] + '0');
@@ -699,34 +719,36 @@ void APP_Tasks(void) {
                 dbgUARTVal(yLoc[ID] + '0');
                 dbgUARTVal(' ');
                 walkability [xPath[ID]][yPath[ID]].walkability = unwalkable;
-                //                if (dir == SOUTH) {
-                //                    
-                //                    for (i = 0; i < mapWidth; i++)
-                //                        for (j = yPath[ID]; j >= 0; j--)
-                //                            walkability [i][j].walkability = unwalkable;
-                //                        
-                //                }
-                //                else if (dir == WEST && xLoc[ID] <= 2){
-                //                    for (i = 0; i <= xPath[ID]; i++)
-                //                        for (j = mapHeight-1; j >= 0; j--)
-                //                            walkability [i][j].walkability = unwalkable;
-                //                       
-                //                }
-                //                else if (dir == EAST){
-                //                    for (j = 0; j < yPath[ID]; j++){
-                //                        walkability [xPath[ID]][j].walkability = unwalkable;
-                //                    }
-                //                }
-                //                    
-                //                else{
-                //                    walkability[xPath[ID]][yPath[ID]].walkability = unwalkable;
-                //                }
+                if (dir == NORTH) {
+                    dbgUARTVal('N');
+                    dbgUARTVal('O');
+                    for (i = 0; i < mapWidth; i++)
+                        for (j = mapHeight; j >= yPath[ID]; j--)
+                            walkability [i][j].walkability = unwalkable;
+                }
+//                } else if (dir == WEST && xLoc[ID] <= 2) {
+//                    for (i = 0; i <= xPath[ID]; i++)
+//                        for (j = mapHeight - 1; j >= 0; j--)
+//                            walkability [i][j].walkability = unwalkable;
+//
+//                } else if (dir == EAST) {
+                else{
+                    dbgUARTVal('*');
+                    dbgUARTVal('B');
+                    dbgUARTVal(dir + '0');
+                    for (j = yPath[ID]; j < mapHeight; j++) {
+                        walkability [xPath[ID]][j].walkability = unwalkable;
+                    }
+                }
+//                else {
+//                    walkability[xPath[ID]][yPath[ID]].walkability = unwalkable;
+//                }
 
                 fullMap = true;
                 appState = INIT;
             }
             if (strcmp(myMsgPtr, "tapel") == 0) {
-                LATAINV = 0x8;
+                //LATAINV = 0x8;
                 DIRECTIONS dir = getOrientation(ID);
                 int i, j;
                 dbgUARTVal(xPath[ID] + '0');
@@ -738,24 +760,32 @@ void APP_Tasks(void) {
                 dbgUARTVal(yLoc[ID] + '0');
                 dbgUARTVal(' ');
                 walkability [xPath[ID]][yPath[ID]].walkability = unwalkable;
-                //                if (dir == SOUTHWEST) {
-                //                      
-                //                    for (i = 0; i < mapWidth; i++)
-                //                        for (j = yPath[ID]; j >= 0; j--)
-                //                            walkability [i][j].walkability = unwalkable;
-                //                     
-                //                }
-                //                else if (dir == NORTHWEST && xLoc[ID] <= 2){
-                //                    for (i = 0; i <= xPath[ID]; i++)
-                //                        for (j = mapHeight-1; j >= 0; j--)
-                //                            walkability [i][j].walkability = unwalkable;
-                //                      
-                //                }
-                //                else if (dir == SOUTHEAST || dir == EAST){
-                //                    for (j = 0; j < yPath[ID]; j++){
-                //                        walkability [xPath[ID]][j].walkability = unwalkable;
-                //                    }
-                //                }
+                /*if (dir == NORTHEAST) {
+                    dbgUARTVal('N');
+                    dbgUARTVal('E');
+                    for (i = 0; i < mapWidth; i++)
+                        for (j = yPath[ID]; j <= mapHeight; j++)
+                            walkability [i][j].walkability = unwalkable;
+
+                } 
+//                else if (dir == NORTHWEST && xLoc[ID] <= 2) {
+//                    for (i = 0; i <= xPath[ID]; i++)
+//                        for (j = mapHeight - 1; j >= 0; j--)
+//                            walkability [i][j].walkability = unwalkable;
+//
+//                } else if (dir == SOUTHEAST || dir == EAST) {
+//                    for (j = 0; j < yPath[ID]; j++) {
+//                        walkability [xPath[ID]][j].walkability = unwalkable;
+//                    }
+//                }
+                /*else{
+                    dbgUARTVal('*');
+                    dbgUARTVal('L');
+                    dbgUARTVal(dir + '0');
+                    for (j = yPath[ID]; j < mapHeight; j++) {
+                        walkability [xPath[ID]][j].walkability = unwalkable;
+                    }
+                }*/
                 //                else{
                 //                    walkability[xPath[ID]][yPath[ID]].walkability = unwalkable;
                 //                }
@@ -763,7 +793,7 @@ void APP_Tasks(void) {
                 appState = INIT;
             }
             if (strcmp(myMsgPtr, "taper") == 0) {
-                LATAINV = 0x8;
+                //LATAINV = 0x8;
                 DIRECTIONS dir = getOrientation(ID);
                 int i, j;
                 dbgUARTVal(xPath[ID] + '0');
@@ -775,24 +805,33 @@ void APP_Tasks(void) {
                 dbgUARTVal(yLoc[ID] + '0');
                 dbgUARTVal(' ');
                 walkability [xPath[ID]][yPath[ID]].walkability = unwalkable;
-                //                if (dir == SOUTHEAST) {
-                //                    
-                //                    for (i = 0; i < mapWidth; i++)
-                //                        for (j = yPath[ID]; j >= 0; j--)
-                //                            walkability [i][j].walkability = unwalkable;
-                //                      
-                //                }
-                //                else if (dir == SOUTHWEST && xLoc[ID] <= 2){
-                //                    for (i = 0; i <= xPath[ID]; i++)
-                //                        for (j = mapHeight-1; j >= 0; j--)
-                //                            walkability [i][j].walkability = unwalkable;
-                //                    
-                //                }
-                //                else if (dir == NORTHEAST || dir == EAST){
-                //                    for (j = 0; j < yPath[ID]; j++){
-                //                        walkability [xPath[ID]][j].walkability = unwalkable;
-                //                    }
-                //                }
+//                if (dir == NORTHWEST) {
+//                    dbgUARTVal('N');
+//                    dbgUARTVal('W');
+//
+//                    for (i = 0; i < mapWidth; i++)
+//                        for (j = yPath[ID]; j <= mapHeight; j++)
+//                            walkability [i][j].walkability = unwalkable;
+//
+//                } 
+////                else if (dir == SOUTHWEST && xLoc[ID] <= 2) {
+////                    for (i = 0; i <= xPath[ID]; i++)
+////                        for (j = mapHeight - 1; j >= 0; j--)
+////                            walkability [i][j].walkability = unwalkable;
+////
+////                } else if (dir == NORTHEAST || dir == EAST) {
+////                    for (j = 0; j < yPath[ID]; j++) {
+////                        walkability [xPath[ID]][j].walkability = unwalkable;
+////                    }
+////                }
+//                else{
+//                    dbgUARTVal('*');
+//                    dbgUARTVal('R');
+//                    dbgUARTVal(dir + '0');
+//                    for (j = yPath[ID]; j < mapHeight; j++) {
+//                        walkability [xPath[ID]][j].walkability = unwalkable;
+//                    }
+//                }
                 //                else{
                 //                    walkability[xPath[ID]][yPath[ID]].walkability = unwalkable;
                 //                }
@@ -809,7 +848,8 @@ void APP_Tasks(void) {
         switch (appState) {
             case INIT:
                 //LATAINV = 0x8;
-
+                
+                
 
                 //pathStatus[ID] = FindPath(ID, xLoc[ID], yLoc[ID], goalX, goalY);
                 //appState = RUN;
@@ -821,7 +861,30 @@ void APP_Tasks(void) {
                 dbgUARTVal('R');
                 dbgUARTVal('T');*/
                 if (fullMap) {
+                    fullMap = false;
+                    if(xLoc[flagID] != -1 && yLoc[flagID] != -1 && pathType == 0) {
+                        EndPathfinder();
+                        pathStatus[flagID] = FindPath(flagID, xLoc[flagID], yLoc[flagID], 5, 1);
+                        if(pathStatus[flagID] == found) {
+                            dbgUARTVal(xLoc[flagID] + '0');
+//                            xFlagLoc = xLoc[flagID];
+//                            yFlagLoc = yLoc[flagID];
+                            while(xLoc[flagID] != 5 || yLoc[flagID] != 1) {
+                                
+                                ReadPath(ID, xLoc[flagID], yLoc[flagID], 1);
+                                if(yPath[flagID] == 3) {
+                                    goalX = xPath[flagID];
+                                    goalY = 3;
+                                }
+                                xLoc[flagID] = xPath[flagID];
+                                yLoc[flagID] = yPath[flagID];
 
+                                pathStatus[flagID] = FindPath(flagID, xLoc[flagID], yLoc[flagID], 5, 1);
+                            }
+                            
+                            
+                        }
+                    }
                     if (goalX != -1 && goalY != -1) {
                         if (xLoc[ID] != -1 && yLoc[ID] != -1) {
                             EndPathfinder();
@@ -841,14 +904,14 @@ void APP_Tasks(void) {
                         } else {
 
                             //requestMap();
-                            appState = WAIT;
+                            appState = prevState;
                         }
                     } else {
                         //requestMap();
-                        appState = WAIT;
+                        appState = prevState;
                     }
                 } else
-                    appState = WAIT;
+                    appState = prevState;
 
                 break;
             case RUN:
@@ -861,9 +924,10 @@ void APP_Tasks(void) {
 
                 //}
 
-                if (steps >= 10) {
-                    appState = WAIT;
-                    //requestMap();
+                if (steps > 2) {
+                    //appState = WAIT;
+                    requestMap();
+                    steps = 0;
                 }//2.Move smiley.
                 else if (pathStatus[ID] == found) {
                     dbgUARTVal('|');
@@ -878,11 +942,35 @@ void APP_Tasks(void) {
                     //dbgUARTVal('X');
                     //snprintf(recvMsg1, MSG_BUF_SIZE, "Can't find a path!");
                     //dbgServer(recvMsg1);
+                    
                     appState = WAIT;
                 }
 
                 if (xLoc[ID] == goalX && yLoc[ID] == goalY) {
-                    appState = WAIT;
+                    if(pathType == 0) {
+                        MOTOR_MESSAGE msg;
+                        msg.messageType = 'M';
+                        msg.motorState = MOTOR_PATH_FIND;
+                        msg.dist = 1;
+                        msg.dir = NORTH;
+                        if (xQueueSend(encoderQueue, &msg, NULL) != pdTRUE) {
+                            //send failed
+                        }
+                        pathType = 1;
+                        appState = WAIT;
+                    }
+                    else if(yFlagLoc < 9 && pathType == 1) {
+                        //EndPathfinder();
+                        /*pathStatus[ID] = FindPath(ID, xLoc[ID], yLoc[ID], goalX, goalY);
+                        steps = 0;*/
+                        goalX = xFlagLoc;
+                        goalY = yFlagLoc;
+                        fullMap = true;
+                        appState = INIT;
+                        pathType = 2;
+                    }
+                    else
+                        appState = WAIT;
                 }
 
 
@@ -896,10 +984,12 @@ void APP_Tasks(void) {
                 xLoc[ID] = 0;
                 yLoc[ID] = 0;
                 appState = INIT;
+                prevState = WAIT;
                 break;
             case DRIVE:
-                if (dbgCount > 500) {
+                if (dbgCount > 1000) {
                     //LATAINV = 0x8;
+                    dbgUARTVal('^');
                     dbgCount = 0;
                 }
 

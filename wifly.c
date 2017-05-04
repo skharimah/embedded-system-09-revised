@@ -177,7 +177,7 @@ void checksum(char* msg, char *len) {
     int hex;
     for (i = 0; msg[i] != '\0'; i++) {
         sum = sum + msg[i];
-        sum = sum  % 10000;
+        sum = sum % 10000;
     }
     for (j = 0; j < 4; j++) {
         len[3 - j] = (sum % 10) + '0';
@@ -232,7 +232,6 @@ int getMsgFromRecvQ(char *msg) {
 
     return -1;
 }
-
 
 bool ReadJSONfromWifly(char* msg, int* msglen) {
     dbgOutputLoc(175);
@@ -289,6 +288,7 @@ bool ReceiveMsgFromWifly(char* msg) {
     dbgOutputLoc(171);
     bool eom;
     unsigned int noDataCounter = 0;
+    memset(msg, 0, 200);
     bool validJSONMessage = ReadJSONfromWifly(msg, &pos);
     dbgOutputLoc(172);
     //recvFCheck += (ReceiveCharFromWifly() << 8); // read the most significant 8 bits in, shift left 8 bits
@@ -359,17 +359,42 @@ bool ReceiveMsgFromWifly(char* msg) {
 
         if (fCheck != rFCheck) {
             dbgOutputVal('!');
+            dbgUARTVal('F');
+            dbgUARTVal('A');
+            dbgUARTVal('I');
+            dbgUARTVal('L');
+            dbgUARTVal('F');
+            dbgUARTVal('1');
             bad_messages++;
             return false;
         }
 
-        dbgOutputVal('T');
+        dbgOutputVal('G');
         //dbgOutputVal(msg->ucData[0]);
         good_messages++;
         return true;
 
     } else {
         dbgOutputVal('F');
+        dbgUARTVal('F');
+        dbgUARTVal('A');
+        dbgUARTVal('I');
+        dbgUARTVal('L');
+        dbgUARTVal('C');
+        dbgUARTVal(':');
+        
+        dbgUARTVal('<');
+        dbgUARTVal(chksum[0]);
+        dbgUARTVal(chksum[1]);
+        dbgUARTVal(chksum[2]);
+        dbgUARTVal(chksum[3]);
+        dbgUARTVal('>');
+        
+        for (i = 0; msg[i] != '\0'; i++){
+            dbgUARTVal(msg[i]); 
+        }
+        
+        
         bad_messages++;
         return false;
     }

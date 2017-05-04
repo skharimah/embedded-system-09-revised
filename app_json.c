@@ -238,7 +238,7 @@ void APP_JSON_Tasks(void) {
 
                 if (msgType.size > 0) {
                     dbgOutputLoc(171);
-
+                    memset(buffer1, 0, 20);
                     for (i = 0; i < msgType.size; i++) {
                         buffer1[i] = msgType.resultString[i];
                     }
@@ -262,6 +262,7 @@ void APP_JSON_Tasks(void) {
                     dbgOutputLoc(174);
                     dbgOutputVal('b');
                 }
+                memset(data_requested, 0, 20);    //////////////////////////////////
                 if (data_req.size > 0) {
                     dbgOutputLoc(175);
 
@@ -316,7 +317,7 @@ void APP_JSON_Tasks(void) {
                     /* TODO: Get encoder_value here */
                     addIntegerKeyValuePairToJsonObject("rev", revision);
 
-                    addStringKeyValuePairToJsonObject("source", "192.168.1.103");
+                    addStringKeyValuePairToJsonObject("source", "192.168.1.104");
 
                     /* TODO: Get encoder_value here */
                     addStringKeyValuePairToJsonObject("destination", "192.168.1.105");
@@ -334,7 +335,7 @@ void APP_JSON_Tasks(void) {
                     /* TODO: Get encoder_value here */
                     addStringKeyValuePairToJsonObject("requested_data", myMsgPtr);
 
-                    addStringKeyValuePairToJsonObject("source", "192.168.1.103");
+                    addStringKeyValuePairToJsonObject("source", "192.168.1.104");
 
                     /* TODO: Get encoder_value here */
                     addStringKeyValuePairToJsonObject("destination", "192.168.1.105");
@@ -360,23 +361,49 @@ void APP_JSON_Tasks(void) {
                 dbgOutputLoc(111);
                 int i, sum = 0;
                 int sequence_id = 0;
+                MOTOR_MESSAGE motorMessage;
                 if (buffer1[2] == 'q') {
-
+                    //dbgUARTVal('G');
+                    for(i = 0; data_requested[i] != NULL; i++) {
+                            dbgUARTVal(data_requested[i]);
+                            //dbgUARTVal('s');
+                        }
                     if (strcmp(data_requested, "stop") == 0) {
                         dbgOutputLoc(113);
+                        motorMessage.messageType = 'S';
+                        if(xQueueSendFromISR(encoderQueue, &motorMessage, NULL) != pdTRUE) {
+                        //send failed
+                        }
+                        
                         strcpy(appMsg, "stop");
                         myMsgPtr = &appMsg;
                         messageToQ(appRecvQueue, myMsgPtr);
+//                        if(xQueueSendFromISR(appRecvQueue, &motorMessage, NULL) != pdTRUE) {
+//                        //send failed
+//                        }
+                        app_jsonData.state = APP_JSON_STATE_WAITING_FOR_MESSAGE;
                     } else if (strcmp(data_requested, "run") == 0) {
-                        dbgOutputLoc(222);
+                        dbgOutputLoc(222);  
+                        dbgUARTVal('G');
+                        motorMessage.messageType = 'R';
+                        if(xQueueSendFromISR(encoderQueue, &motorMessage, NULL) != pdTRUE) {
+                        //send failed
+                        }
+                        memset(appMsg, 0, 200);
                         strcpy(appMsg, "run");
                         myMsgPtr = &appMsg;
                         messageToQ(appRecvQueue, myMsgPtr);
+                        app_jsonData.state = APP_JSON_STATE_WAITING_FOR_MESSAGE;
                     } else if (strcmp(data_requested, "pause") == 0) {
                         dbgOutputLoc(222);
                         strcpy(appMsg, "pause");
+                        motorMessage.messageType = 'P';
+                        if(xQueueSendFromISR(encoderQueue, &motorMessage, NULL) != pdTRUE) {
+                        //send failed
+                        }
                         myMsgPtr = &appMsg;
                         messageToQ(appRecvQueue, myMsgPtr);
+                        app_jsonData.state = APP_JSON_STATE_WAITING_FOR_MESSAGE;
                     } else if (strcmp(data_requested, "encoder") == 0) {
                         dbgOutputLoc(222);
                         strcpy(appMsg, "encoder");
@@ -459,12 +486,13 @@ void APP_JSON_Tasks(void) {
                             {
                             sequence_id = (seq_id.resultString[2] -'0')+ (seq_id.resultString[1] - '0')*10 + (seq_id.resultString[0] - '0')*100;
                         }
+                        
                         if (sequence_id == numObs){
                             fullMap = true;
                         }
-                        else{
-                            fullMap = false;
-                        }
+//                        else{
+//                            fullMap = false;
+//                        }
                     }
 
                     if (obs.size > 0) {
@@ -540,7 +568,7 @@ void APP_JSON_Tasks(void) {
                 /* TODO: Get IR_sensor_value here */
                 //addIntegerKeyValuePairToJsonObject("infrared_sensor_value", 150);
                 /* TODO: Get port number here */
-                addStringKeyValuePairToJsonObject("source", "192.168.1.103");
+                addStringKeyValuePairToJsonObject("source", "192.168.1.104");
                 /* TODO: Get encoder_value here */
                 addStringKeyValuePairToJsonObject("destination", buffer2);
 
@@ -550,6 +578,7 @@ void APP_JSON_Tasks(void) {
                 }
                 memset(recvMsg1, 0, MSG_BUF_SIZE);
                 memset(data_requested, 0, 20);
+                
                 
 
 
